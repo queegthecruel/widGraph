@@ -136,7 +136,7 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
 
 widGraphTitle::widGraphTitle(widGraph *graph): widGraphElement(graph)
 {
-    setStyleSheet("background:transparent;");
+    setStyleSheet("background:gray;");
 }
 
 void widGraphTitle::paintEvent(QPaintEvent */*event*/)
