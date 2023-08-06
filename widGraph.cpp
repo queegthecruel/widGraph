@@ -152,7 +152,7 @@ void widGraphTitle::m_setDimensions()
 
 widGraphXAxis::widGraphXAxis(widGraph *graph): widGraphAxis(graph)
 {
-    setStyleSheet("background:transparent;");
+      setStyleSheet("background:transparent;");
 }
 
 double widGraphXAxis::m_getDrawAreaPositionFromValue(const double &value)
