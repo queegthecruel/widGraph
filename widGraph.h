@@ -45,70 +45,91 @@ class widGraphAxis: public widGraphElement
 public:
     widGraphAxis(widGraph *graph): widGraphElement(graph)
     {}
-    virtual double m_getDrawAreaPositionFromValue(const double &value) = 0;
+    virtual double m_getDrawAreaPositionFromValue(double value) = 0;
     virtual void m_setAutoAxis() = 0;
     void paintEvent(QPaintEvent */*event*/) override;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
 private:
-    virtual double m_getPositionFromValue(const double &value) = 0;
-    virtual void m_drawLine(painterAntiAl &painter) {};
-    virtual void m_drawTicks(painterAntiAl &painter) {};
-    virtual void m_drawNumbers(painterAntiAl &painter) {};
-    virtual void m_drawText(painterAntiAl &painter) {};
+    virtual double m_getPositionFromValue(double value) = 0;
+    virtual void m_drawLine(painterAntiAl &painter) = 0;
+    virtual void m_drawTicks(painterAntiAl &painter) = 0;
+    virtual void m_drawNumbers(painterAntiAl &painter) = 0;
+    virtual void m_drawText(painterAntiAl &painter) = 0;
+protected:
+    constexpr static double m_tickLength = 10,
+                            m_spaceTicksToNumbers = 5,
+                            m_spaceNumbersToText = 3,
+                            m_spaceBorder = 5;
+    constexpr static double m_rowSpacing = 1.0;
 };
 
 class widGraphXAxis: public widGraphAxis
 {
 public:
     widGraphXAxis(widGraph *graph);
-    virtual double m_getDrawAreaPositionFromValue(const double &value) override;
+    virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
 private:
-    virtual double m_getPositionFromValue(const double &value) override;
+    virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
 
-    double m_getTicksEndFromTop();
-    double m_getNumbersStartFromTop();
-    double m_getNumberEndsFromTop();
-    double m_getTextStartFromTop();
-    double m_getTextEndsFromTop();
+    double m_getTicksStart();
+    double m_getTicksEnd();
+    double m_getNumbersStart();
+    double m_getNumberEnds();
+    double m_getTextStart();
+    double m_getTextEnds();
     double m_getEndFromTop();
-
 protected:
-    const double m_tickLength = 10;
 };
 
 class widGraphY1Axis: public widGraphAxis
 {
 public:
     widGraphY1Axis(widGraph *graph);
-    virtual double m_getDrawAreaPositionFromValue(const double &value) override;
+    virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
 private:
-    virtual double m_getPositionFromValue(const double &value) override;
+    virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
+    virtual void m_drawText(painterAntiAl &painter) override;
+
+    double m_getTicksStart();
+    double m_getTicksEnd();
+    double m_getNumbersStart();
+    double m_getNumberEnds();
+    double m_getTextStart();
+    double m_getTextEnds();
 };
 
 class widGraphY2Axis: public widGraphAxis
 {
 public:
     widGraphY2Axis(widGraph *graph);
-    virtual double m_getDrawAreaPositionFromValue(const double &value) override;
+    virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
 private:
-    virtual double m_getPositionFromValue(const double &value) override;
+    virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
+    virtual void m_drawText(painterAntiAl &painter) override;
+
+    double m_getTicksStart();
+    double m_getTicksEnd();
+    double m_getNumbersStart();
+    double m_getNumberEnds();
+    double m_getTextStart();
+    double m_getTextEnds();
 };
 
 class widGraphLegend: public widGraphElement

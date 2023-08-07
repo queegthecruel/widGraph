@@ -72,9 +72,9 @@ void widGraphDrawArea::m_drawHorGrid(painterAntiAl &painter)
     auto ptr_y = ptr_graph->m_getY1Axis();
     auto ptr_data = ptr_graph->m_getData().lock();
     const auto &ptr_dataY = ptr_data->m_Y1;
-    const double &minY = ptr_dataY.m_min;
-    const double &maxY = ptr_dataY.m_max;
-    const double &stepY = ptr_dataY.m_step;
+    double minY = ptr_dataY.m_min;
+    double maxY = ptr_dataY.m_max;
+    double stepY = ptr_dataY.m_step;
 
     double numberY = minY;
     while (numberY <= maxY)
@@ -89,9 +89,9 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
 {
     auto ptr_x = ptr_graph->m_getXAxis();
     const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    const double &minX = ptr_dataX.m_min;
-    const double &maxX = ptr_dataX.m_max;
-    const double &stepX = ptr_dataX.m_step;
+    double minX = ptr_dataX.m_min;
+    double maxX = ptr_dataX.m_max;
+    double stepX = ptr_dataX.m_step;
 
     double numberX = minX;
     while (numberX <= maxX)
@@ -155,13 +155,13 @@ widGraphXAxis::widGraphXAxis(widGraph *graph): widGraphAxis(graph)
       setStyleSheet("background:transparent;");
 }
 
-double widGraphXAxis::m_getDrawAreaPositionFromValue(const double &value)
+double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenX = ptr_data->m_Y1.m_width;
-    const double &endScreenX = width() - ptr_data->m_Y2.m_width;
-    const double &minX = ptr_data->m_X.m_min;
-    const double &maxX = ptr_data->m_X.m_max;
+    double startScreenX = ptr_data->m_Y1.m_width;
+    double endScreenX = width() - ptr_data->m_Y2.m_width;
+    double minX = ptr_data->m_X.m_min;
+    double maxX = ptr_data->m_X.m_max;
     return (endScreenX-startScreenX)*(value-minX)/(maxX-minX);
 }
 
@@ -187,18 +187,18 @@ void widGraphXAxis::m_setDimensions()
     setFixedHeight(ptr_dataX.m_height);
 }
 
-double widGraphXAxis::m_getPositionFromValue(const double &value)
+double widGraphXAxis::m_getPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenX = ptr_data->m_Y1.m_width;
+    double startScreenX = ptr_data->m_Y1.m_width;
     return startScreenX + m_getDrawAreaPositionFromValue(value);
 }
 
 void widGraphXAxis::m_drawLine(painterAntiAl &painter)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenX = ptr_data->m_Y1.m_width;
-    const double &endScreenX = width() - ptr_data->m_Y2.m_width;
+    double startScreenX = ptr_data->m_Y1.m_width;
+    double endScreenX = width() - ptr_data->m_Y2.m_width;
     painter.drawLine(startScreenX,0,endScreenX,0);
 }
 
@@ -207,16 +207,16 @@ void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
     painter.save();
     const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
 
-    const double &minX = ptr_dataX.m_min;
-    const double &maxX = ptr_dataX.m_max;
-    const double &stepX = ptr_dataX.m_step;
+    double minX = ptr_dataX.m_min;
+    double maxX = ptr_dataX.m_max;
+    double stepX = ptr_dataX.m_step;
 
     double numberX = minX;
     while (numberX <= maxX)
     {
         double posX = m_getPositionFromValue(numberX);
-        painter.drawLine(QPoint(posX,0),
-                         QPoint(posX,m_getTicksEndFromTop()));
+        painter.drawLine(QPoint(posX,m_getTicksStart()),
+                         QPoint(posX,m_getTicksEnd()));
         numberX = numberX + stepX;
     }
     painter.restore();
@@ -230,16 +230,16 @@ void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
     font.setPixelSize(ptr_dataX.m_fontNumbers);
     painter.setFont(font);
 
-    const double &minX = ptr_dataX.m_min;
-    const double &maxX = ptr_dataX.m_max;
-    const double &stepX = ptr_dataX.m_step;
+    double minX = ptr_dataX.m_min;
+    double maxX = ptr_dataX.m_max;
+    double stepX = ptr_dataX.m_step;
 
     double numberX = minX;
     while (numberX <= maxX)
     {
         double posX = m_getPositionFromValue(numberX);
-        QRect rect(QPoint(posX - 20, m_getNumbersStartFromTop()),
-                   QPoint(posX + 20, m_getNumberEndsFromTop()));
+        QRect rect(QPoint(posX - ptr_dataX.m_fontNumbers/2, m_getNumbersStart()),
+                   QPoint(posX + ptr_dataX.m_fontNumbers/2, m_getNumberEnds()));
         painter.drawText(rect, QString::number(numberX),
                          QTextOption(Qt::AlignCenter));
         numberX = numberX + stepX;
@@ -257,8 +257,8 @@ void widGraphXAxis::m_drawText(painterAntiAl &painter)
 
     const auto &ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
     double y2width = ptr_dataY2.m_width;
-    QRect rect(QPoint(0, m_getTextStartFromTop()),
-               QPoint(width() - y2width, m_getTextEndsFromTop()));
+    QRect rect(QPoint(0, m_getTextStart()),
+               QPoint(width() - y2width, m_getTextEnds()));
     std::string text = ptr_dataX.m_text;
     if (ptr_dataX.m_unit != "")
         text = text + " [" + ptr_dataX.m_unit + "]";
@@ -267,38 +267,43 @@ void widGraphXAxis::m_drawText(painterAntiAl &painter)
     painter.restore();
 }
 
-double widGraphXAxis::m_getTicksEndFromTop()
+double widGraphXAxis::m_getTicksStart()
+{
+    return 0;
+}
+
+double widGraphXAxis::m_getTicksEnd()
 {
     return m_tickLength;
 }
 
-double widGraphXAxis::m_getNumbersStartFromTop()
+double widGraphXAxis::m_getNumbersStart()
 {
-    return m_getTicksEndFromTop();
+    return m_getTicksEnd() + m_spaceTicksToNumbers;
 }
 
-double widGraphXAxis::m_getNumberEndsFromTop()
+double widGraphXAxis::m_getNumberEnds()
 {
     const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    double rowHeight = 1.2*ptr_dataX.m_fontNumbers;
-    return m_getNumbersStartFromTop() + rowHeight;
+    double rowHeight = m_rowSpacing*ptr_dataX.m_fontNumbers;
+    return m_getNumbersStart() + rowHeight;
 }
 
-double widGraphXAxis::m_getTextStartFromTop()
+double widGraphXAxis::m_getTextStart()
 {
-    return m_getNumberEndsFromTop();
+    return m_getNumberEnds() + m_spaceNumbersToText;
 }
 
-double widGraphXAxis::m_getTextEndsFromTop()
+double widGraphXAxis::m_getTextEnds()
 {
     const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    double rowHeight = 1.2*ptr_dataX.m_fontText;
-    return m_getTextStartFromTop() + rowHeight;
+    double rowHeight = m_rowSpacing*ptr_dataX.m_fontText;
+    return m_getTextStart() + rowHeight;
 }
 
 double widGraphXAxis::m_getEndFromTop()
 {
-    return m_getTextEndsFromTop() + 3;
+    return m_getTextEnds() + m_spaceBorder;
 }
 
 widGraphY1Axis::widGraphY1Axis(widGraph *graph): widGraphAxis(graph)
@@ -306,15 +311,15 @@ widGraphY1Axis::widGraphY1Axis(widGraph *graph): widGraphAxis(graph)
 
 }
 
-double widGraphY1Axis::m_getDrawAreaPositionFromValue(const double &value)
+double widGraphY1Axis::m_getDrawAreaPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &titleHeight = ptr_data->m_title.m_height;
-    const double &xAXisHeight = ptr_data->m_X.m_height;
-    const double &yStart = height() - xAXisHeight;
+    double titleHeight = ptr_data->m_title.m_height;
+    double xAXisHeight = ptr_data->m_X.m_height;
+    double yStart = height() - xAXisHeight;
 
-    const double &minY = ptr_data->m_Y1.m_min;
-    const double &maxY = ptr_data->m_Y1.m_max;
+    double minY = ptr_data->m_Y1.m_min;
+    double maxY = ptr_data->m_Y1.m_max;
     return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
 }
 
@@ -337,59 +342,121 @@ void widGraphY1Axis::m_setAutoAxis()
 
 void widGraphY1Axis::m_setDimensions()
 {
-    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    ptr_dataY1.m_width = m_getTicksStart();
     setFixedWidth(ptr_dataY1.m_width);
 }
 
-double widGraphY1Axis::m_getPositionFromValue(const double &value)
+double widGraphY1Axis::m_getPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenY = ptr_data->m_title.m_height;
+    double startScreenY = ptr_data->m_title.m_height;
     return m_getDrawAreaPositionFromValue(value) + startScreenY;
 }
 
 void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
 {
+    painter.save();
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenY = ptr_data->m_title.m_height;
-    const double &endScreenY = height() - ptr_data->m_X.m_height;
-    const double &right = width() - 1;
+    double startScreenY = ptr_data->m_title.m_height;
+    double endScreenY = height() - ptr_data->m_X.m_height;
+    double right = width() - 1;
     painter.drawLine(right,startScreenY,right,endScreenY);
+    painter.restore();
 }
 
 void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
 {
+    painter.save();
     const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
-     const double &right = width() - 1;
-     const double &minY = ptr_dataY.m_min;
-     const double &maxY = ptr_dataY.m_max;
-     const double &stepY = ptr_dataY.m_step;
+     double minY = ptr_dataY.m_min;
+     double maxY = ptr_dataY.m_max;
+     double stepY = ptr_dataY.m_step;
 
      double numberY = minY;
      while (numberY <= maxY)
      {
          double posY = m_getPositionFromValue(numberY);
-         painter.drawLine(right,posY,right - 10,posY);
+         painter.drawLine(QPoint(m_getTicksStart(),posY),
+                          QPoint(m_getTicksEnd(),posY));
          numberY = numberY + stepY;
      }
+     painter.restore();
 }
 
 void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
 {
+    painter.save();
     const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
-    const double &right = width() - 1;
-    const double &minY = ptr_dataY.m_min;
-    const double &maxY = ptr_dataY.m_max;
-    const double &stepY = ptr_dataY.m_step;
+    QFont font;
+    font.setPixelSize(ptr_dataY.m_fontNumbers);
+    painter.setFont(font);
+    double minY = ptr_dataY.m_min;
+    double maxY = ptr_dataY.m_max;
+    double stepY = ptr_dataY.m_step;
     double numberY = minY;
     while (numberY <= maxY)
     {
         double posY = m_getPositionFromValue(numberY);
-        QRect rect(right - 45, posY - 5, 30, 10);
+        QRect rect(QPoint(m_getNumberEnds(), posY - ptr_dataY.m_fontNumbers/2),
+                   QPoint(m_getNumbersStart(), posY + ptr_dataY.m_fontNumbers/2));
         painter.drawText(rect, QString::number(numberY),
                          QTextOption(Qt::AlignRight | Qt::AlignVCenter));
         numberY = numberY + stepY;
     }
+    painter.restore();
+}
+
+void widGraphY1Axis::m_drawText(painterAntiAl &painter)
+{
+    painter.save();
+    const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
+    QFont font;
+    font.setPixelSize(ptr_dataY.m_fontText);
+    painter.setFont(font);
+
+    std::string text = ptr_dataY.m_text;
+    if (ptr_dataY.m_unit != "")
+        text = text + " [" + ptr_dataY.m_unit + "]";
+    QRect rect(QPoint(0,m_getTextEnds()),
+               QPoint(-height(), m_getTextStart()));
+    painter.rotate(270);
+    painter.drawText(rect, Qt::AlignCenter, QString::fromStdString(text));
+    painter.restore();
+}
+
+double widGraphY1Axis::m_getTicksStart()
+{
+    return m_getTicksEnd() + m_tickLength;
+}
+
+double widGraphY1Axis::m_getTicksEnd()
+{
+    return m_getNumbersStart() + m_spaceTicksToNumbers;
+}
+
+double widGraphY1Axis::m_getNumbersStart()
+{
+    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    double rowHeight = m_rowSpacing*ptr_dataY1.m_fontNumbers;
+    return m_getNumberEnds() + rowHeight;
+}
+
+double widGraphY1Axis::m_getNumberEnds()
+{
+    return m_getTextStart() + m_spaceNumbersToText;
+}
+
+double widGraphY1Axis::m_getTextStart()
+{
+    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    double rowHeight = m_rowSpacing*ptr_dataY1.m_fontText;
+    return m_getTextEnds() + rowHeight;
+}
+
+double widGraphY1Axis::m_getTextEnds()
+{
+    return 0 + m_spaceBorder;
 }
 
 void widGraphAxis::paintEvent(QPaintEvent *)
@@ -447,7 +514,7 @@ double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
 
 std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double min, double max)
 {
-    int maxTicks = 10;
+    int maxTicks = 7;
     double range = m_supCalculateNiceNumbers(max - min, false);
     double tickSpacing = m_supCalculateNiceNumbers(range / (maxTicks - 1), true);
     double niceMin = floor(min / tickSpacing) * tickSpacing;
@@ -459,15 +526,15 @@ widGraphY2Axis::widGraphY2Axis(widGraph *graph): widGraphAxis(graph)
 {
 }
 
-double widGraphY2Axis::m_getDrawAreaPositionFromValue(const double &value)
+double widGraphY2Axis::m_getDrawAreaPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &titleHeight = ptr_data->m_title.m_height;
-    const double &xAXisHeight = ptr_data->m_X.m_height;
-    const double &yStart = height() - xAXisHeight;
+    double titleHeight = ptr_data->m_title.m_height;
+    double xAXisHeight = ptr_data->m_X.m_height;
+    double yStart = height() - xAXisHeight;
 
-    const double &minY = ptr_data->m_Y2.m_min;
-    const double &maxY = ptr_data->m_Y2.m_max;
+    double minY = ptr_data->m_Y2.m_min;
+    double maxY = ptr_data->m_Y2.m_max;
     return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
 }
 
@@ -491,37 +558,39 @@ void widGraphY2Axis::m_setAutoAxis()
 
 void widGraphY2Axis::m_setDimensions()
 {
-    const auto &ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
+    auto &ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
+    ptr_dataY2.m_width = m_getTextEnds() + m_spaceBorder;
     setFixedWidth(ptr_dataY2.m_width);
 }
 
-double widGraphY2Axis::m_getPositionFromValue(const double &value)
+double widGraphY2Axis::m_getPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenY = ptr_data->m_title.m_height;
+    double startScreenY = ptr_data->m_title.m_height;
     return m_getDrawAreaPositionFromValue(value) + startScreenY;
 }
 
 void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    const double &startScreenY = ptr_data->m_title.m_height;
-    const double &endScreenY = height() - ptr_data->m_X.m_height;
+    double startScreenY = ptr_data->m_title.m_height;
+    double endScreenY = height() - ptr_data->m_X.m_height;
     painter.drawLine(0,startScreenY,0,endScreenY);
 }
 
 void widGraphY2Axis::m_drawTicks(painterAntiAl &painter)
 {
     const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y2;
-    const double &minY = ptr_dataY.m_min;
-    const double &maxY = ptr_dataY.m_max;
-    const double &stepY = ptr_dataY.m_step;
+    double minY = ptr_dataY.m_min;
+    double maxY = ptr_dataY.m_max;
+    double stepY = ptr_dataY.m_step;
 
     double numberY = minY;
     while (numberY <= maxY)
     {
         double posY = m_getPositionFromValue(numberY);
-        painter.drawLine(0,posY,0 + 10,posY);
+        painter.drawLine(QPoint(m_getTicksStart(),posY),
+                         QPoint(m_getTicksEnd(),posY));
         numberY = numberY + stepY;
     }
 }
@@ -529,19 +598,76 @@ void widGraphY2Axis::m_drawTicks(painterAntiAl &painter)
 void widGraphY2Axis::m_drawNumbers(painterAntiAl &painter)
 {
     const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y2;
-    const double &minY = ptr_dataY.m_min;
-    const double &maxY = ptr_dataY.m_max;
-    const double &stepY = ptr_dataY.m_step;
+    QFont font;
+    font.setPixelSize(ptr_dataY.m_fontNumbers);
+    painter.setFont(font);
+
+    double minY = ptr_dataY.m_min;
+    double maxY = ptr_dataY.m_max;
+    double stepY = ptr_dataY.m_step;
     double numberY = minY;
     while (numberY <= maxY)
     {
         double posY = m_getPositionFromValue(numberY);
-        QRect rect(15, posY - 5, 30, 10);
+        QRect rect(QPoint(m_getNumbersStart(), posY - ptr_dataY.m_fontNumbers/2),
+                   QPoint(m_getNumberEnds(), posY + ptr_dataY.m_fontNumbers/2));
         painter.drawText(rect, QString::number(numberY),
                          QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
         numberY = numberY + stepY;
     }
 
+}
+
+void widGraphY2Axis::m_drawText(painterAntiAl &painter)
+{
+    painter.save();
+    const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y2;
+    QFont font;
+    font.setPixelSize(ptr_dataY.m_fontText);
+    painter.setFont(font);
+
+    std::string text = ptr_dataY.m_text;
+    if (ptr_dataY.m_unit != "")
+        text = text + " [" + ptr_dataY.m_unit + "]";
+    QRect rect(QPoint(0, m_getTextEnds()),
+               QPoint(-height(), m_getTextStart()));
+    painter.rotate(270);
+    painter.drawText(rect, Qt::AlignCenter, QString::fromStdString(text));
+    painter.restore();
+}
+
+double widGraphY2Axis::m_getTicksStart()
+{
+    return 0;
+}
+
+double widGraphY2Axis::m_getTicksEnd()
+{
+    return m_getTicksStart() + m_tickLength;
+}
+
+double widGraphY2Axis::m_getNumbersStart()
+{
+    return m_getTicksEnd() + m_spaceTicksToNumbers;
+}
+
+double widGraphY2Axis::m_getNumberEnds()
+{
+    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    double rowHeight = m_rowSpacing*ptr_dataY1.m_fontNumbers;
+    return m_getNumbersStart() + rowHeight;
+}
+
+double widGraphY2Axis::m_getTextStart()
+{
+    return m_getNumberEnds() + m_spaceNumbersToText;
+}
+
+double widGraphY2Axis::m_getTextEnds()
+{
+    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    double rowHeight = m_rowSpacing*ptr_dataY1.m_fontText;
+    return m_getTextStart() + rowHeight;
 }
 
 widGraphLegend::widGraphLegend(widGraph *graph):

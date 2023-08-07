@@ -11,6 +11,18 @@ MainWindow::MainWindow(QWidget *parent):
     m_widGraph = new widGraph();
     m_widGraph->m_getData().lock()->m_X.m_text = "X-axis";
     m_widGraph->m_getData().lock()->m_X.m_unit = "km";
+    m_widGraph->m_getData().lock()->m_X.m_fontNumbers = 17;
+    m_widGraph->m_getData().lock()->m_X.m_fontText = 17;
+
+    m_widGraph->m_getData().lock()->m_Y1.m_text = "Y-axis 1";
+    m_widGraph->m_getData().lock()->m_Y1.m_unit = "km/h";
+    m_widGraph->m_getData().lock()->m_Y1.m_fontNumbers = 17;
+    m_widGraph->m_getData().lock()->m_Y1.m_fontText = 17;
+
+    m_widGraph->m_getData().lock()->m_Y2.m_text = "Y-axis 2";
+    m_widGraph->m_getData().lock()->m_Y2.m_unit = "kN";
+    m_widGraph->m_getData().lock()->m_Y2.m_fontNumbers = 17;
+    m_widGraph->m_getData().lock()->m_Y2.m_fontText = 17;
 
     // Dataset 1
         auto numbers1 = std::vector<double>{4, 4, 4, 4, 4, 4};
