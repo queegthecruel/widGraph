@@ -136,12 +136,26 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
 
 widGraphTitle::widGraphTitle(widGraph *graph): widGraphElement(graph)
 {
-    setStyleSheet("background:gray;");
+    setStyleSheet("background:transparent;");
 }
 
 void widGraphTitle::paintEvent(QPaintEvent */*event*/)
 {
-
+    // Painter
+        painterAntiAl painter(this);
+    // Pen
+        QPen pen(Qt::black, 2);
+        painter.setPen(pen);
+    // Font
+        QFont font;
+        font.setPixelSize(15);
+        painter.setFont(font);
+    // Draw
+        std::string title = "Title";
+        QRectF rect = QRectF(QPointF(0,0),
+                             QSizeF(width(), height()));
+        painter.drawText(rect, QString::fromStdString(title),
+                         QTextOption(Qt::AlignCenter));
 }
 
 void widGraphTitle::m_setDimensions()
@@ -461,10 +475,9 @@ double widGraphY1Axis::m_getTextEnds()
 
 void widGraphAxis::paintEvent(QPaintEvent *)
 {
-    //Painter
+    // Painter
         painterAntiAl painter(this);
-        painter.save();
-    //Pen
+    // Pen
         QPen pen(Qt::black, 2);
         painter.setPen(pen);
     // Draw line
@@ -475,8 +488,6 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         m_drawNumbers(painter);
     // Draw text
         m_drawText(painter);
-    // Painter
-        painter.restore();
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)

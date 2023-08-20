@@ -57,11 +57,11 @@ private:
     virtual void m_drawNumbers(painterAntiAl &painter) = 0;
     virtual void m_drawText(painterAntiAl &painter) = 0;
 protected:
-    constexpr static double m_tickLength = 10,
+    const double m_tickLength = 10,
                             m_spaceTicksToNumbers = 5,
                             m_spaceNumbersToText = 3,
                             m_spaceBorder = 5;
-    constexpr static double m_rowSpacing = 1.0;
+    const double m_rowSpacing = 1.0;
 };
 
 class widGraphXAxis: public widGraphAxis
