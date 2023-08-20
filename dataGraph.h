@@ -57,6 +57,12 @@ struct dataLegend: public dataElement
     int m_fontHeight = 15;
 };
 
+struct dataDrawArea: public dataElement
+{
+    dataDrawArea() {}
+    ~dataDrawArea() = default;
+};
+
 class graphObjects;
 struct dataGraph
 {
@@ -68,6 +74,7 @@ struct dataGraph
     dataAxisY1 m_Y1;
     dataAxisY2 m_Y2;
     dataLegend m_legend;
+    dataDrawArea m_drawArea;
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
 };
 

@@ -11,6 +11,7 @@ CONFIG += c++20
 
 SOURCES += \
     dataGraph.cpp \
+    dialogs.cpp \
     main.cpp \
     mainwindow.cpp \
     objectsGraph.cpp \
@@ -19,6 +20,7 @@ SOURCES += \
 
 HEADERS += \
     dataGraph.h \
+    dialogs.h \
     mainwindow.h \
     objectsGraph.h \
     widGraph.h \
