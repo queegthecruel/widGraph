@@ -19,7 +19,7 @@ class dialogAxis: public dialogs
 {
     Q_OBJECT
 public:
-    dialogAxis(widGraph *graph, dataAxis &data);
+    dialogAxis(widGraph *graph, std::weak_ptr<dataAxis> data);
     virtual ~dialogAxis() = default;
     void m_loadValues();
     void m_saveValues();
@@ -28,7 +28,7 @@ public slots:
     void m_slotSave();
 protected:
     widGraph *ptr_graph;
-    dataAxis& ptr_data;
+    std::weak_ptr<dataAxis> ptr_data;
 
     QPushButton *m_butLoad, *m_butSave;
     QVBoxLayout *m_layBackground;

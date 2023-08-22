@@ -7,7 +7,7 @@ dialogs::dialogs()
 
 }
 
-dialogAxis::dialogAxis(widGraph *graph, dataAxis &data):
+dialogAxis::dialogAxis(widGraph *graph, std::weak_ptr<dataAxis> data):
     ptr_graph(graph), ptr_data(data)
 {
     m_editFontSizeNumbers = new lineEdit();
@@ -27,14 +27,14 @@ dialogAxis::dialogAxis(widGraph *graph, dataAxis &data):
 
 void dialogAxis::m_loadValues()
 {
-    const auto &ref_data = ptr_data;
-    m_editFontSizeNumbers->m_setNumber(ref_data.m_fontNumbers);
+    auto ref_data = ptr_data.lock();
+    m_editFontSizeNumbers->m_setNumber(ref_data->m_fontNumbers);
 }
 
 void dialogAxis::m_saveValues()
 {
-    auto &ref_data = ptr_data;
-    ref_data.m_fontNumbers = m_editFontSizeNumbers->m_number();
+    auto ref_data = ptr_data.lock();
+    ref_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
 }
 
 void dialogAxis::m_slotLoad()

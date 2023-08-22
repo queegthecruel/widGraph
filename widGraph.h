@@ -19,7 +19,6 @@ public:
     {}
     void paintEvent(QPaintEvent *event) override = 0;
     virtual void m_setDimensions() {}
-    virtual dataElement& m_getData() = 0;
 protected:
     widGraph *ptr_graph;
 };
@@ -28,7 +27,6 @@ class widGraphDrawArea: public widGraphElement
 public:
     widGraphDrawArea(widGraph *graph);
     void paintEvent(QPaintEvent *event) override;
-    virtual dataElement& m_getData() override;
 
 private:
     void m_drawHorGrid(painterAntiAl &painter);
@@ -41,7 +39,6 @@ public:
     widGraphTitle(widGraph *graph);
     void paintEvent(QPaintEvent *event) override;
     virtual void m_setDimensions() override;
-    virtual dataElement& m_getData() override;
 };
 
 class widGraphAxis: public widGraphElement
@@ -52,7 +49,7 @@ public:
     virtual void m_setAutoAxis() = 0;
     void paintEvent(QPaintEvent */*event*/) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
-    virtual dataAxis& m_getData() override = 0;
+    virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
 private:
@@ -77,7 +74,7 @@ public:
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
-    virtual dataAxis& m_getData() override;
+    virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
@@ -102,7 +99,7 @@ public:
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
-    virtual dataAxis& m_getData() override;
+    virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
@@ -125,7 +122,7 @@ public:
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
-    virtual dataAxis& m_getData() override;
+    virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual double m_getPositionFromValue(double value) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
@@ -147,7 +144,6 @@ public:
     widGraphLegend(widGraph *graph);
     void paintEvent(QPaintEvent *event) override;
     virtual void m_setDimensions() override;
-    virtual dataElement& m_getData() override;
 private:
     void m_drawTopLine(painterAntiAl &painter);
     void m_drawTexts(painterAntiAl &painter);

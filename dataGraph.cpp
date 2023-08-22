@@ -39,6 +39,11 @@ dataLegend::dataLegend()
 
 dataGraph::dataGraph()
 {
-
+     m_title = std::make_shared<dataTitle>();
+     m_X = std::make_shared<dataAxisX>();
+     m_Y1 = std::make_shared<dataAxisY1>();
+     m_Y2 = std::make_shared<dataAxisY2>();
+     m_legend = std::make_shared<dataLegend>();
+     m_drawArea = std::make_shared<dataDrawArea>();
 }
 

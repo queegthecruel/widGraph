@@ -67,14 +67,16 @@ class graphObjects;
 struct dataGraph
 {
     dataGraph();
+    dataGraph(const dataGraph&) = delete;
+    dataGraph& operator=(const dataGraph&) = delete;
     ~dataGraph() = default;
 
-    dataTitle m_title;
-    dataAxisX m_X;
-    dataAxisY1 m_Y1;
-    dataAxisY2 m_Y2;
-    dataLegend m_legend;
-    dataDrawArea m_drawArea;
+    std::shared_ptr<dataTitle> m_title;
+    std::shared_ptr<dataAxisX> m_X;
+    std::shared_ptr<dataAxisY1> m_Y1;
+    std::shared_ptr<dataAxisY2> m_Y2;
+    std::shared_ptr<dataLegend> m_legend;
+    std::shared_ptr<dataDrawArea> m_drawArea;
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
 };
 
