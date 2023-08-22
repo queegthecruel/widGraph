@@ -4,23 +4,64 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
+
+std::string readString(std::ifstream &instream);
+void writeString(std::ofstream &outstream, const std::string& value);
+double readDouble(std::ifstream &instream);
+void writeDouble(std::ofstream &outstream, const double& value);
+int readInt(std::ifstream &instream);
+void writeInt(std::ofstream &outstream, const int& value);
+bool readBool(std::ifstream &instream);
+void writeBool(std::ofstream &outstream, const bool& value);
 
 // Graph data
-struct dataElement {};
+struct dataElement
+{
+    dataElement() {}
+    dataElement(std::ifstream &instream) {}
+    ~dataElement() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+    }
+};
 
 struct dataTitle: public dataElement
 {
     dataTitle();
+    dataTitle(std::ifstream &instream):
+        dataElement(instream)
+    {
+
+    }
     ~dataTitle() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataElement::m_saveToFile(outstream);
+    }
     std::string title = "Graph title";
     int m_width = -1;
     int m_height = 50;
+    std::string m_text = "widGraph";
+    double m_fontText = 15;
 };
 
 struct dataAxis: public dataElement
 {
     dataAxis();
+    dataAxis(std::ifstream &instream):
+        dataElement(instream)
+    {
+        m_fontText = readDouble(instream);
+        m_fontNumbers = readDouble(instream);
+    }
     ~dataAxis() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataElement::m_saveToFile(outstream);
+        writeDouble(outstream, m_fontText);
+        writeDouble(outstream, m_fontNumbers);
+    }
 
     double m_min = 0, m_max = 10, m_step = 1;
     int m_width = -1;
@@ -32,44 +73,76 @@ struct dataAxis: public dataElement
 struct dataAxisX: public dataAxis
 {
     dataAxisX();
+    dataAxisX(std::ifstream &instream):
+        dataAxis(instream) {}
     ~dataAxisX() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataAxis::m_saveToFile(outstream);
+    }
 };
 
 struct dataAxisY1: public dataAxis
 {
     dataAxisY1();
+    dataAxisY1(std::ifstream &instream):
+        dataAxis(instream) {}
     ~dataAxisY1() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataAxis::m_saveToFile(outstream);
+    }
 };
 
 struct dataAxisY2: public dataAxis
 {
     dataAxisY2();
+    dataAxisY2(std::ifstream &instream):
+        dataAxis(instream) {}
     ~dataAxisY2() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataAxis::m_saveToFile(outstream);
+    }
 };
 
 struct dataLegend: public dataElement
 {
     dataLegend();
+    dataLegend(std::ifstream &instream):
+        dataElement(instream) {}
     ~dataLegend() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataElement::m_saveToFile(outstream);
+    }
 
     int m_width = -1;
     int m_height = -1;
-    int m_fontHeight = 15;
+    int m_fontText = 15;
 };
 
 struct dataDrawArea: public dataElement
 {
     dataDrawArea() {}
+    dataDrawArea(std::ifstream &instream):
+        dataElement(instream) {}
     ~dataDrawArea() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataElement::m_saveToFile(outstream);
+    }
 };
 
 class graphObjects;
 struct dataGraph
 {
     dataGraph();
+    dataGraph(std::ifstream &instream);
     dataGraph(const dataGraph&) = delete;
-    dataGraph& operator=(const dataGraph&) = delete;
+    dataGraph& operator=(const dataGraph& oldData);
     ~dataGraph() = default;
+    void m_saveToFile(std::ofstream &outstream);
 
     std::shared_ptr<dataTitle> m_title;
     std::shared_ptr<dataAxisX> m_X;
@@ -78,6 +151,7 @@ struct dataGraph
     std::shared_ptr<dataLegend> m_legend;
     std::shared_ptr<dataDrawArea> m_drawArea;
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
+    enum GRAPH_SETTINGS {TITLE, X, Y1, Y2, LEGEND, DRAWAREA};
 };
 
 

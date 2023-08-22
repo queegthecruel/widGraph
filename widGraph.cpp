@@ -1,6 +1,6 @@
 #include "widGraph.h"
 #include "widOthers.h"
-#include "dialogs.h"
+#include "dialogGraph.h"
 
 widGraph::widGraph()
 {
@@ -14,9 +14,7 @@ widGraph::widGraph()
         m_widY2 = new widGraphY2Axis(this);
         m_widLegend = new widGraphLegend(this);
     // Add elements to the layout
-        QGridLayout *layBackground = new QGridLayout(this);
-        layBackground->setContentsMargins(0,0,0,0);
-        layBackground->setSpacing(0);
+        graphLayout *layBackground = new graphLayout(this);
         layBackground->addWidget(m_widTitle, 0,0, 1,3);
         layBackground->addWidget(m_widX, 2,0, 1,3);
         layBackground->addWidget(m_widY1, 0,0, 3,1);
@@ -34,6 +32,7 @@ void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
 
 void widGraph::m_loadValues()
 {
+    setUpdatesEnabled(false);
     // Set dimensions
         m_widLegend->m_setDimensions();
         m_widX->m_setDimensions();
@@ -45,6 +44,7 @@ void widGraph::m_loadValues()
         m_widX->m_setAutoAxis();
         m_widY1->m_setAutoAxis();
         m_widY2->m_setAutoAxis();
+    setUpdatesEnabled(true);
 }
 
 void widGraph::m_setCurveStyle(int curveIndex, int R, int G, int B, int axis)
@@ -68,11 +68,25 @@ void widGraph::m_setCurveName(int curveIndex, const std::string &name)
     ptr_curveData->m_name = name;
 }
 
+void widGraph::m_openDialog(int tabIndex)
+{
+    if (m_dialog == nullptr) {
+        m_dialog = std::make_unique<dialogGraph>(this, m_data, tabIndex);
+        connect(m_dialog.get(), &QDialog::finished, this, &widGraph::m_slotDialogClosed);
+        m_dialog->show();
+    }
+}
+
+void widGraph::m_slotDialogClosed(int status)
+{
+    m_dialog = nullptr;
+}
+
 void widGraphDrawArea::m_drawHorGrid(painterAntiAl &painter)
 {
     auto ptr_y = ptr_graph->m_getY1Axis();
     auto ptr_data = ptr_graph->m_getData().lock();
-    const auto &ptr_dataY = ptr_data->m_Y1;
+    auto ptr_dataY = ptr_data->m_Y1;
     double minY = ptr_dataY->m_min;
     double maxY = ptr_dataY->m_max;
     double stepY = ptr_dataY->m_step;
@@ -89,7 +103,7 @@ void widGraphDrawArea::m_drawHorGrid(painterAntiAl &painter)
 void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
 {
     auto ptr_x = ptr_graph->m_getXAxis();
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     double minX = ptr_dataX->m_min;
     double maxX = ptr_dataX->m_max;
     double stepX = ptr_dataX->m_step;
@@ -103,7 +117,8 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
     }
 }
 
-widGraphDrawArea::widGraphDrawArea(widGraph *graph): widGraphElement(graph)
+widGraphDrawArea::widGraphDrawArea(widGraph *graph):
+    widGraphElement(graph, dataGraph::DRAWAREA)
 {
   //  setStyleSheet("background:transparent;");
 }
@@ -115,7 +130,7 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
     painter.save();
 
     // Curves
-        const auto &vectorObjects = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+        auto vectorObjects = ptr_graph->m_getData().lock()->m_vectorOfObjects;
         for(auto &var: vectorObjects)
             var->m_drawItself(&painter, ptr_graph);
 
@@ -135,7 +150,8 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
         painter.restore();
 }
 
-widGraphTitle::widGraphTitle(widGraph *graph): widGraphElement(graph)
+widGraphTitle::widGraphTitle(widGraph *graph):
+    widGraphElement(graph, dataGraph::TITLE)
 {
     setStyleSheet("background:transparent;");
 }
@@ -148,11 +164,12 @@ void widGraphTitle::paintEvent(QPaintEvent */*event*/)
         QPen pen(Qt::black, 2);
         painter.setPen(pen);
     // Font
+        auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
         QFont font;
-        font.setPixelSize(15);
+        font.setPixelSize(ptr_dataTitle->m_fontText);
         painter.setFont(font);
     // Draw
-        std::string title = "Title";
+        const std::string &title = ptr_dataTitle->m_text;
         QRectF rect = QRectF(QPointF(0,0),
                              QSizeF(width(), height()));
         painter.drawText(rect, QString::fromStdString(title),
@@ -161,13 +178,16 @@ void widGraphTitle::paintEvent(QPaintEvent */*event*/)
 
 void widGraphTitle::m_setDimensions()
 {
-    const auto &ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+    auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+    ptr_dataTitle->m_height = m_spaceAbove +
+            m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
     setFixedHeight(ptr_dataTitle->m_height);
 }
 
-widGraphXAxis::widGraphXAxis(widGraph *graph): widGraphAxis(graph)
+widGraphXAxis::widGraphXAxis(widGraph *graph):
+    widGraphAxis(graph, dataGraph::X)
 {
-      setStyleSheet("background:transparent;");
+    setStyleSheet("background:transparent;");
 }
 
 double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
@@ -197,7 +217,7 @@ void widGraphXAxis::m_setAutoAxis()
 
 void widGraphXAxis::m_setDimensions()
 {
-    auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     ptr_dataX->m_height = m_getEndFromTop();
     setFixedHeight(ptr_dataX->m_height);
 }
@@ -225,7 +245,7 @@ void widGraphXAxis::m_drawLine(painterAntiAl &painter)
 void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
 
     double minX = ptr_dataX->m_min;
     double maxX = ptr_dataX->m_max;
@@ -245,7 +265,7 @@ void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
 void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     QFont font;
     font.setPixelSize(ptr_dataX->m_fontNumbers);
     painter.setFont(font);
@@ -270,12 +290,12 @@ void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
 void widGraphXAxis::m_drawText(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     QFont font;
     font.setPixelSize(ptr_dataX->m_fontText);
     painter.setFont(font);
 
-    const auto &ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
+    auto ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
     double y2width = ptr_dataY2->m_width;
     QRect rect(QPoint(0, m_getTextStart()),
                QPoint(width() - y2width, m_getTextEnds()));
@@ -304,7 +324,7 @@ double widGraphXAxis::m_getNumbersStart()
 
 double widGraphXAxis::m_getNumberEnds()
 {
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     double rowHeight = m_rowSpacing*ptr_dataX->m_fontNumbers;
     return m_getNumbersStart() + rowHeight;
 }
@@ -316,7 +336,7 @@ double widGraphXAxis::m_getTextStart()
 
 double widGraphXAxis::m_getTextEnds()
 {
-    const auto &ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     double rowHeight = m_rowSpacing*ptr_dataX->m_fontText;
     return m_getTextStart() + rowHeight;
 }
@@ -326,7 +346,8 @@ double widGraphXAxis::m_getEndFromTop()
     return m_getTextEnds() + m_spaceBorder;
 }
 
-widGraphY1Axis::widGraphY1Axis(widGraph *graph): widGraphAxis(graph)
+widGraphY1Axis::widGraphY1Axis(widGraph *graph):
+    widGraphAxis(graph, dataGraph::Y1)
 {
 
 }
@@ -362,7 +383,7 @@ void widGraphY1Axis::m_setAutoAxis()
 
 void widGraphY1Axis::m_setDimensions()
 {
-    auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
     ptr_dataY1->m_width = m_getTicksStart();
     setFixedWidth(ptr_dataY1->m_width);
 }
@@ -393,7 +414,7 @@ void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
 void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
      double minY = ptr_dataY->m_min;
      double maxY = ptr_dataY->m_max;
      double stepY = ptr_dataY->m_step;
@@ -412,7 +433,7 @@ void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
 void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
     QFont font;
     font.setPixelSize(ptr_dataY->m_fontNumbers);
     painter.setFont(font);
@@ -435,7 +456,7 @@ void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
 void widGraphY1Axis::m_drawText(painterAntiAl &painter)
 {
     painter.save();
-    const auto &ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
     QFont font;
     font.setPixelSize(ptr_dataY->m_fontText);
     painter.setFont(font);
@@ -462,7 +483,7 @@ double widGraphY1Axis::m_getTicksEnd()
 
 double widGraphY1Axis::m_getNumbersStart()
 {
-    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
     double rowHeight = m_rowSpacing*ptr_dataY1->m_fontNumbers;
     return m_getNumberEnds() + rowHeight;
 }
@@ -474,7 +495,7 @@ double widGraphY1Axis::m_getNumberEnds()
 
 double widGraphY1Axis::m_getTextStart()
 {
-    const auto &ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
     double rowHeight = m_rowSpacing*ptr_dataY1->m_fontText;
     return m_getTextEnds() + rowHeight;
 }
@@ -484,8 +505,8 @@ double widGraphY1Axis::m_getTextEnds()
     return 0 + m_spaceBorder;
 }
 
-widGraphAxis::widGraphAxis(widGraph *graph):
-    widGraphElement(graph)
+widGraphAxis::widGraphAxis(widGraph *graph, int elementNumber):
+    widGraphElement(graph, elementNumber)
 {}
 
 void widGraphAxis::paintEvent(QPaintEvent *)
@@ -503,13 +524,6 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         m_drawNumbers(painter);
     // Draw text
         m_drawText(painter);
-}
-
-void widGraphAxis::mouseReleaseEvent(QMouseEvent *event)
-{
-    auto ptr_data = m_getData();
-    m_dialog = std::make_unique<dialogAxis>(ptr_graph, ptr_data);
-    m_dialog->show();
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -555,7 +569,8 @@ std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double mi
     return std::tuple<double, double, double>(niceMin, niceMax, tickSpacing);
 }
 
-widGraphY2Axis::widGraphY2Axis(widGraph *graph): widGraphAxis(graph)
+widGraphY2Axis::widGraphY2Axis(widGraph *graph):
+    widGraphAxis(graph, dataGraph::Y2)
 {
 }
 
@@ -704,13 +719,13 @@ double widGraphY2Axis::m_getTextStart()
 
 double widGraphY2Axis::m_getTextEnds()
 {
-    const auto &ptr_dataY2 = m_getData().lock();
+    auto ptr_dataY2 = m_getData().lock();
     double rowHeight = m_rowSpacing*ptr_dataY2->m_fontText;
     return m_getTextStart() + rowHeight;
 }
 
 widGraphLegend::widGraphLegend(widGraph *graph):
-    widGraphElement(graph)
+    widGraphElement(graph, dataGraph::LEGEND)
 {
 }
 
@@ -721,12 +736,12 @@ void widGraphLegend::m_drawTopLine(painterAntiAl &painter)
 
 void widGraphLegend::m_drawTexts(painterAntiAl &painter)
 {
-    const auto &ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
+    auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     int i = 0;
-    double rowHeight = 1.2*ptr_legendData->m_fontHeight;
+    double rowHeight = 1.2*ptr_legendData->m_fontText;
     QFont font;
-    font.setPixelSize(ptr_legendData->m_fontHeight);
+    font.setPixelSize(ptr_legendData->m_fontText);
     painter.setFont(font);
     double startLeft = 10;
     for (const auto &var: listCurves) {
@@ -751,8 +766,13 @@ void widGraphLegend::m_setDimensions()
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     int numberCurves = listCurves.size();
     auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
-    double rowHeight = 1.2*ptr_legendData->m_fontHeight;
+    double rowHeight = 1.2*ptr_legendData->m_fontText;
     double height = numberCurves * rowHeight;
     setFixedHeight(height);
 }
 
+
+void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    ptr_graph->m_openDialog(m_elementNumber);
+}

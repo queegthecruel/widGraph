@@ -32,8 +32,37 @@ treeItem *treeWidget::m_addChild(const std::string &text,
     return item;
 }
 
-treeItem::treeItem(treeItem *parent): QTreeWidgetItem(parent)
+treeItem::treeItem(treeItem *parent):
+    QTreeWidgetItem(parent)
 {}
 
-treeItem::treeItem(class treeWidget *parent): QTreeWidgetItem(parent)
+treeItem::treeItem(class treeWidget *parent):
+    QTreeWidgetItem(parent)
 {}
+
+VBoxLayout::VBoxLayout(QWidget *parent):
+    QVBoxLayout(parent)
+{
+    setContentsMargins(0,0,0,0);
+    setSpacing(0);
+}
+
+graphLayout::graphLayout(QWidget *parent):
+    QGridLayout(parent)
+{
+    setContentsMargins(0,0,0,0);
+    setSpacing(0);
+}
+
+HBoxLayout::HBoxLayout(QWidget *parent):
+    QHBoxLayout(parent)
+{
+    setContentsMargins(0,0,0,0);
+    setSpacing(0);
+}
+
+lineEdit::lineEdit(int maxWidth)
+{
+    if (maxWidth != -1)
+        setMaximumWidth(maxWidth);
+}

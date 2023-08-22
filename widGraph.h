@@ -5,29 +5,31 @@
 #include <QGridLayout>
 #include "dataGraph.h"
 #include "objectsGraph.h"
+#include "dialogGraph.h"
 
 // Graph widgets
 class widGraph;
 class painterAntiAl;
-class dialogAxis;
 
 class widGraphElement: public QWidget
 {
 public:
-    widGraphElement(widGraph *graph):
-        ptr_graph(graph)
+    widGraphElement(widGraph *graph, int elementNumber):
+        ptr_graph(graph), m_elementNumber(elementNumber)
     {}
     void paintEvent(QPaintEvent *event) override = 0;
-    virtual void m_setDimensions() {}
+    void mouseDoubleClickEvent(QMouseEvent *event)override;
+    virtual void m_setDimensions() = 0;
 protected:
     widGraph *ptr_graph;
+    const int m_elementNumber;
 };
 class widGraphDrawArea: public widGraphElement
 {
 public:
     widGraphDrawArea(widGraph *graph);
     void paintEvent(QPaintEvent *event) override;
-
+    virtual void m_setDimensions() override {};
 private:
     void m_drawHorGrid(painterAntiAl &painter);
     void m_drawVertGrid(painterAntiAl &painter);
@@ -39,16 +41,19 @@ public:
     widGraphTitle(widGraph *graph);
     void paintEvent(QPaintEvent *event) override;
     virtual void m_setDimensions() override;
+protected:
+    const double m_rowSpacing = 1.0;
+    const double m_spaceAbove = 5, m_spaceBelow = 5;
 };
 
 class widGraphAxis: public widGraphElement
 {
 public:
-    widGraphAxis(widGraph *graph);
+    widGraphAxis(widGraph *graph, int elementNumber);
+    ~widGraphAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) = 0;
     virtual void m_setAutoAxis() = 0;
     void paintEvent(QPaintEvent */*event*/) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
@@ -64,13 +69,13 @@ protected:
                             m_spaceNumbersToText = 3,
                             m_spaceBorder = 5;
     const double m_rowSpacing = 1.0;
-    std::unique_ptr<dialogAxis> m_dialog;
 };
 
 class widGraphXAxis: public widGraphAxis
 {
 public:
     widGraphXAxis(widGraph *graph);
+    ~widGraphXAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
@@ -96,6 +101,7 @@ class widGraphY1Axis: public widGraphAxis
 {
 public:
     widGraphY1Axis(widGraph *graph);
+    ~widGraphY1Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
@@ -119,6 +125,7 @@ class widGraphY2Axis: public widGraphAxis
 {
 public:
     widGraphY2Axis(widGraph *graph);
+    ~widGraphY2Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
@@ -151,10 +158,15 @@ private:
 
 class widGraph: public QWidget
 {
+    Q_OBJECT
 public:
     widGraph();
+    widGraph(const widGraph&) = delete;
+    widGraph& operator=(const widGraph&) = delete;
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
+    inline void m_setData(std::shared_ptr<dataGraph> newData)
+            {*m_data = *newData;}
     widGraphXAxis* m_getXAxis()
         {return m_widX;}
     widGraphY1Axis* m_getY1Axis()
@@ -165,6 +177,9 @@ public:
     void m_loadValues();
     void m_setCurveStyle(int curveIndex, int R, int G, int B, int axis = 0);
     void m_setCurveName(int curveIndex, const std::string& name);
+    void m_openDialog(int tabIndex = 0);
+public slots:
+    void m_slotDialogClosed(int status);
 protected:
     // Data
         std::shared_ptr<dataGraph> m_data;
@@ -175,6 +190,8 @@ protected:
         widGraphY1Axis *m_widY1;
         widGraphY2Axis *m_widY2;
         widGraphLegend *m_widLegend;
+    // Dialog
+        std::unique_ptr<dialogGraph> m_dialog;
 };
 
 
