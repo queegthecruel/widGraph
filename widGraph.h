@@ -57,6 +57,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
+    void m_setAxis();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual void m_drawLine(painterAntiAl &painter) = 0;
@@ -65,9 +66,9 @@ private:
     virtual void m_drawText(painterAntiAl &painter) = 0;
 protected:
     const double m_tickLength = 10,
-                            m_spaceTicksToNumbers = 5,
-                            m_spaceNumbersToText = 3,
-                            m_spaceBorder = 5;
+                 m_spaceTicksToNumbers = 5,
+                 m_spaceNumbersToText = 3,
+                 m_spaceBorder = 5;
     const double m_rowSpacing = 1.0;
 };
 

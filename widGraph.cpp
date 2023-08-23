@@ -41,9 +41,9 @@ void widGraph::m_loadValues()
         m_widTitle->m_setDimensions();
 
     // Set axis
-        m_widX->m_setAutoAxis();
-        m_widY1->m_setAutoAxis();
-        m_widY2->m_setAutoAxis();
+        m_widX->m_setAxis();
+        m_widY1->m_setAxis();
+        m_widY2->m_setAxis();
     setUpdatesEnabled(true);
 }
 
@@ -567,6 +567,13 @@ std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double mi
     double niceMin = floor(min / tickSpacing) * tickSpacing;
     double niceMax = ceil(max / tickSpacing) * tickSpacing;
     return std::tuple<double, double, double>(niceMin, niceMax, tickSpacing);
+}
+
+void widGraphAxis::m_setAxis()
+{
+    auto ptr_data = m_getData().lock();
+    if (ptr_data->m_autoAxis)
+        m_setAutoAxis();
 }
 
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):

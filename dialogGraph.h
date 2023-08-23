@@ -58,6 +58,8 @@ public:
 protected:
     std::weak_ptr<dataAxisX> ptr_data;
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
+    checkbox *m_checkAuto;
+    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
 class tabGraphSettingsY1Axis: public tabGraphSettings
@@ -70,6 +72,8 @@ public:
 protected:
     std::weak_ptr<dataAxisY1> ptr_data;
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
+    checkbox *m_checkAuto;
+    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
 class tabGraphSettingsY2Axis: public tabGraphSettings
@@ -82,6 +86,8 @@ public:
 protected:
     std::weak_ptr<dataAxisY2> ptr_data;
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
+    checkbox *m_checkAuto;
+    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
 class tabGraphSettingsDrawArea: public tabGraphSettings

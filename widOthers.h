@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QPaintDevice>
 #include <QLineEdit>
+#include <QCheckBox>
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
@@ -26,6 +27,17 @@ public:
         {return text().toStdString();}
     inline double m_number()
         {return text().toDouble();}
+};
+
+class checkbox: public QCheckBox
+{
+public:
+    checkbox() {}
+    ~checkbox() = default;
+    void m_setChecked(bool status)
+    {
+        setChecked(status);
+    }
 };
 
 class treeWidget;

@@ -63,6 +63,7 @@ struct dataAxis: public dataElement
         writeDouble(outstream, m_fontNumbers);
     }
 
+    bool m_autoAxis = true;
     double m_min = 0, m_max = 10, m_step = 1;
     int m_width = -1;
     int m_height = -1;
