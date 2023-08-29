@@ -28,13 +28,11 @@ MainWindow::MainWindow(QWidget *parent):
     ptr_y2->m_fontText = 17;
 
     // Dataset 1
-        auto numbers1 = std::vector<double>{4, 4, 4, 4, 4, 4};
-
+        auto numbers1 = std::vector<double>{4, 4, 12, 4, 4, 4};
         m_data1 = std::make_shared<std::vector<double>>(numbers1);
         m_widGraph->m_addObject(std::make_shared<graphCurve>(m_data1));
         m_widGraph->m_setCurveStyle(-1, 255, 0, 0);
         m_widGraph->m_setCurveName(-1, "Curve 1");
-        (*m_data1)[2] = 12;
     // Dataset 2
         auto numbers2x = std::vector<double>{0, 1, 2, 7, 8, 9};
         auto numbers2y = std::vector<double>{1, 1, 1, 88, 3, 2};

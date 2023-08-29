@@ -1,11 +1,12 @@
 #ifndef WIDGRAPH_H
 #define WIDGRAPH_H
 
-#include <QWidget>
-#include <QGridLayout>
 #include "dataGraph.h"
 #include "objectsGraph.h"
 #include "dialogGraph.h"
+#include <QWidget>
+#include <QGridLayout>
+#include <QMouseEvent>
 
 // Graph widgets
 class widGraph;
@@ -104,15 +105,22 @@ public:
     widGraphY1Axis(widGraph *graph);
     ~widGraphY1Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
+    virtual double m_getValueFromDrawAreaPosition(double position);
     virtual void m_setAutoAxis() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
 private:
     virtual double m_getPositionFromValue(double value) override;
+    virtual double m_getValueFromPosition(double position);
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
+    bool m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2);
 
     double m_getTicksStart();
     double m_getTicksEnd();
@@ -120,6 +128,9 @@ private:
     double m_getNumberEnds();
     double m_getTextStart();
     double m_getTextEnds();
+protected:
+    bool m_isMouseMoving = false;
+    QPoint m_startingPoint;
 };
 
 class widGraphY2Axis: public widGraphAxis
