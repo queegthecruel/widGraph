@@ -91,6 +91,7 @@ void tabGraphSettingsXAxis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
+    s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAuto->isChecked();
     s_data->m_min = m_editMin->m_number();
     s_data->m_max = m_editMax->m_number();
@@ -129,6 +130,7 @@ void tabGraphSettingsY1Axis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
+    s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAuto->isChecked();
     s_data->m_min = m_editMin->m_number();
     s_data->m_max = m_editMax->m_number();
@@ -167,6 +169,7 @@ void tabGraphSettingsY2Axis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
+    s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAuto->isChecked();
     s_data->m_min = m_editMin->m_number();
     s_data->m_max = m_editMax->m_number();

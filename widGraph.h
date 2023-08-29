@@ -113,6 +113,8 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+    void m_setAxisTemp(double start, double end);
+
 private:
     virtual double m_getPositionFromValue(double value) override;
     virtual double m_getValueFromPosition(double position);

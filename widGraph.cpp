@@ -416,6 +416,17 @@ void widGraphY1Axis::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
+void widGraphY1Axis::m_setAxisTemp(double start, double end)
+{
+    auto ptr_data = m_getData().lock();
+    ptr_data->m_autoAxis = false;
+    ptr_data->m_min = std::min(start, end);
+    ptr_data->m_max = std::max(start, end);
+    ptr_data->m_step = std::abs(start - end)/10;
+//    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(ptr_data->m_min, ptr_data->m_max);
+//    ptr_data->m_step = niceStep;
+}
+
 void widGraphY1Axis::mouseReleaseEvent(QMouseEvent *event)
 {
     m_isMouseMoving = false;
@@ -424,15 +435,12 @@ void widGraphY1Axis::mouseReleaseEvent(QMouseEvent *event)
     if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
         double start = m_getValueFromPosition(m_startingPoint.y());
         double end = m_getValueFromPosition(currentPoint.y());
-        auto ptr_data = m_getData().lock();
-        ptr_data->m_autoAxis = false;
-        ptr_data->m_min = std::min(start, end);
-        ptr_data->m_max = std::max(start, end);
-        ptr_data->m_step = std::abs(start - end)/10;
+        m_setAxisTemp(start, end);
         ptr_graph->m_loadValues();
     }
     else
         update();
+    m_startingPoint = QPoint(0,0);
 }
 
 void widGraphY1Axis::paintEvent(QPaintEvent *event)
