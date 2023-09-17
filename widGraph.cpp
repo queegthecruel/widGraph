@@ -1,6 +1,8 @@
 #include "widGraph.h"
 #include "widOthers.h"
 #include "dialogGraph.h"
+#include <QApplication>
+#include <QClipboard>>
 
 widGraph::widGraph()
 {
@@ -77,6 +79,18 @@ void widGraph::m_openDialog(int tabIndex)
     }
 }
 
+void widGraph::m_takeScreenshot()
+{
+    setStyleSheet("background: white");
+    int ratio = 5;
+    QSize imageSize = size()*ratio;
+    QImage image = QImage(imageSize, QImage::Format_RGB32);
+    image.setDevicePixelRatio(ratio);
+    render(&image);
+    QApplication::clipboard()->setImage(image);
+    setStyleSheet("background: transparent");
+}
+
 void widGraph::m_slotDialogClosed(int status)
 {
     m_dialog = nullptr;
@@ -135,10 +149,13 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
             var->m_drawItself(&painter, ptr_graph);
 
     // Grid
-        QPen penGrid(Qt::gray, 1, Qt::DashLine);
-        painter.setPen(penGrid);
-        m_drawHorGrid(painter);
-        m_drawVertGrid(painter);
+        auto ptr_data = ptr_graph->m_getData().lock()->m_drawArea;
+        if (ptr_data->m_showGrid) {
+            QPen penGrid(Qt::gray, 1, Qt::DashLine);
+            painter.setPen(penGrid);
+            m_drawHorGrid(painter);
+            m_drawVertGrid(painter);
+        }
 
     // Rectangle
         QPen penRect(Qt::black, 2);
@@ -154,26 +171,21 @@ widGraphTitle::widGraphTitle(widGraph *graph):
     widGraphElement(graph, dataGraph::TITLE)
 {
     setStyleSheet("background:transparent;");
+    m_text = new widGraphTitleText(ptr_graph);
+    m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
+    m_butShowGrid = new widGraphButtonShowGrid(ptr_graph);
+    m_butScreenshot = new widGraphButtonScreenshot(ptr_graph);
+    m_layBackground = new HBoxLayout(this);
+    m_layBackground->setSpacing(2);
+    m_layBackground->addWidget(m_text);
+    m_layBackground->addWidget(m_butAuto);
+    m_layBackground->addWidget(m_butShowGrid);
+    m_layBackground->addWidget(m_butScreenshot);
 }
 
-void widGraphTitle::paintEvent(QPaintEvent */*event*/)
+void widGraphTitle::paintEvent(QPaintEvent *event)
 {
-    // Painter
-        painterAntiAl painter(this);
-    // Pen
-        QPen pen(Qt::black, 2);
-        painter.setPen(pen);
-    // Font
-        auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
-        QFont font;
-        font.setPixelSize(ptr_dataTitle->m_fontText);
-        painter.setFont(font);
-    // Draw
-        const std::string &title = ptr_dataTitle->m_text;
-        QRectF rect = QRectF(QPointF(0,0),
-                             QSizeF(width(), height()));
-        painter.drawText(rect, QString::fromStdString(title),
-                         QTextOption(Qt::AlignCenter));
+    QWidget::paintEvent(event);
 }
 
 void widGraphTitle::m_setDimensions()
@@ -182,6 +194,14 @@ void widGraphTitle::m_setDimensions()
     ptr_dataTitle->m_height = m_spaceAbove +
             m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
     setFixedHeight(ptr_dataTitle->m_height);
+
+    auto ptr_data = ptr_graph->m_getData().lock();
+
+    m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
+    m_text->m_setDimensions();
+    m_butAuto->m_setDimensions();
+    m_butShowGrid->m_setDimensions();
+    m_butScreenshot->m_setDimensions();
 }
 
 widGraphXAxis::widGraphXAxis(widGraph *graph):
@@ -689,7 +709,6 @@ std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double mi
 
 void widGraphAxis::m_setAxis()
 {
-
     auto ptr_axisData = m_getData().lock();
     if (ptr_axisData->m_autoAxis) {
         // Min and max values
@@ -974,7 +993,199 @@ void widGraphLegend::m_setDimensions()
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    qDebug() << "Double";
     ptr_graph->m_openDialog(m_elementNumber);
     event->accept();
+}
+
+widGraphButton::widGraphButton(widGraph *graph, const QString &tooltip):
+    widGraphElement(graph, -1)
+{
+    setToolTip(tooltip);
+}
+
+void widGraphButton::paintEvent(QPaintEvent *event)
+{
+    // Painter
+    painterAntiAl painter(this);
+    // Pen
+        m_drawBorder(painter);
+    // Draw inside
+        m_drawInside(painter);
+}
+
+void widGraphButton::m_drawBorder(painterAntiAl &painter)
+{
+    painter.save();
+    // Pen
+        QPen pen;
+        if (m_isCheckable && m_isChecked)
+            pen = QPen(Qt::blue, 2);
+        else
+            pen = QPen(Qt::black, 1);
+        painter.setPen(pen);
+    // Draw border
+        QRectF rectButton = QRectF(QPointF(0,0), m_size);
+        painter.drawRect(rectButton);
+    painter.restore();
+}
+
+void widGraphButton::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QWidget::mouseDoubleClickEvent(event);
+    event->accept();
+}
+
+void widGraphButton::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_isChecked = !m_isChecked;
+    m_onClick();
+    ptr_graph->m_loadValues();
+}
+
+void widGraphButton::m_setDimensions()
+{
+    setFixedSize(m_size.toSize());
+}
+
+widGraphTitleText::widGraphTitleText(widGraph *graph):
+    widGraphElement(graph, -1)
+{
+    setStyleSheet("background:transparent;");
+}
+
+void widGraphTitleText::paintEvent(QPaintEvent *event)
+{
+    // Painter
+        painterAntiAl painter(this);
+    // Pen
+        QPen pen(Qt::black, 2);
+        painter.setPen(pen);
+    // Font
+        auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+        QFont font;
+        font.setPixelSize(ptr_dataTitle->m_fontText);
+        painter.setFont(font);
+    // Draw
+        const std::string &title = ptr_dataTitle->m_text;
+        QRectF rect = QRectF(QPointF(0,0),
+                             QSizeF(width(), height()));
+        painter.drawText(rect, QString::fromStdString(title),
+                         QTextOption(Qt::AlignCenter));
+}
+
+void widGraphTitleText::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QWidget:: mouseDoubleClickEvent(event);
+    event->ignore();
+}
+
+void widGraphTitleText::m_setDimensions()
+{
+  //  auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+  //  setFixedWidth(500);
+}
+
+widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
+    widGraphButton(graph, "Set automatic axes")
+{
+
+}
+
+void widGraphButtonAutoAxes::m_onClick()
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    auto ptr_dataX = ptr_data->m_X;
+    auto ptr_dataY1 = ptr_data->m_Y1;
+    auto ptr_dataY2 = ptr_data->m_Y2;
+    ptr_dataX->m_autoAxis = true;
+    ptr_dataX->m_autoStep = true;
+    ptr_dataY1->m_autoAxis = true;
+    ptr_dataY1->m_autoStep = true;
+    ptr_dataY2->m_autoAxis = true;
+    ptr_dataY2->m_autoStep = true;
+}
+
+widGraphButtonShowGrid::widGraphButtonShowGrid(widGraph *graph):
+    widGraphButton(graph, "Show/hide grid")
+{
+    // Set as checkable
+        m_isCheckable = true;
+    // Initial value
+        auto ptr_data = ptr_graph->m_getData().lock();
+        auto ptr_dataDrawArea = ptr_data->m_drawArea;
+        m_isChecked = ptr_dataDrawArea->m_showGrid;
+}
+
+void widGraphButtonShowGrid::m_onClick()
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    auto ptr_dataDrawArea = ptr_data->m_drawArea;
+    ptr_dataDrawArea->m_showGrid = m_isChecked;
+}
+
+void widGraphButtonShowGrid::m_drawInside(painterAntiAl &painter)
+{
+    painter.save();
+    // Pen
+        QPen pen;
+        if (m_isCheckable && m_isChecked)
+            pen = QPen(Qt::blue, 2);
+        else
+            pen = QPen(Qt::black, 1);
+        painter.setPen(pen);
+    // Draw grid
+        double w = width()/4;
+        double h = height()/4;
+        painter.drawLine(w, 0, w, height());
+        painter.drawLine(2*w, 0, 2*w, height());
+        painter.drawLine(3*w, 0, 3*w, height());
+        painter.drawLine(0, h, width(), h);
+        painter.drawLine(0, 2*h, width(), 2*h);
+        painter.drawLine(0, 3*h, width(), 3*h);
+    painter.restore();
+}
+
+void widGraphButtonAutoAxes::m_drawInside(painterAntiAl &painter)
+{
+    painter.save();
+    // Pen
+        QPen pen;
+        pen = QPen(Qt::blue, 1);
+        painter.setPen(pen);
+    // Font
+        QFont font;
+        font.setPixelSize(18);
+        painter.setFont(font);
+    // Draw
+        painter.drawText(QRect(0, 0, width(), height()),
+                         "A", QTextOption(Qt::AlignCenter));
+    painter.restore();
+}
+
+widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
+    widGraphButton(graph, "Take a screenshot")
+{
+
+}
+
+void widGraphButtonScreenshot::m_onClick()
+{
+    ptr_graph->m_takeScreenshot();
+}
+
+void widGraphButtonScreenshot::m_drawInside(painterAntiAl &painter)
+{
+    painter.save();
+    // Pen
+        QPen pen;
+        pen = QPen(Qt::blue, 1);
+        painter.setPen(pen);
+    // Font
+        QFont font;
+        font.setPixelSize(18);
+        painter.setFont(font);
+    // Draw
+        painter.drawText(QRect(0, 0, width(), height()),
+                         "S", QTextOption(Qt::AlignCenter));
+    painter.restore();
 }

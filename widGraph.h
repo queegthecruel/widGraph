@@ -19,7 +19,7 @@ public:
         ptr_graph(graph), m_elementNumber(elementNumber)
     {}
     void paintEvent(QPaintEvent *event) override = 0;
-    void mouseDoubleClickEvent(QMouseEvent *event)override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     virtual void m_setDimensions() = 0;
 protected:
     widGraph *ptr_graph;
@@ -36,15 +36,71 @@ private:
     void m_drawVertGrid(painterAntiAl &painter);
 };
 
+class widGraphButton: public widGraphElement
+{
+public:
+    widGraphButton(widGraph *graph, const QString &tooltip);
+    void paintEvent(QPaintEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void m_setDimensions() override;
+private:
+    virtual void m_onClick() = 0;
+    virtual void m_drawInside(painterAntiAl &painter) = 0;
+    void m_drawBorder(painterAntiAl &painter);
+protected:
+    QSizeF m_size = QSize(20,20);
+    bool m_isChecked = false;
+    bool m_isCheckable = false;
+};
+
+class widGraphButtonAutoAxes: public widGraphButton
+{
+public:
+    widGraphButtonAutoAxes(widGraph *graph);
+    virtual void m_onClick() override;
+    virtual void m_drawInside(painterAntiAl &painter) override;
+};
+
+class widGraphButtonScreenshot: public widGraphButton
+{
+public:
+    widGraphButtonScreenshot(widGraph *graph);
+    virtual void m_onClick() override;
+    virtual void m_drawInside(painterAntiAl &painter) override;
+};
+
+class widGraphButtonShowGrid: public widGraphButton
+{
+public:
+    widGraphButtonShowGrid(widGraph *graph);
+    virtual void m_onClick() override;
+    virtual void m_drawInside(painterAntiAl &painter) override;
+};
+
+class widGraphTitleText: public widGraphElement
+{
+public:
+    widGraphTitleText(widGraph *graph);
+    void paintEvent(QPaintEvent *event) override ;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    virtual void m_setDimensions() override;
+};
+
 class widGraphTitle: public widGraphElement
 {
 public:
     widGraphTitle(widGraph *graph);
-    void paintEvent(QPaintEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;;
     virtual void m_setDimensions() override;
 protected:
     const double m_rowSpacing = 1.0;
     const double m_spaceAbove = 5, m_spaceBelow = 5;
+    HBoxLayout *m_layBackground;
+    widGraphTitleText *m_text;
+    widGraphButtonAutoAxes *m_butAuto;
+    widGraphButtonShowGrid *m_butShowGrid;
+    widGraphButtonScreenshot *m_butScreenshot;
 };
 
 class widGraphAxis: public widGraphElement
@@ -206,6 +262,7 @@ public:
     void m_setCurveStyle(int curveIndex, int R, int G, int B, int axis = 0);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog(int tabIndex = 0);
+    void m_takeScreenshot();
 public slots:
     void m_slotDialogClosed(int status);
 protected:

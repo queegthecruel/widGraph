@@ -125,6 +125,7 @@ struct dataDrawArea: public dataElement
     {
         dataElement::m_saveToFile(outstream);
     }
+    bool m_showGrid = true;
 };
 
 class graphObjects;
