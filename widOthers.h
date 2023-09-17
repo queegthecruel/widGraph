@@ -27,7 +27,7 @@ public:
     inline double m_number()
         {return text().toDouble();}
 protected:
-    QValidator *m_validator;
+    QValidator *m_validator = nullptr;
 };
 
 class checkbox: public QCheckBox

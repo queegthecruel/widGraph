@@ -62,8 +62,8 @@ tabGraphSettings::tabGraphSettings()
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT);
-    m_editFontSizeText = new lineEdit(validator::INT);
+    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
+    m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_checkAuto = new checkbox();
     m_editMin = new lineEdit(validator::DOUBLE);
     m_editMax = new lineEdit(validator::DOUBLE);
@@ -101,8 +101,8 @@ void tabGraphSettingsXAxis::m_saveValues()
 tabGraphSettingsY1Axis::tabGraphSettingsY1Axis(std::weak_ptr<dataAxisY1> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT);
-    m_editFontSizeText = new lineEdit(validator::INT);
+    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
+    m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_checkAuto = new checkbox();
     m_editMin = new lineEdit(validator::DOUBLE);
     m_editMax = new lineEdit(validator::DOUBLE);
@@ -140,8 +140,8 @@ void tabGraphSettingsY1Axis::m_saveValues()
 tabGraphSettingsY2Axis::tabGraphSettingsY2Axis(std::weak_ptr<dataAxisY2> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT);
-    m_editFontSizeText = new lineEdit(validator::INT);
+    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
+    m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_checkAuto = new checkbox();
     m_editMin = new lineEdit(validator::DOUBLE);
     m_editMax = new lineEdit(validator::DOUBLE);
@@ -180,7 +180,7 @@ tabGraphSettingsTitle::tabGraphSettingsTitle(std::weak_ptr<dataTitle> data):
     ptr_data(data)
 {
     m_editText = new lineEdit(validator::NONE);
-    m_editFontSize = new lineEdit(validator::INT);
+    m_editFontSize = new lineEdit(validator::INT_POS);
     m_tree->m_addChild("Text", m_editText);
     m_tree->m_addChild("Font size", m_editFontSize);
 }
@@ -221,7 +221,7 @@ void tabGraphSettingsDrawArea::m_saveValues()
 tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
     ptr_data(data)
 {
-    m_editFontSizeText = new lineEdit(validator::INT);
+    m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_tree->m_addChild("Text size", m_editFontSizeText);
 }
 

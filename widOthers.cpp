@@ -69,9 +69,19 @@ lineEdit::lineEdit(enum validator valid)
         maxWidth = 200;
         break;
     case validator::INT:
+        m_validator = new QIntValidator(-qInf(), qInf(), this);
+        maxWidth = 75;
+        break;
+    case validator::INT_POS:
+        m_validator = new QIntValidator(1, qInf(), this);
+        maxWidth = 75;
+        break;
+    case validator::INT_POS_0:
+        m_validator = new QIntValidator(0, qInf(), this);
         maxWidth = 75;
         break;
     case validator::DOUBLE:
+        m_validator = new QDoubleValidator(-qInf(), qInf(), 2, this);
         maxWidth = 75;
         break;
     }
