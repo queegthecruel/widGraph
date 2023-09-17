@@ -61,8 +61,41 @@ HBoxLayout::HBoxLayout(QWidget *parent):
     setSpacing(0);
 }
 
-lineEdit::lineEdit(int maxWidth)
+lineEdit::lineEdit(enum validator valid)
 {
-    if (maxWidth != -1)
-        setMaximumWidth(maxWidth);
+    int maxWidth = 200;
+    switch (valid) {
+    case validator::NONE:
+        maxWidth = 200;
+        break;
+    case validator::INT:
+        maxWidth = 75;
+        break;
+    case validator::DOUBLE:
+        maxWidth = 75;
+        break;
+    }
+    setMaximumWidth(maxWidth);
+    setMinimumWidth(25);
+}
+
+void lineEdit::m_setText(const std::string &text)
+{
+    blockSignals(true);
+    setText(QString::fromStdString(text));
+    blockSignals(false);
+}
+
+void lineEdit::m_setNumber(double value)
+{
+    blockSignals(true);
+    setText(QString::number(value));
+    blockSignals(false);
+}
+
+void checkbox::m_setChecked(bool status)
+{
+    blockSignals(true);
+    setChecked(status);
+    blockSignals(false);
 }

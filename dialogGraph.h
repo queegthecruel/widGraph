@@ -32,7 +32,6 @@ public:
 protected:
     VBoxLayout *m_layBackground;
     treeWidget *m_tree;
-    static const int maxWidthNumbers = 75, maxWidthText = 200;
 };
 
 class tabGraphSettingsTitle: public tabGraphSettings

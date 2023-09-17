@@ -14,19 +14,20 @@ public:
     painterAntiAl(QPaintDevice *device);
 };
 
+enum class validator {NONE, INT, DOUBLE};
 class lineEdit: public QLineEdit
 {
 public:
-    lineEdit(int maxWidth = -1);
+    lineEdit(enum validator valid);
     ~lineEdit() = default;
-    inline void m_setText(const std::string &text)
-        {setText(QString::fromStdString(text));}
-    inline void m_setNumber(double value)
-        {setText(QString::number(value));}
+    void m_setText(const std::string &text);
+    void m_setNumber(double value);
     inline std::string m_text()
         {return text().toStdString();}
     inline double m_number()
         {return text().toDouble();}
+protected:
+    QValidator *m_validator;
 };
 
 class checkbox: public QCheckBox
@@ -34,10 +35,7 @@ class checkbox: public QCheckBox
 public:
     checkbox() {}
     ~checkbox() = default;
-    void m_setChecked(bool status)
-    {
-        setChecked(status);
-    }
+    void m_setChecked(bool status);
 };
 
 class treeWidget;
