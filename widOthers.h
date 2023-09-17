@@ -26,11 +26,13 @@ public:
         {return text().toStdString();}
     inline double m_number()
         {return text().toDouble();}
+    void m_redBoxAnimation(int ms = 1000);
 private:
     void m_supValidator(enum validator valid);
     int m_supWidth(enum validator valid);
 protected:
     QValidator *m_validator = nullptr;
+    QTimer *m_redBoxTimer = nullptr;
 };
 
 class checkbox: public QCheckBox

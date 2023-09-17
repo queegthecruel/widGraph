@@ -85,6 +85,8 @@ void tabGraphSettingsXAxis::m_loadValues()
     m_editMin->m_setNumber(s_data->m_min);
     m_editMax->m_setNumber(s_data->m_max);
     m_editStep->m_setNumber(s_data->m_step);
+    m_editStep->m_redBoxAnimation();
+
 }
 
 void tabGraphSettingsXAxis::m_saveValues()
@@ -268,7 +270,7 @@ footerDialogGraph::footerDialogGraph()
     m_butClose = new QPushButton("Close");
     m_butApply = new QPushButton("Apply");
     connect(m_butSaveFile, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotSaveFile);
-    connect(m_butLoadFile, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotLoadFIle);
+    connect(m_butLoadFile, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotLoadFile);
     connect(m_butClose, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotClose);
     connect(m_butApply, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotApply);
     m_layBackground = new HBoxLayout(this);

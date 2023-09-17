@@ -132,10 +132,10 @@ public:
     ~footerDialogGraph() = default;
 public slots:
     void m_slotApply()
-        {emit emit m_emitApply();}
+        {emit m_emitApply();}
     inline void m_slotClose()
         {emit m_emitClose();}
-    inline void m_slotLoadFIle()
+    inline void m_slotLoadFile()
         {emit m_emitLoadFile();}
     inline void m_slotSaveFile()
         {emit m_emitSaveFile();}
@@ -171,7 +171,6 @@ public slots:
 protected:
     widGraph *ptr_graph;
     std::weak_ptr<dataGraph> ptr_data;
-    QHBoxLayout *m_layFooter;
     VBoxLayout *m_layBackground;
     graphSettingsTabWidget *m_tabbed;
     footerDialogGraph *m_footer;

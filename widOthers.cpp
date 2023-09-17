@@ -1,4 +1,5 @@
 #include "widOthers.h"
+#include <QTimer>
 
 painterAntiAl::painterAntiAl(QPaintDevice *device):
     QPainter(device)
@@ -120,6 +121,24 @@ void lineEdit::m_setNumber(double value)
     blockSignals(true);
     setText(QString::number(value));
     blockSignals(false);
+}
+
+void lineEdit::m_redBoxAnimation(int ms)
+{
+    QString stylesheet = styleSheet();
+
+    if (m_redBoxTimer == nullptr) {
+        m_redBoxTimer = new QTimer(this);
+    }
+    setStyleSheet("border: 2px solid red;");
+    connect(m_redBoxTimer, &QTimer::timeout,
+            this, [this, stylesheet](){
+                    setStyleSheet(stylesheet);
+                    m_redBoxTimer->stop();
+                    });
+    m_redBoxTimer->setInterval(ms);
+    m_redBoxTimer->start();
+
 }
 
 void checkbox::m_setChecked(bool status)
