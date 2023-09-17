@@ -10,6 +10,32 @@ dataAxis::dataAxis()
 
 }
 
+dataAxis::dataAxis(std::ifstream &instream):
+    dataElement(instream)
+{
+    m_fontText = readDouble(instream);
+    m_fontNumbers = readDouble(instream);
+}
+
+void dataAxis::m_saveToFile(std::ofstream &outstream)
+{
+    dataElement::m_saveToFile(outstream);
+    writeDouble(outstream, m_fontText);
+    writeDouble(outstream, m_fontNumbers);
+}
+
+void dataAxis::m_setMinMaxStep(double min, double max, double step)
+{
+    m_min = min;
+    m_max = max;
+    m_step = step;
+}
+
+void dataAxis::m_setStep(double step)
+{
+    m_step = step;
+}
+
 dataAxisX::dataAxisX()
 {
     m_min = 0;

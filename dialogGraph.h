@@ -58,9 +58,10 @@ public:
     void m_saveGeneralValues(std::shared_ptr<dataAxis> s_data);
 public slots:
     void m_slotAutoAxisToggled();
+    void m_slotAutoStepToggled();
 protected:
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
-    checkbox *m_checkAuto;
+    checkbox *m_checkAutoAxis, *m_checkAutoStep;
     lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 

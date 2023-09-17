@@ -49,19 +49,11 @@ struct dataTitle: public dataElement
 struct dataAxis: public dataElement
 {
     dataAxis();
-    dataAxis(std::ifstream &instream):
-        dataElement(instream)
-    {
-        m_fontText = readDouble(instream);
-        m_fontNumbers = readDouble(instream);
-    }
+    dataAxis(std::ifstream &instream);
     ~dataAxis() = default;
-    void m_saveToFile(std::ofstream &outstream)
-    {
-        dataElement::m_saveToFile(outstream);
-        writeDouble(outstream, m_fontText);
-        writeDouble(outstream, m_fontNumbers);
-    }
+    void m_saveToFile(std::ofstream &outstream);
+    void m_setMinMaxStep(double min, double max, double step);
+    void m_setStep(double step);
 
     bool m_autoAxis = true, m_autoStep  = true;
     double m_min = 0, m_max = 10, m_step = 1;

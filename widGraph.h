@@ -53,7 +53,7 @@ public:
     widGraphAxis(widGraph *graph, int elementNumber);
     ~widGraphAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) = 0;
-    virtual void m_setAutoAxis() = 0;
+    virtual std::tuple<double, double> m_getMinAndMax() = 0;
     void paintEvent(QPaintEvent */*event*/) override;
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
@@ -65,6 +65,8 @@ private:
     virtual void m_drawTicks(painterAntiAl &painter) = 0;
     virtual void m_drawNumbers(painterAntiAl &painter) = 0;
     virtual void m_drawText(painterAntiAl &painter) = 0;
+protected:
+    void m_setAxisByMouse(double start, double end);
 protected:
     const double m_tickLength = 10,
                  m_spaceTicksToNumbers = 5,
@@ -79,7 +81,7 @@ public:
     widGraphXAxis(widGraph *graph);
     ~widGraphXAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
-    virtual void m_setAutoAxis() override;
+    virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
@@ -106,14 +108,13 @@ public:
     ~widGraphY1Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual double m_getValueFromDrawAreaPosition(double position);
-    virtual void m_setAutoAxis() override;
+    virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void m_setAxisTemp(double start, double end);
 
 private:
     virtual double m_getPositionFromValue(double value) override;
@@ -141,7 +142,7 @@ public:
     widGraphY2Axis(widGraph *graph);
     ~widGraphY2Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
-    virtual void m_setAutoAxis() override;
+    virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:

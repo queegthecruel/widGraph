@@ -219,16 +219,19 @@ tabGraphSettingsAxis::tabGraphSettingsAxis()
 {
     m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
     m_editFontSizeText = new lineEdit(validator::INT_POS);
-    m_checkAuto = new checkbox();
-    connect(m_checkAuto, &QAbstractButton::toggled, this, &tabGraphSettingsAxis::m_slotAutoAxisToggled);
+    m_checkAutoAxis = new checkbox();
+    connect(m_checkAutoAxis, &QAbstractButton::toggled, this, &tabGraphSettingsAxis::m_slotAutoAxisToggled);
+    m_checkAutoStep = new checkbox();
+    connect(m_checkAutoStep, &QAbstractButton::toggled, this, &tabGraphSettingsAxis::m_slotAutoStepToggled);
     m_editMin = new lineEdit(validator::DOUBLE);
     m_editMax = new lineEdit(validator::DOUBLE);
     m_editStep = new lineEdit(validator::DOUBLE);
     m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
     m_tree->m_addChild("Text size", m_editFontSizeText);
-    auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAuto);
+    auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAutoAxis);
     m_tree->m_addChild("Min", m_editMin, titleMinMax);
     m_tree->m_addChild("Max", m_editMax, titleMinMax);
+    m_tree->m_addChild("Auto step", m_checkAutoStep, titleMinMax);
     m_tree->m_addChild("Step", m_editStep, titleMinMax);
 }
 
@@ -236,7 +239,8 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
     m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
-    m_checkAuto->m_setChecked(s_data->m_autoAxis);
+    m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
+    m_checkAutoStep->m_setChecked(s_data->m_autoStep);
     m_editMin->m_setNumber(s_data->m_min);
     m_editMax->m_setNumber(s_data->m_max);
     m_editStep->m_setNumber(s_data->m_step);
@@ -247,7 +251,8 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
     s_data->m_fontText = m_editFontSizeText->m_number();
-    s_data->m_autoAxis = m_checkAuto->isChecked();
+    s_data->m_autoAxis = m_checkAutoAxis->isChecked();
+    s_data->m_autoStep = m_checkAutoStep->isChecked();
     s_data->m_min = m_editMin->m_number();
     s_data->m_max = m_editMax->m_number();
     s_data->m_step = m_editStep->m_number();
@@ -255,8 +260,16 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
 
 void tabGraphSettingsAxis::m_slotAutoAxisToggled()
 {
-    bool autoAxis = m_checkAuto->isChecked();
+    bool autoAxis = m_checkAutoAxis->isChecked();
     m_editMin->setEnabled(!autoAxis);
     m_editMax->setEnabled(!autoAxis);
+    m_checkAutoStep->setEnabled(!autoAxis);
     m_editStep->setEnabled(!autoAxis);
+}
+
+void tabGraphSettingsAxis::m_slotAutoStepToggled()
+{
+    bool autoStep = m_checkAutoStep->isChecked();
+ //   bool autoAxis = m_checkAutoAxis->isChecked();
+    m_editStep->setEnabled(!autoStep);
 }

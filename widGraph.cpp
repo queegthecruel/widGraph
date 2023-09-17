@@ -200,19 +200,19 @@ double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
     return (endScreenX-startScreenX)*(value-minX)/(maxX-minX);
 }
 
-void widGraphXAxis::m_setAutoAxis()
+std::tuple<double, double> widGraphXAxis::m_getMinAndMax()
 {
-    auto ptr_data = ptr_graph->m_getData().lock();
-    double minX = 0;
-    double maxX = 0;
-    for (auto &var:ptr_data->m_vectorOfObjects) {
-        minX = std::min(minX, var->m_getMinX());
-        maxX = std::max(maxX, var->m_getMaxX());
-    }
-    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(minX, maxX);
-    ptr_data->m_X->m_min = niceMin;
-    ptr_data->m_X->m_max = niceMax;
-    ptr_data->m_X->m_step = niceStep;
+    // Graph data
+        auto ptr_graphData = ptr_graph->m_getData().lock();
+    // Min and max values
+        double minX = 0;
+        double maxX = 0;
+        for (auto &var:ptr_graphData->m_vectorOfObjects) {
+            minX = std::min(minX, var->m_getMinX());
+            maxX = std::max(maxX, var->m_getMaxX());
+        }
+    // Return
+        return {minX, maxX};
 }
 
 void widGraphXAxis::m_setDimensions()
@@ -376,21 +376,18 @@ double widGraphY1Axis::m_getValueFromDrawAreaPosition(double position)
     return - position*(maxY-minY)/(yStart-titleHeight) + maxY;
 }
 
-void widGraphY1Axis::m_setAutoAxis()
+std::tuple<double, double> widGraphY1Axis::m_getMinAndMax()
 {
-    auto ptr_data = ptr_graph->m_getData().lock();
+    auto ptr_graphData = ptr_graph->m_getData().lock();
     double minY = 0;
     double maxY = 0;
-    for (auto &var:ptr_data->m_vectorOfObjects) {
+    for (auto &var:ptr_graphData->m_vectorOfObjects) {
         if(var->m_getPrefferedYAxis() == 0) {
             minY = std::min(minY, var->m_getMinY());
             maxY = std::max(maxY, var->m_getMaxY());
         }
     }
-    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(minY, maxY);
-    ptr_data->m_Y1->m_min = niceMin;
-    ptr_data->m_Y1->m_max = niceMax;
-    ptr_data->m_Y1->m_step = niceStep;
+    return {minY, maxY};
 }
 
 void widGraphY1Axis::m_setDimensions()
@@ -416,17 +413,6 @@ void widGraphY1Axis::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
-void widGraphY1Axis::m_setAxisTemp(double start, double end)
-{
-    auto ptr_data = m_getData().lock();
-    ptr_data->m_autoAxis = false;
-    ptr_data->m_min = std::min(start, end);
-    ptr_data->m_max = std::max(start, end);
-    ptr_data->m_step = std::abs(start - end)/10;
-//    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(ptr_data->m_min, ptr_data->m_max);
-//    ptr_data->m_step = niceStep;
-}
-
 void widGraphY1Axis::mouseReleaseEvent(QMouseEvent *event)
 {
     m_isMouseMoving = false;
@@ -435,7 +421,7 @@ void widGraphY1Axis::mouseReleaseEvent(QMouseEvent *event)
     if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
         double start = m_getValueFromPosition(m_startingPoint.y());
         double end = m_getValueFromPosition(currentPoint.y());
-        m_setAxisTemp(start, end);
+        m_setAxisByMouse(start, end);
         ptr_graph->m_loadValues();
     }
     else
@@ -655,14 +641,41 @@ std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double mi
     double tickSpacing = m_supCalculateNiceNumbers(range / (maxTicks - 1), true);
     double niceMin = floor(min / tickSpacing) * tickSpacing;
     double niceMax = ceil(max / tickSpacing) * tickSpacing;
-    return std::tuple<double, double, double>(niceMin, niceMax, tickSpacing);
+    return {niceMin, niceMax, tickSpacing};
 }
 
 void widGraphAxis::m_setAxis()
 {
+
+    auto ptr_axisData = m_getData().lock();
+    if (ptr_axisData->m_autoAxis) {
+        // Min and max values
+            auto [min, max] = m_getMinAndMax();
+        // Calculate nice numbers
+            auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
+        // Save them
+            ptr_axisData->m_setMinMaxStep(niceMin, niceMax, niceStep);
+    }
+    else if (ptr_axisData->m_autoStep) {
+        // Min and max values
+            double min = ptr_axisData->m_min;
+            double max = ptr_axisData->m_max;
+        // Calculate nice numbers
+            auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
+        // Save them
+            ptr_axisData->m_setStep(niceStep);
+    }
+}
+
+void widGraphAxis::m_setAxisByMouse(double start, double end)
+{
     auto ptr_data = m_getData().lock();
-    if (ptr_data->m_autoAxis)
-        m_setAutoAxis();
+    ptr_data->m_autoAxis = false;
+    ptr_data->m_autoStep = false;
+    double min = std::min(start, end);
+    double max = std::max(start, end);
+    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
+    ptr_data->m_setMinMaxStep(min, max, niceStep);
 }
 
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):
@@ -682,23 +695,18 @@ double widGraphY2Axis::m_getDrawAreaPositionFromValue(double value)
     return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
 }
 
-void widGraphY2Axis::m_setAutoAxis()
+std::tuple<double, double> widGraphY2Axis::m_getMinAndMax()
 {
-    auto ptr_dataGraph = ptr_graph->m_getData().lock();
+    auto ptr_graphData = ptr_graph->m_getData().lock();
     double minY = 0;
     double maxY = 0;
-    for (auto &var:ptr_dataGraph->m_vectorOfObjects) {
+    for (auto &var: ptr_graphData->m_vectorOfObjects) {
         if(var->m_getPrefferedYAxis() == 1) {
             minY = std::min(minY, var->m_getMinY());
             maxY = std::max(maxY, var->m_getMaxY());
         }
     }
-
-    auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(minY, maxY);
-    auto ptr_dataY2 = m_getData().lock();
-    ptr_dataY2->m_min = niceMin;
-    ptr_dataY2->m_max = niceMax;
-    ptr_dataY2->m_step = niceStep;
+    return {minY, maxY};
 }
 
 void widGraphY2Axis::m_setDimensions()
