@@ -58,7 +58,7 @@ public:
     treeWidget();
     ~treeWidget() = default;
     treeItem* m_addChild(const std::string &text, QWidget *ptr_widget,
-        treeItem* ptr_branch = nullptr, const std::string &tooltip = "");
+        treeItem* ptr_branch = nullptr, bool isExpanded = true, const std::string &tooltip = "");
 };
 
 class VBoxLayout: public QVBoxLayout

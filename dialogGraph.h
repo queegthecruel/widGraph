@@ -16,6 +16,7 @@ public:
 struct dataGraph;
 class widGraph;
 struct dataTitle;
+struct dataAxis;
 struct dataAxisX;
 struct dataAxisY1;
 struct dataAxisY2;
@@ -47,7 +48,23 @@ protected:
     lineEdit *m_editFontSize;
 };
 
-class tabGraphSettingsXAxis: public tabGraphSettings
+class tabGraphSettingsAxis: public tabGraphSettings
+{
+    Q_OBJECT
+public:
+    tabGraphSettingsAxis();
+    ~tabGraphSettingsAxis() = default;
+    void m_loadGeneralValues(std::shared_ptr<dataAxis> s_data);
+    void m_saveGeneralValues(std::shared_ptr<dataAxis> s_data);
+public slots:
+    void m_slotAutoAxisToggled();
+protected:
+    lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
+    checkbox *m_checkAuto;
+    lineEdit *m_editMin, *m_editMax, *m_editStep;
+};
+
+class tabGraphSettingsXAxis: public tabGraphSettingsAxis
 {
 public:
     tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data);
@@ -56,12 +73,9 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataAxisX> ptr_data;
-    lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
-    checkbox *m_checkAuto;
-    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
-class tabGraphSettingsY1Axis: public tabGraphSettings
+class tabGraphSettingsY1Axis: public tabGraphSettingsAxis
 {
 public:
     tabGraphSettingsY1Axis(std::weak_ptr<dataAxisY1> data);
@@ -70,12 +84,9 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataAxisY1> ptr_data;
-    lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
-    checkbox *m_checkAuto;
-    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
-class tabGraphSettingsY2Axis: public tabGraphSettings
+class tabGraphSettingsY2Axis: public tabGraphSettingsAxis
 {
 public:
     tabGraphSettingsY2Axis(std::weak_ptr<dataAxisY2> data);
@@ -84,9 +95,6 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataAxisY2> ptr_data;
-    lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
-    checkbox *m_checkAuto;
-    lineEdit *m_editMin, *m_editMax, *m_editStep;
 };
 
 class tabGraphSettingsDrawArea: public tabGraphSettings

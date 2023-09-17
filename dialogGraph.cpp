@@ -62,120 +62,52 @@ tabGraphSettings::tabGraphSettings()
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
-    m_editFontSizeText = new lineEdit(validator::INT_POS);
-    m_checkAuto = new checkbox();
-    m_editMin = new lineEdit(validator::DOUBLE);
-    m_editMax = new lineEdit(validator::DOUBLE);
-    m_editStep = new lineEdit(validator::DOUBLE);
-    m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
-    m_tree->m_addChild("Text size", m_editFontSizeText);
-    m_tree->m_addChild("Auto axis", m_checkAuto);
-    m_tree->m_addChild("Min", m_editMin);
-    m_tree->m_addChild("Max", m_editMax);
-    m_tree->m_addChild("Step", m_editStep);
 }
 
 void tabGraphSettingsXAxis::m_loadValues()
 {
     auto s_data = ptr_data.lock();
-    m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
-    m_editFontSizeText->m_setNumber(s_data->m_fontText);
-    m_checkAuto->m_setChecked(s_data->m_autoAxis);
-    m_editMin->m_setNumber(s_data->m_min);
-    m_editMax->m_setNumber(s_data->m_max);
-    m_editStep->m_setNumber(s_data->m_step);
-    m_editStep->m_redBoxAnimation();
-
+    m_loadGeneralValues(s_data);
 }
 
 void tabGraphSettingsXAxis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
-    s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
-    s_data->m_fontText = m_editFontSizeText->m_number();
-    s_data->m_autoAxis = m_checkAuto->isChecked();
-    s_data->m_min = m_editMin->m_number();
-    s_data->m_max = m_editMax->m_number();
-    s_data->m_step = m_editStep->m_number();
+    m_saveGeneralValues(s_data);
 }
 
 tabGraphSettingsY1Axis::tabGraphSettingsY1Axis(std::weak_ptr<dataAxisY1> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
-    m_editFontSizeText = new lineEdit(validator::INT_POS);
-    m_checkAuto = new checkbox();
-    m_editMin = new lineEdit(validator::DOUBLE);
-    m_editMax = new lineEdit(validator::DOUBLE);
-    m_editStep = new lineEdit(validator::DOUBLE);
-    m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
-    m_tree->m_addChild("Text size", m_editFontSizeText);
-    m_tree->m_addChild("Auto axis", m_checkAuto);
-    m_tree->m_addChild("Min", m_editMin);
-    m_tree->m_addChild("Max", m_editMax);
-    m_tree->m_addChild("Step", m_editStep);
 }
 
 void tabGraphSettingsY1Axis::m_loadValues()
 {
     auto s_data = ptr_data.lock();
-    m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
-    m_editFontSizeText->m_setNumber(s_data->m_fontText);
-    m_checkAuto->m_setChecked(s_data->m_autoAxis);
-    m_editMin->m_setNumber(s_data->m_min);
-    m_editMax->m_setNumber(s_data->m_max);
-    m_editStep->m_setNumber(s_data->m_step);
+    m_loadGeneralValues(s_data);
 }
 
 void tabGraphSettingsY1Axis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
-    s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
-    s_data->m_fontText = m_editFontSizeText->m_number();
-    s_data->m_autoAxis = m_checkAuto->isChecked();
-    s_data->m_min = m_editMin->m_number();
-    s_data->m_max = m_editMax->m_number();
-    s_data->m_step = m_editStep->m_number();
+    m_saveGeneralValues(s_data);
 }
 
 tabGraphSettingsY2Axis::tabGraphSettingsY2Axis(std::weak_ptr<dataAxisY2> data):
     ptr_data(data)
 {
-    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
-    m_editFontSizeText = new lineEdit(validator::INT_POS);
-    m_checkAuto = new checkbox();
-    m_editMin = new lineEdit(validator::DOUBLE);
-    m_editMax = new lineEdit(validator::DOUBLE);
-    m_editStep = new lineEdit(validator::DOUBLE);
-    m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
-    m_tree->m_addChild("Text size", m_editFontSizeText);
-    m_tree->m_addChild("Auto axis", m_checkAuto);
-    m_tree->m_addChild("Min", m_editMin);
-    m_tree->m_addChild("Max", m_editMax);
-    m_tree->m_addChild("Step", m_editStep);
 }
 
 void tabGraphSettingsY2Axis::m_loadValues()
 {
     auto s_data = ptr_data.lock();
-    m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
-    m_editFontSizeText->m_setNumber(s_data->m_fontText);
-    m_checkAuto->m_setChecked(s_data->m_autoAxis);
-    m_editMin->m_setNumber(s_data->m_min);
-    m_editMax->m_setNumber(s_data->m_max);
-    m_editStep->m_setNumber(s_data->m_step);
+    m_loadGeneralValues(s_data);
 }
 
 void tabGraphSettingsY2Axis::m_saveValues()
 {
     auto s_data = ptr_data.lock();
-    s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
-    s_data->m_fontText = m_editFontSizeText->m_number();
-    s_data->m_autoAxis = m_checkAuto->isChecked();
-    s_data->m_min = m_editMin->m_number();
-    s_data->m_max = m_editMax->m_number();
-    s_data->m_step = m_editStep->m_number();
+    m_saveGeneralValues(s_data);
 }
 
 tabGraphSettingsTitle::tabGraphSettingsTitle(std::weak_ptr<dataTitle> data):
@@ -281,4 +213,50 @@ footerDialogGraph::footerDialogGraph()
     m_layBackground->addStretch();
     m_layBackground->addWidget(m_butApply);
     m_layBackground->addWidget(m_butClose);
+}
+
+tabGraphSettingsAxis::tabGraphSettingsAxis()
+{
+    m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
+    m_editFontSizeText = new lineEdit(validator::INT_POS);
+    m_checkAuto = new checkbox();
+    connect(m_checkAuto, &QAbstractButton::toggled, this, &tabGraphSettingsAxis::m_slotAutoAxisToggled);
+    m_editMin = new lineEdit(validator::DOUBLE);
+    m_editMax = new lineEdit(validator::DOUBLE);
+    m_editStep = new lineEdit(validator::DOUBLE);
+    m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
+    m_tree->m_addChild("Text size", m_editFontSizeText);
+    auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAuto);
+    m_tree->m_addChild("Min", m_editMin, titleMinMax);
+    m_tree->m_addChild("Max", m_editMax, titleMinMax);
+    m_tree->m_addChild("Step", m_editStep, titleMinMax);
+}
+
+void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
+{
+    m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
+    m_editFontSizeText->m_setNumber(s_data->m_fontText);
+    m_checkAuto->m_setChecked(s_data->m_autoAxis);
+    m_editMin->m_setNumber(s_data->m_min);
+    m_editMax->m_setNumber(s_data->m_max);
+    m_editStep->m_setNumber(s_data->m_step);
+    m_slotAutoAxisToggled();
+}
+
+void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
+{
+    s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
+    s_data->m_fontText = m_editFontSizeText->m_number();
+    s_data->m_autoAxis = m_checkAuto->isChecked();
+    s_data->m_min = m_editMin->m_number();
+    s_data->m_max = m_editMax->m_number();
+    s_data->m_step = m_editStep->m_number();
+}
+
+void tabGraphSettingsAxis::m_slotAutoAxisToggled()
+{
+    bool autoAxis = m_checkAuto->isChecked();
+    m_editMin->setEnabled(!autoAxis);
+    m_editMax->setEnabled(!autoAxis);
+    m_editStep->setEnabled(!autoAxis);
 }

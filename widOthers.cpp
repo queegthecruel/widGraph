@@ -16,7 +16,7 @@ treeWidget::treeWidget()
 }
 
 treeItem *treeWidget::m_addChild(const std::string &text,
-    QWidget *ptr_widget, treeItem *ptr_branch, const std::string &tooltip)
+    QWidget *ptr_widget, treeItem *ptr_branch, bool isExpanded, const std::string &tooltip)
 {
     // If no branch is given, connect new item to the branch,
     // Otherwise, connect to main tree, i.e., this
@@ -29,8 +29,10 @@ treeItem *treeWidget::m_addChild(const std::string &text,
         item->setText(0, QString::fromStdString(text));
         item->setToolTip(0, QString::fromStdString(tooltip));
         setItemWidget(item, 1, ptr_widget);
+    // Set expanded
+        item->setExpanded(isExpanded);
     // Return the new item
-    return item;
+        return item;
 }
 
 treeItem::treeItem(treeItem *parent):
@@ -127,9 +129,8 @@ void lineEdit::m_redBoxAnimation(int ms)
 {
     QString stylesheet = styleSheet();
 
-    if (m_redBoxTimer == nullptr) {
+    if (m_redBoxTimer == nullptr)
         m_redBoxTimer = new QTimer(this);
-    }
     setStyleSheet("border: 2px solid red;");
     connect(m_redBoxTimer, &QTimer::timeout,
             this, [this, stylesheet](){
@@ -138,7 +139,6 @@ void lineEdit::m_redBoxAnimation(int ms)
                     });
     m_redBoxTimer->setInterval(ms);
     m_redBoxTimer->start();
-
 }
 
 void checkbox::m_setChecked(bool status)
