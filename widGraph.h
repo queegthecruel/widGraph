@@ -53,7 +53,11 @@ public:
     widGraphAxis(widGraph *graph, int elementNumber);
     ~widGraphAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) = 0;
+    virtual double m_getValueFromDrawAreaPosition(double position) = 0;
     virtual std::tuple<double, double> m_getMinAndMax() = 0;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent */*event*/) override;
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
@@ -61,18 +65,27 @@ public:
     void m_setAxis();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
+    virtual double m_getValueFromPosition(double position) = 0;
     virtual void m_drawLine(painterAntiAl &painter) = 0;
     virtual void m_drawTicks(painterAntiAl &painter) = 0;
     virtual void m_drawNumbers(painterAntiAl &painter) = 0;
     virtual void m_drawText(painterAntiAl &painter) = 0;
+    virtual void m_drawZoomCursor(painterAntiAl &painter) = 0;
 protected:
     void m_setAxisByMouse(double start, double end);
+    bool m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2);
 protected:
+// For positions
     const double m_tickLength = 10,
                  m_spaceTicksToNumbers = 5,
                  m_spaceNumbersToText = 3,
                  m_spaceBorder = 5;
     const double m_rowSpacing = 1.0;
+
+// For zoom
+    bool m_isMouseMoving = false;
+    QPoint m_startingPoint;
+    const double m_zoomCursorWidth = 20;
 };
 
 class widGraphXAxis: public widGraphAxis
@@ -81,20 +94,23 @@ public:
     widGraphXAxis(widGraph *graph);
     ~widGraphXAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
+    virtual double m_getValueFromDrawAreaPosition(double position) override;
     virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual double m_getPositionFromValue(double value) override;
+    virtual double m_getValueFromPosition(double position) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
+    virtual void m_drawZoomCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
     double m_getNumbersStart();
-    double m_getNumberEnds();
+    double m_getNumbersEnd();
     double m_getTextStart();
     double m_getTextEnds();
     double m_getEndFromTop();
@@ -107,33 +123,27 @@ public:
     widGraphY1Axis(widGraph *graph);
     ~widGraphY1Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
-    virtual double m_getValueFromDrawAreaPosition(double position);
+    virtual double m_getValueFromDrawAreaPosition(double position) override;
     virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void paintEvent(QPaintEvent *event) override;
-
 private:
     virtual double m_getPositionFromValue(double value) override;
-    virtual double m_getValueFromPosition(double position);
+    virtual double m_getValueFromPosition(double position) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
-    bool m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2);
+    virtual void m_drawZoomCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
     double m_getNumbersStart();
-    double m_getNumberEnds();
+    double m_getNumbersEnd();
     double m_getTextStart();
     double m_getTextEnds();
 protected:
-    bool m_isMouseMoving = false;
-    QPoint m_startingPoint;
+
 };
 
 class widGraphY2Axis: public widGraphAxis
@@ -142,20 +152,23 @@ public:
     widGraphY2Axis(widGraph *graph);
     ~widGraphY2Axis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
+    virtual double m_getValueFromDrawAreaPosition(double position) override;
     virtual std::tuple<double, double> m_getMinAndMax() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual double m_getPositionFromValue(double value) override;
+    virtual double m_getValueFromPosition(double position) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
     virtual void m_drawTicks(painterAntiAl &painter) override;
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
+    virtual void m_drawZoomCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
     double m_getNumbersStart();
-    double m_getNumberEnds();
+    double m_getNumbersEnd();
     double m_getTextStart();
     double m_getTextEnds();
 };

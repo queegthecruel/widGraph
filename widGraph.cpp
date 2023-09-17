@@ -195,9 +195,21 @@ double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
     double endScreenX = width() - ptr_data->m_Y2->m_width;
+
     double minX = ptr_data->m_X->m_min;
     double maxX = ptr_data->m_X->m_max;
     return (endScreenX-startScreenX)*(value-minX)/(maxX-minX);
+}
+
+double widGraphXAxis::m_getValueFromDrawAreaPosition(double position)
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    double startScreenX = ptr_data->m_Y1->m_width;
+    double endScreenX = width() - ptr_data->m_Y2->m_width;
+
+    double minX = ptr_data->m_X->m_min;
+    double maxX = ptr_data->m_X->m_max;
+    return - position*(maxX-minX)/(endScreenX-startScreenX) + minX;
 }
 
 std::tuple<double, double> widGraphXAxis::m_getMinAndMax()
@@ -232,6 +244,13 @@ double widGraphXAxis::m_getPositionFromValue(double value)
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
     return startScreenX + m_getDrawAreaPositionFromValue(value);
+}
+
+double widGraphXAxis::m_getValueFromPosition(double position)
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    double startScreenX = ptr_data->m_Y1->m_width;
+    return m_getValueFromDrawAreaPosition(position - startScreenX);
 }
 
 void widGraphXAxis::m_drawLine(painterAntiAl &painter)
@@ -274,13 +293,15 @@ void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
     double maxX = ptr_dataX->m_max;
     double stepX = ptr_dataX->m_step;
 
+    int nSteps = (maxX - minX)/stepX;
+    double numberLength = width()/nSteps/2;
     double numberX = minX;
     while (numberX <= maxX)
     {
         double posX = m_getPositionFromValue(numberX);
-        QRect rect(QPoint(posX - ptr_dataX->m_fontNumbers/2, m_getNumbersStart()),
-                   QPoint(posX + ptr_dataX->m_fontNumbers/2, m_getNumberEnds()));
-        painter.drawText(rect, QString::number(numberX),
+        QRect rect(QPoint(posX - numberLength, m_getNumbersStart()),
+                   QPoint(posX + numberLength, m_getNumbersEnd()));
+        painter.drawText(rect, QString::number(numberX, 'f', 2),
                          QTextOption(Qt::AlignCenter));
         numberX = numberX + stepX;
     }
@@ -307,6 +328,31 @@ void widGraphXAxis::m_drawText(painterAntiAl &painter)
     painter.restore();
 }
 
+void widGraphXAxis::m_drawZoomCursor(painterAntiAl &painter)
+{
+    painter.save();
+    if (m_isMouseMoving) {
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+            int top = m_getTicksEnd();
+            int bottom = top + m_zoomCursorWidth;
+            // Start line
+                QPoint startTop(m_startingPoint.x(), top);
+                QPoint startBottom(m_startingPoint.x(), bottom);
+                QLine leftLine(startTop, startBottom);
+                painter.drawLine(leftLine);
+            // End line
+                QPoint endTop(currentPoint.x(), top);
+                QPoint endBottom(currentPoint.x(), bottom);
+                QLine rightLine(endTop, endBottom);
+                painter.drawLine(rightLine);
+            // Long line
+                painter.drawLine(leftLine.center(), rightLine.center());
+        }
+    }
+    painter.restore();
+}
+
 double widGraphXAxis::m_getTicksStart()
 {
     return 0;
@@ -322,7 +368,7 @@ double widGraphXAxis::m_getNumbersStart()
     return m_getTicksEnd() + m_spaceTicksToNumbers;
 }
 
-double widGraphXAxis::m_getNumberEnds()
+double widGraphXAxis::m_getNumbersEnd()
 {
     auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     double rowHeight = m_rowSpacing*ptr_dataX->m_fontNumbers;
@@ -331,7 +377,7 @@ double widGraphXAxis::m_getNumberEnds()
 
 double widGraphXAxis::m_getTextStart()
 {
-    return m_getNumberEnds() + m_spaceNumbersToText;
+    return m_getNumbersEnd() + m_spaceNumbersToText;
 }
 
 double widGraphXAxis::m_getTextEnds()
@@ -402,57 +448,6 @@ std::weak_ptr<dataAxis> widGraphY1Axis::m_getData()
     return ptr_graph->m_getData().lock()->m_Y1;
 }
 
-void widGraphY1Axis::mousePressEvent(QMouseEvent *event)
-{
-    m_isMouseMoving = true;
-    m_startingPoint = event->pos();
-}
-
-void widGraphY1Axis::mouseMoveEvent(QMouseEvent *event)
-{
-    update();
-}
-
-void widGraphY1Axis::mouseReleaseEvent(QMouseEvent *event)
-{
-    m_isMouseMoving = false;
-    QPoint currentPoint = mapFromGlobal(QCursor::pos());
-
-    if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-        double start = m_getValueFromPosition(m_startingPoint.y());
-        double end = m_getValueFromPosition(currentPoint.y());
-        m_setAxisByMouse(start, end);
-        ptr_graph->m_loadValues();
-    }
-    else
-        update();
-    m_startingPoint = QPoint(0,0);
-}
-
-void widGraphY1Axis::paintEvent(QPaintEvent *event)
-{
-    widGraphAxis::paintEvent(event);
-    painterAntiAl painter(this);
-    if (m_isMouseMoving) {
-        QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-            int right = m_getNumbersStart();
-            int left = right - 20;
-            QPoint startLeft(left, m_startingPoint.y());
-            QPoint startRight(right, m_startingPoint.y());
-            QLine topLine(startLeft, startRight);
-            painter.drawLine(topLine);
-
-            QPoint endLeft(left, currentPoint.y());
-            QPoint endRight(right, currentPoint.y());
-            QLine bottomLine(endLeft, endRight);
-            painter.drawLine(bottomLine);
-
-            painter.drawLine(topLine.center(), bottomLine.center());
-        }
-    }
-}
-
 double widGraphY1Axis::m_getPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
@@ -504,14 +499,16 @@ void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
     QFont font;
     font.setPixelSize(ptr_dataY->m_fontNumbers);
     painter.setFont(font);
+
     double minY = ptr_dataY->m_min;
     double maxY = ptr_dataY->m_max;
     double stepY = ptr_dataY->m_step;
+
     double numberY = minY;
     while (numberY <= maxY)
     {
         double posY = m_getPositionFromValue(numberY);
-        QRect rect(QPoint(m_getNumberEnds(), posY - ptr_dataY->m_fontNumbers/2),
+        QRect rect(QPoint(m_getNumbersEnd(), posY - ptr_dataY->m_fontNumbers/2),
                    QPoint(m_getNumbersStart(), posY + ptr_dataY->m_fontNumbers/2));
         painter.drawText(rect, QString::number(numberY, 'f', 2),
                          QTextOption(Qt::AlignRight | Qt::AlignVCenter));
@@ -538,12 +535,29 @@ void widGraphY1Axis::m_drawText(painterAntiAl &painter)
     painter.restore();
 }
 
-bool widGraphY1Axis::m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2)
+void widGraphY1Axis::m_drawZoomCursor(painterAntiAl &painter)
 {
-    int pointsDistance = abs(x1.y() - x2.y());
-    if (pointsDistance > 20) return true;
-    else return false;
-
+    painter.save();
+    if (m_isMouseMoving) {
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+            int right = m_getNumbersStart();
+            int left = right - m_zoomCursorWidth;
+            // Start line
+                QPoint startLeft(left, m_startingPoint.y());
+                QPoint startRight(right, m_startingPoint.y());
+                QLine topLine(startLeft, startRight);
+                painter.drawLine(topLine);
+            // End line
+                QPoint endLeft(left, currentPoint.y());
+                QPoint endRight(right, currentPoint.y());
+                QLine bottomLine(endLeft, endRight);
+                painter.drawLine(bottomLine);
+            // Long line
+                painter.drawLine(topLine.center(), bottomLine.center());
+        }
+    }
+    painter.restore();
 }
 
 double widGraphY1Axis::m_getTicksStart()
@@ -560,10 +574,10 @@ double widGraphY1Axis::m_getNumbersStart()
 {
     auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
     double numberWidth = 3*m_rowSpacing*ptr_dataY1->m_fontNumbers;
-    return m_getNumberEnds() + numberWidth;
+    return m_getNumbersEnd() + numberWidth;
 }
 
-double widGraphY1Axis::m_getNumberEnds()
+double widGraphY1Axis::m_getNumbersEnd()
 {
     return m_getTextStart() + m_spaceNumbersToText;
 }
@@ -584,6 +598,33 @@ widGraphAxis::widGraphAxis(widGraph *graph, int elementNumber):
     widGraphElement(graph, elementNumber)
 {}
 
+void widGraphAxis::mousePressEvent(QMouseEvent *event)
+{
+    m_isMouseMoving = true;
+    m_startingPoint = event->pos();
+}
+
+void widGraphAxis::mouseMoveEvent(QMouseEvent *event)
+{
+    update();
+}
+
+void widGraphAxis::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_isMouseMoving = false;
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+
+    if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+        double start = m_getValueFromPosition(m_startingPoint.y());
+        double end = m_getValueFromPosition(currentPoint.y());
+        m_setAxisByMouse(start, end);
+        ptr_graph->m_loadValues();
+    }
+    else
+        update();
+    m_startingPoint = QPoint(0,0);
+}
+
 void widGraphAxis::paintEvent(QPaintEvent *)
 {
     // Painter
@@ -599,6 +640,8 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         m_drawNumbers(painter);
     // Draw text
         m_drawText(painter);
+    // Draw zoom cursor
+        m_drawZoomCursor(painter);
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -678,6 +721,15 @@ void widGraphAxis::m_setAxisByMouse(double start, double end)
     ptr_data->m_setMinMaxStep(min, max, niceStep);
 }
 
+bool widGraphAxis::m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2)
+{
+    int dist_x = x1.x() - x2.x();
+    int dist_y = x1.y() - x2.y();
+    int pointsDistance = sqrt(dist_x*dist_x + dist_y*dist_y);
+    if (pointsDistance > 20) return true;
+    else return false;
+}
+
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):
     widGraphAxis(graph, dataGraph::Y2)
 {
@@ -693,6 +745,18 @@ double widGraphY2Axis::m_getDrawAreaPositionFromValue(double value)
     double minY = ptr_data->m_Y2->m_min;
     double maxY = ptr_data->m_Y2->m_max;
     return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
+}
+
+double widGraphY2Axis::m_getValueFromDrawAreaPosition(double position)
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    double titleHeight = ptr_data->m_title->m_height;
+    double xAXisHeight = ptr_data->m_X->m_height;
+    double yStart = height() - xAXisHeight;
+
+    double minY = ptr_data->m_Y1->m_min;
+    double maxY = ptr_data->m_Y1->m_max;
+    return - position*(maxY-minY)/(yStart-titleHeight) + maxY;
 }
 
 std::tuple<double, double> widGraphY2Axis::m_getMinAndMax()
@@ -726,6 +790,13 @@ double widGraphY2Axis::m_getPositionFromValue(double value)
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenY = ptr_data->m_title->m_height;
     return m_getDrawAreaPositionFromValue(value) + startScreenY;
+}
+
+double widGraphY2Axis::m_getValueFromPosition(double position)
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    double startScreenY = ptr_data->m_title->m_height;
+    return m_getValueFromDrawAreaPosition(position - startScreenY);
 }
 
 void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
@@ -768,8 +839,8 @@ void widGraphY2Axis::m_drawNumbers(painterAntiAl &painter)
     {
         double posY = m_getPositionFromValue(numberY);
         QRect rect(QPoint(m_getNumbersStart(), posY - ptr_dataY->m_fontNumbers/2),
-                   QPoint(m_getNumberEnds(), posY + ptr_dataY->m_fontNumbers/2));
-        painter.drawText(rect, QString::number(numberY),
+                   QPoint(m_getNumbersEnd(), posY + ptr_dataY->m_fontNumbers/2));
+        painter.drawText(rect, QString::number(numberY, 'f', 2),
                          QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
         numberY = numberY + stepY;
     }
@@ -794,6 +865,31 @@ void widGraphY2Axis::m_drawText(painterAntiAl &painter)
     painter.restore();
 }
 
+void widGraphY2Axis::m_drawZoomCursor(painterAntiAl &painter)
+{
+    painter.save();
+    if (m_isMouseMoving) {
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+            int right = m_getNumbersEnd();
+            int left = right - m_zoomCursorWidth;
+            // Start line
+                QPoint startLeft(left, m_startingPoint.y());
+                QPoint startRight(right, m_startingPoint.y());
+                QLine topLine(startLeft, startRight);
+                painter.drawLine(topLine);
+            // End line
+                QPoint endLeft(left, currentPoint.y());
+                QPoint endRight(right, currentPoint.y());
+                QLine bottomLine(endLeft, endRight);
+                painter.drawLine(bottomLine);
+            // Long line
+                painter.drawLine(topLine.center(), bottomLine.center());
+        }
+    }
+    painter.restore();
+}
+
 double widGraphY2Axis::m_getTicksStart()
 {
     return 0;
@@ -809,16 +905,16 @@ double widGraphY2Axis::m_getNumbersStart()
     return m_getTicksEnd() + m_spaceTicksToNumbers;
 }
 
-double widGraphY2Axis::m_getNumberEnds()
+double widGraphY2Axis::m_getNumbersEnd()
 {
     const auto ptr_dataY2 = m_getData().lock();
-    double rowHeight = m_rowSpacing*ptr_dataY2->m_fontNumbers;
+    double rowHeight = 3*m_rowSpacing*ptr_dataY2->m_fontNumbers;
     return m_getNumbersStart() + rowHeight;
 }
 
 double widGraphY2Axis::m_getTextStart()
 {
-    return m_getNumberEnds() + m_spaceNumbersToText;
+    return m_getNumbersEnd() + m_spaceNumbersToText;
 }
 
 double widGraphY2Axis::m_getTextEnds()
