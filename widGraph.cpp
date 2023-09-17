@@ -81,14 +81,14 @@ void widGraph::m_openDialog(int tabIndex)
 
 void widGraph::m_takeScreenshot()
 {
-    setStyleSheet("background: white");
+    setStyleSheet(".QWidget {background: white;}");
     int ratio = 5;
     QSize imageSize = size()*ratio;
     QImage image = QImage(imageSize, QImage::Format_RGB32);
     image.setDevicePixelRatio(ratio);
     render(&image);
     QApplication::clipboard()->setImage(image);
-    setStyleSheet("background: transparent");
+    setStyleSheet(".QWidget {background: transparent;}");
 }
 
 void widGraph::m_slotDialogClosed(int status)
@@ -170,7 +170,6 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
 widGraphTitle::widGraphTitle(widGraph *graph):
     widGraphElement(graph, dataGraph::TITLE)
 {
-    setStyleSheet("background:transparent;");
     m_text = new widGraphTitleText(ptr_graph);
     m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
     m_butShowGrid = new widGraphButtonShowGrid(ptr_graph);
@@ -207,7 +206,7 @@ void widGraphTitle::m_setDimensions()
 widGraphXAxis::widGraphXAxis(widGraph *graph):
     widGraphAxis(graph, dataGraph::X)
 {
-    setStyleSheet("background:transparent;");
+
 }
 
 double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
@@ -1050,7 +1049,6 @@ void widGraphButton::m_setDimensions()
 widGraphTitleText::widGraphTitleText(widGraph *graph):
     widGraphElement(graph, -1)
 {
-    setStyleSheet("background:transparent;");
 }
 
 void widGraphTitleText::paintEvent(QPaintEvent *event)
