@@ -14,7 +14,7 @@ public:
     painterAntiAl(QPaintDevice *device);
 };
 
-enum class validator {NONE, INT, DOUBLE};
+enum class validator {NONE, INT, INT_POS, INT_POS_0, DOUBLE};
 class lineEdit: public QLineEdit
 {
 public:
@@ -26,6 +26,9 @@ public:
         {return text().toStdString();}
     inline double m_number()
         {return text().toDouble();}
+private:
+    void m_supValidator(enum validator valid);
+    int m_supWidth(enum validator valid);
 protected:
     QValidator *m_validator = nullptr;
 };

@@ -63,30 +63,49 @@ HBoxLayout::HBoxLayout(QWidget *parent):
 
 lineEdit::lineEdit(enum validator valid)
 {
-    int maxWidth = 200;
+    // Width
+        int maxWidth = m_supWidth(valid);
+        setMaximumWidth(maxWidth);
+        setMinimumWidth(25);
+    // Validator
+        m_supValidator(valid);
+}
+
+void lineEdit::m_supValidator(enum validator valid)
+{
+    switch (valid) {
+    case validator::NONE:
+        break;
+    case validator::INT:
+        m_validator = new QIntValidator(-qInf(), qInf(), this);
+        break;
+    case validator::INT_POS:
+        m_validator = new QIntValidator(1, qInf(), this);
+        break;
+    case validator::INT_POS_0:
+        m_validator = new QIntValidator(0, qInf(), this);
+        break;
+    case validator::DOUBLE:
+        m_validator = new QDoubleValidator(-qInf(), qInf(), 2, this);
+        break;
+    }
+}
+
+int lineEdit::m_supWidth(enum validator valid)
+{
+    int maxWidth = 0;
     switch (valid) {
     case validator::NONE:
         maxWidth = 200;
         break;
     case validator::INT:
-        m_validator = new QIntValidator(-qInf(), qInf(), this);
-        maxWidth = 75;
-        break;
     case validator::INT_POS:
-        m_validator = new QIntValidator(1, qInf(), this);
-        maxWidth = 75;
-        break;
     case validator::INT_POS_0:
-        m_validator = new QIntValidator(0, qInf(), this);
-        maxWidth = 75;
-        break;
     case validator::DOUBLE:
-        m_validator = new QDoubleValidator(-qInf(), qInf(), 2, this);
         maxWidth = 75;
         break;
     }
-    setMaximumWidth(maxWidth);
-    setMinimumWidth(25);
+    return maxWidth;
 }
 
 void lineEdit::m_setText(const std::string &text)
