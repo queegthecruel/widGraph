@@ -39,29 +39,55 @@ void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
     painter->setPen(QPen(QColor(m_data->m_R, m_data->m_G, m_data->m_B), 3));
-
-    widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
-    widGraphAxis* ptr_y;
-    if (m_getPrefferedYAxis() == 0)
-        ptr_y = ptr_graph->m_getY1Axis();
-    else
-        ptr_y = ptr_graph->m_getY2Axis();
-
-    QPainterPath path;
-
-    path.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX->begin()),
-                ptr_y->m_getDrawAreaPositionFromValue(*s_dataY->begin()));
-
-    for (auto itX = s_dataX->begin(), itY = s_dataY->begin();
-        itX < s_dataX->end() || itY < s_dataY->end();
-         itX++, itY++) {
-        path.lineTo(ptr_x->m_getDrawAreaPositionFromValue(*itX),
-                    ptr_y->m_getDrawAreaPositionFromValue(*itY));
-    }
-    painter->drawPath(path);
+    // Get appropriate axes
+        widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
+        widGraphAxis* ptr_y;
+        if (m_getPrefferedYAxis() == 0)
+            ptr_y = ptr_graph->m_getY1Axis();
+        else
+            ptr_y = ptr_graph->m_getY2Axis();
+    // Get apinter paths
+        QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
+        QPainterPath pathPoints = m_getPointsPainterPath(ptr_x, ptr_y);
+    // Draw
+        painter->drawPath(pathCurve);
+        painter->drawPath(pathPoints);
     painter->restore();
 }
 
+QPainterPath graphCurve::m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y)
+{
+    QPainterPath pathCurve;
+    // Move to the first point
+        pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX->begin()),
+                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY->begin()));
+    // All points
+        for (auto itX = s_dataX->begin(), itY = s_dataY->begin();
+            itX < s_dataX->end() || itY < s_dataY->end();
+             itX++, itY++) {
+            pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(*itX),
+                        ptr_y->m_getDrawAreaPositionFromValue(*itY));
+        }
+    return pathCurve;
+}
+
+QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+{
+    QPainterPath pathPoints;
+    // Move to the first point
+        pathPoints.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX->begin()),
+                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY->begin()));
+    // All points
+        for (auto itX = s_dataX->begin(), itY = s_dataY->begin();
+            itX < s_dataX->end() || itY < s_dataY->end();
+             itX++, itY++) {
+            QPointF point = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*itX),
+                                    ptr_y->m_getDrawAreaPositionFromValue(*itY));
+            QPainterPath pathPoint = graphObjects::m_createPoint(point);
+            pathPoints.addPath(pathPoint);
+        }
+        return pathPoints;
+}
 double graphCurve::m_getMinX() {
     auto it = min_element(std::begin(*s_dataX), std::end(*s_dataX));
     return *it;
@@ -92,4 +118,16 @@ graphObjects::graphObjects()
 int graphObjects::m_getPrefferedYAxis()
 {
     return m_data->m_prefferedYAxis;
+}
+
+QPainterPath graphObjects::m_createPoint(QPointF point, double width)
+{
+    double widthHalf = width/2;
+    QPainterPath path;
+    path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+    path.lineTo(point + QPointF(widthHalf,widthHalf));
+    path.moveTo(point + QPointF(-widthHalf, widthHalf));
+    path.lineTo(point + QPointF(widthHalf,-widthHalf));
+
+    return path;
 }

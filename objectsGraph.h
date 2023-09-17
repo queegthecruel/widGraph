@@ -7,6 +7,7 @@
 
 // Graph objects
 class widGraph;
+class widGraphAxis;
 class dataGraphObject;
 class graphObjects
 {
@@ -20,6 +21,7 @@ public:
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
+    static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double width = 10);
 protected:
     std::shared_ptr<dataGraphObject> m_data;
 };
@@ -36,6 +38,9 @@ public:
     virtual double m_getMaxX() override;
     virtual double m_getMinY() override;
     virtual double m_getMaxY() override;
+private:
+    QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
+    QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
     std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
