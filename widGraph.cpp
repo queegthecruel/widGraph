@@ -2,7 +2,7 @@
 #include "widOthers.h"
 #include "dialogGraph.h"
 #include <QApplication>
-#include <QClipboard>>
+#include <QClipboard>
 
 widGraph::widGraph()
 {
@@ -23,7 +23,7 @@ widGraph::widGraph()
         layBackground->addWidget(m_widY2, 0,2, 3,1);
         layBackground->addWidget(m_widArea, 1,1, 1,1);
         layBackground->addWidget(m_widLegend, 3,0, 1,3);
-      // Stylesheet
+     // Stylesheet
         setStyleSheet("background: transparent;");
         setFocusPolicy(Qt::StrongFocus);
 }
@@ -159,25 +159,18 @@ void widGraphDrawArea::m_cancelOperation()
 widGraphDrawArea::widGraphDrawArea(widGraph *graph):
     widGraphElement(graph, dataGraph::DRAWAREA)
 {
-    //  setStyleSheet("background:transparent;");
 }
 
 void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
 {
     m_startingPoint = event->pos();
+    m_isMouseZooming = false;
+    m_isMouseDragging = false;
     auto ptr_control = ptr_graph->m_getData().lock()->m_control;
-    if (ptr_control->m_zoom) {
+    if (ptr_control->m_zoom)
         m_isMouseZooming = true;
-        m_isMouseDragging = false;
-    }
-    else if (ptr_control->m_move) {
+    else if (ptr_control->m_move)
         m_isMouseDragging = true;
-        m_isMouseZooming = false;
-    }
-    else {
-        m_isMouseZooming = false;
-        m_isMouseDragging = false;
-    }
 }
 
 void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
@@ -185,13 +178,35 @@ void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
-void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
+void widGraphDrawArea::m_moveByMouse()
 {
-    if (m_isMouseZooming) {
-        m_isMouseZooming = false;
-        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    m_isMouseDragging = false;
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
+    double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
+    double startY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
+    double endX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(currentPoint.x());
+    double endY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
+    double endY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
 
-        if (widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+    double currStartX = ptr_graph->m_getData().lock()->m_X->m_min;
+    double currEndX = ptr_graph->m_getData().lock()->m_X->m_max;
+    double currStartY1 = ptr_graph->m_getData().lock()->m_Y1->m_min;
+    double currEndY1 = ptr_graph->m_getData().lock()->m_Y1->m_max;
+    double currStartY2 = ptr_graph->m_getData().lock()->m_Y2->m_min;
+    double currEndY2 = ptr_graph->m_getData().lock()->m_Y2->m_max;
+
+    m_setAxisMinMax(currStartX + (startX - endX), currEndX + (startX - endX),
+                    currStartY1 + (startY1 - endY1), currEndY1 + (startY1 - endY1),
+                    currStartY2 + (startY2 - endY2), currEndY2 + (startY2 - endY2));
+}
+
+void widGraphDrawArea::m_zoomByMouse()
+{
+    m_isMouseZooming = false;
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+
+    if (widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
         double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
         double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
         double startY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
@@ -202,86 +217,93 @@ void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
 
         m_setAxisMinMax(startX, endX, startY1, endY1, startY2, endY2);
             ptr_graph->m_loadValues();
-        }
-        else
-            update();
-        m_startingPoint = QPoint(0,0);
     }
-    if (m_isMouseDragging) {
-        m_isMouseDragging = false;
-        QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
-        double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
-        double startY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
+}
 
-        double endX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(currentPoint.x());
-        double endY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
-        double endY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
-
-        double deltaX = startX - endX;
-        double deltaY1 = startY1 - endY1;
-        double deltaY2 = startY2 - endY2;
-
-        double currStartX = ptr_graph->m_getData().lock()->m_X->m_min;
-        double currEndX = ptr_graph->m_getData().lock()->m_X->m_max;
-        double currStartY1 = ptr_graph->m_getData().lock()->m_Y1->m_min;
-        double currEndY1 = ptr_graph->m_getData().lock()->m_Y1->m_max;
-        double currStartY2 = ptr_graph->m_getData().lock()->m_Y2->m_min;
-        double currEndY2 = ptr_graph->m_getData().lock()->m_Y2->m_max;
-
-        m_setAxisMinMax(currStartX + deltaX, currEndX + deltaX,
-                        currStartY1 + deltaY1, currEndY1 + deltaY1,
-                        currStartY2 + deltaY2, currEndY2 + deltaY2);
-    }
+void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (m_isMouseZooming)
+        m_zoomByMouse();
+    if (m_isMouseDragging)
+        m_moveByMouse();
     ptr_graph->m_loadValues();
+}
+
+void widGraphDrawArea::m_drawMove(painterAntiAl &painter)
+{
+    painter.save();
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_isMouseDragging) {
+        QPen penRect(Qt::black, 1, Qt::DashLine);
+        painter.setPen(penRect);
+        QLine line(m_startingPoint, currentPoint);
+        painter.setBrush(Qt::red);
+        painter.drawEllipse(m_startingPoint, 2, 2);
+        painter.drawLine(line);
+    }
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
+{
+    painter.save();
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_isMouseZooming
+        && widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+        QPen penRect(Qt::black, 1, Qt::DashLine);
+        painter.setPen(penRect);
+        QRect rect(m_startingPoint, currentPoint);
+        painter.drawRect(rect);
+    }
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawBorder(painterAntiAl &painter)
+{
+    painter.save();
+    QPen penBorder(Qt::black, 2);
+    painter.setPen(penBorder);
+    QRect rectBorder(0, 0, width()-1, height()-1);
+    painter.drawRect(rectBorder);
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawGrid(painterAntiAl &painter)
+{
+    painter.save();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_drawArea;
+    if (ptr_data->m_showGrid) {
+        QPen penGrid(Qt::gray, 1, Qt::DashLine);
+        painter.setPen(penGrid);
+        m_drawHorGrid(painter);
+        m_drawVertGrid(painter);
+    }
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawGraphObjects(painterAntiAl &painter)
+{
+    painter.save();
+    auto vectorObjects = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+    for(auto &var: vectorObjects)
+        var->m_drawItself(&painter, ptr_graph);
+    painter.restore();
 }
 
 void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
 {
     // Painter
-    painterAntiAl painter(this);
-    painter.save();
-
+        painterAntiAl painter(this);
     // Curves
-        auto vectorObjects = ptr_graph->m_getData().lock()->m_vectorOfObjects;
-        for(auto &var: vectorObjects)
-            var->m_drawItself(&painter, ptr_graph);
-
+        m_drawGraphObjects(painter);
     // Grid
-        auto ptr_data = ptr_graph->m_getData().lock()->m_drawArea;
-        if (ptr_data->m_showGrid) {
-            QPen penGrid(Qt::gray, 1, Qt::DashLine);
-            painter.setPen(penGrid);
-            m_drawHorGrid(painter);
-            m_drawVertGrid(painter);
-        }
-
+        m_drawGrid(painter);
     // Border
-        QPen penBorder(Qt::black, 2);
-        painter.setPen(penBorder);
-        QRect rectBorder(0, 0, width()-1, height()-1);
-        painter.drawRect(rectBorder);
-
+        m_drawBorder(painter);
     // Selection rectangle
-        QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_isMouseZooming
-            && widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-            QPen penRect(Qt::black, 1, Qt::DashLine);
-            painter.setPen(penRect);
-            QRect rect(m_startingPoint, currentPoint);
-            painter.drawRect(rect);
-        }
+        m_drawSelectionRectangle(painter);
     // Move trajectory
-        if (m_isMouseDragging) {
-            QPen penRect(Qt::black, 1, Qt::DashLine);
-            painter.setPen(penRect);
-            QLine line(m_startingPoint, currentPoint);
-            painter.setBrush(Qt::red);
-            painter.drawEllipse(m_startingPoint, 2, 2);
-            painter.drawLine(line);
-        }
-    // Painter
-        painter.restore();
+        m_drawMove(painter);
 }
 
 widGraphTitle::widGraphTitle(widGraph *graph):

@@ -39,8 +39,15 @@ public:
         double startY1, double endY1, double startY2, double endY2);
     void m_cancelOperation();
 private:
+    void m_moveByMouse();
+    void m_zoomByMouse();
     void m_drawHorGrid(painterAntiAl &painter);
     void m_drawVertGrid(painterAntiAl &painter);
+    void m_drawMove(painterAntiAl &painter);
+    void m_drawSelectionRectangle(painterAntiAl &painter);
+    void m_drawBorder(painterAntiAl &painter);
+    void m_drawGrid(painterAntiAl &painter);
+    void m_drawGraphObjects(painterAntiAl &painter);
 protected:
     bool m_isMouseZooming = false;
     bool m_isMouseDragging = false;
