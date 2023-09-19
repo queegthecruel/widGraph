@@ -71,6 +71,7 @@ dataGraph::dataGraph()
      m_Y2 = std::make_shared<dataAxisY2>();
      m_legend = std::make_shared<dataLegend>();
      m_drawArea = std::make_shared<dataDrawArea>();
+     m_control = std::make_shared<dataControl>();
 }
 
 dataGraph::dataGraph(std::ifstream &instream)
@@ -81,6 +82,7 @@ dataGraph::dataGraph(std::ifstream &instream)
      m_Y2 = std::make_shared<dataAxisY2>(instream);
      m_legend = std::make_shared<dataLegend>(instream);
      m_drawArea = std::make_shared<dataDrawArea>(instream);
+     m_control = std::make_shared<dataControl>(instream);
 }
 
 dataGraph &dataGraph::operator=(const dataGraph &oldData)

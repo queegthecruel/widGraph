@@ -131,10 +131,59 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
     }
 }
 
+void widGraphDrawArea::m_setAxisMinMax(double startX, double endX, double startY1, double endY1, double startY2, double endY2)
+{
+    ptr_graph->m_getXAxis()->m_setAxisMinMax(startX, endX);
+    ptr_graph->m_getY1Axis()->m_setAxisMinMax(startY1, endY1);
+    ptr_graph->m_getY2Axis()->m_setAxisMinMax(startY2, endY2);
+}
+
 widGraphDrawArea::widGraphDrawArea(widGraph *graph):
     widGraphElement(graph, dataGraph::DRAWAREA)
 {
-  //  setStyleSheet("background:transparent;");
+    //  setStyleSheet("background:transparent;");
+}
+
+void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
+{
+    auto ptr_control = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_control->m_zoom) {
+        m_isMouseMoving = true;
+        m_startingPoint = event->pos();
+    }
+    else {
+        m_isMouseMoving = false;
+        m_startingPoint = QPoint(0,0);
+    }
+}
+
+void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
+{
+    update();
+}
+
+void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (m_isMouseMoving) {
+        m_isMouseMoving = false;
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+
+        if (widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+        double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
+        double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
+        double startY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
+
+        double endX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(currentPoint.x());
+        double endY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
+        double endY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
+
+        m_setAxisMinMax(startX, endX, startY1, endY1, startY2, endY2);
+            ptr_graph->m_loadValues();
+        }
+        else
+            update();
+        m_startingPoint = QPoint(0,0);
+    }
 }
 
 void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
@@ -157,11 +206,21 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
             m_drawVertGrid(painter);
         }
 
-    // Rectangle
-        QPen penRect(Qt::black, 2);
-        painter.setPen(penRect);
-        QRect rect(0, 0, width()-1, height()-1);
-        painter.drawRect(rect);
+    // Border
+        QPen penBorder(Qt::black, 2);
+        painter.setPen(penBorder);
+        QRect rectBorder(0, 0, width()-1, height()-1);
+        painter.drawRect(rectBorder);
+
+    // Selection rectangle
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+        if (m_isMouseMoving
+            && widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+            QPen penRect(Qt::black, 1, Qt::DashLine);
+            painter.setPen(penRect);
+            QRect rect(m_startingPoint, currentPoint);
+            painter.drawRect(rect);
+        }
 
     // Painter
         painter.restore();
@@ -173,10 +232,12 @@ widGraphTitle::widGraphTitle(widGraph *graph):
     m_text = new widGraphTitleText(ptr_graph);
     m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
     m_butShowGrid = new widGraphButtonShowGrid(ptr_graph);
+    m_butZoom = new widGraphButtonZoom(ptr_graph);
     m_butScreenshot = new widGraphButtonScreenshot(ptr_graph);
     m_layBackground = new HBoxLayout(this);
     m_layBackground->setSpacing(2);
     m_layBackground->addWidget(m_text);
+    m_layBackground->addWidget(m_butZoom);
     m_layBackground->addWidget(m_butAuto);
     m_layBackground->addWidget(m_butShowGrid);
     m_layBackground->addWidget(m_butScreenshot);
@@ -198,6 +259,7 @@ void widGraphTitle::m_setDimensions()
 
     m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
     m_text->m_setDimensions();
+    m_butZoom->m_setDimensions();
     m_butAuto->m_setDimensions();
     m_butShowGrid->m_setDimensions();
     m_butScreenshot->m_setDimensions();
@@ -224,11 +286,13 @@ double widGraphXAxis::m_getValueFromDrawAreaPosition(double position)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
-    double endScreenX = width() - ptr_data->m_Y2->m_width;
+    double y2axisWidth= ptr_data->m_Y2->m_width;
+    double endScreenX = width() - y2axisWidth;
 
     double minX = ptr_data->m_X->m_min;
     double maxX = ptr_data->m_X->m_max;
-    return - position*(maxX-minX)/(endScreenX-startScreenX) + minX;
+    double ret = position*(maxX-minX)/(endScreenX-startScreenX) + minX;
+    return ret;
 }
 
 std::tuple<double, double> widGraphXAxis::m_getMinAndMax()
@@ -269,7 +333,15 @@ double widGraphXAxis::m_getValueFromPosition(double position)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
-    return m_getValueFromDrawAreaPosition(position - startScreenX);
+    double ret = m_getValueFromDrawAreaPosition(position - startScreenX);
+    return ret;
+}
+
+std::tuple<double, double> widGraphXAxis::m_getStartAndEndFromMouse(QPointF start, QPointF end)
+{
+    double startX = m_getValueFromPosition(start.x());
+    double endX = m_getValueFromPosition(end.x());
+    return {startX, endX};
 }
 
 void widGraphXAxis::m_drawLine(painterAntiAl &painter)
@@ -481,6 +553,13 @@ double widGraphY1Axis::m_getValueFromPosition(double position)
     return m_getValueFromDrawAreaPosition(position - startScreenY);
 }
 
+std::tuple<double, double> widGraphY1Axis::m_getStartAndEndFromMouse(QPointF start, QPointF end)
+{
+    double startY = m_getValueFromPosition(start.y());
+    double endY = m_getValueFromPosition(end.y());
+    return {startY, endY};
+}
+
 void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
 {
     painter.save();
@@ -619,8 +698,15 @@ widGraphAxis::widGraphAxis(widGraph *graph, int elementNumber):
 
 void widGraphAxis::mousePressEvent(QMouseEvent *event)
 {
-    m_isMouseMoving = true;
-    m_startingPoint = event->pos();
+    auto ptr_control = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_control->m_zoom) {
+        m_isMouseMoving = true;
+        m_startingPoint = event->pos();
+    }
+    else {
+        m_isMouseMoving = false;
+        m_startingPoint = QPoint(0,0);
+    }
 }
 
 void widGraphAxis::mouseMoveEvent(QMouseEvent *event)
@@ -630,18 +716,18 @@ void widGraphAxis::mouseMoveEvent(QMouseEvent *event)
 
 void widGraphAxis::mouseReleaseEvent(QMouseEvent *event)
 {
-    m_isMouseMoving = false;
-    QPoint currentPoint = mapFromGlobal(QCursor::pos());
-
-    if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-        double start = m_getValueFromPosition(m_startingPoint.y());
-        double end = m_getValueFromPosition(currentPoint.y());
-        m_setAxisByMouse(start, end);
-        ptr_graph->m_loadValues();
+    if (m_isMouseMoving) {
+        m_isMouseMoving = false;
+        QPoint currentPoint = mapFromGlobal(QCursor::pos());
+        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+            auto [start, end] = m_getStartAndEndFromMouse(m_startingPoint, currentPoint);
+            m_setAxisMinMax(start, end);
+            ptr_graph->m_loadValues();
+        }
+        else
+            update();
+        m_startingPoint = QPoint(0,0);
     }
-    else
-        update();
-    m_startingPoint = QPoint(0,0);
 }
 
 void widGraphAxis::paintEvent(QPaintEvent *)
@@ -728,7 +814,7 @@ void widGraphAxis::m_setAxis()
     }
 }
 
-void widGraphAxis::m_setAxisByMouse(double start, double end)
+void widGraphAxis::m_setAxisMinMax(double start, double end)
 {
     auto ptr_data = m_getData().lock();
     ptr_data->m_autoAxis = false;
@@ -772,8 +858,8 @@ double widGraphY2Axis::m_getValueFromDrawAreaPosition(double position)
     double xAXisHeight = ptr_data->m_X->m_height;
     double yStart = height() - xAXisHeight;
 
-    double minY = ptr_data->m_Y1->m_min;
-    double maxY = ptr_data->m_Y1->m_max;
+    double minY = ptr_data->m_Y2->m_min;
+    double maxY = ptr_data->m_Y2->m_max;
     return - position*(maxY-minY)/(yStart-titleHeight) + maxY;
 }
 
@@ -815,6 +901,13 @@ double widGraphY2Axis::m_getValueFromPosition(double position)
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenY = ptr_data->m_title->m_height;
     return m_getValueFromDrawAreaPosition(position - startScreenY);
+}
+
+std::tuple<double, double> widGraphY2Axis::m_getStartAndEndFromMouse(QPointF start, QPointF end)
+{
+    double startY = m_getValueFromPosition(start.y());
+    double endY = m_getValueFromPosition(end.y());
+    return {startY, endY};
 }
 
 void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
@@ -1103,6 +1196,42 @@ void widGraphButtonAutoAxes::m_onClick()
     ptr_dataY2->m_autoStep = true;
 }
 
+widGraphButtonZoom::widGraphButtonZoom(widGraph *graph):
+    widGraphButton(graph, "Enable/disable zoom")
+{
+    // Set as checkable
+        m_isCheckable = true;
+    // Initial value
+        auto ptr_data = ptr_graph->m_getData().lock();
+        m_isChecked = ptr_data->m_control->m_zoom;
+}
+
+void widGraphButtonZoom::m_onClick()
+{
+    auto ptr_data = ptr_graph->m_getData().lock();
+    ptr_data->m_control->m_zoom = m_isChecked;
+}
+
+void widGraphButtonZoom::m_drawInside(painterAntiAl &painter)
+{
+    painter.save();
+    // Pen
+        QPen pen;
+        if (m_isChecked)
+            pen = QPen(Qt::blue, 2);
+        else
+            pen = QPen(Qt::black, 1);
+    // Font
+        QFont font;
+        font.setPixelSize(18);
+        painter.setFont(font);
+    // Draw
+        painter.drawText(QRect(0, 0, width(), height()),
+                         "Z", QTextOption(Qt::AlignCenter));
+    painter.restore();
+}
+
+
 widGraphButtonShowGrid::widGraphButtonShowGrid(widGraph *graph):
     widGraphButton(graph, "Show/hide grid")
 {
@@ -1126,7 +1255,7 @@ void widGraphButtonShowGrid::m_drawInside(painterAntiAl &painter)
     painter.save();
     // Pen
         QPen pen;
-        if (m_isCheckable && m_isChecked)
+        if (m_isChecked)
             pen = QPen(Qt::blue, 2);
         else
             pen = QPen(Qt::black, 1);

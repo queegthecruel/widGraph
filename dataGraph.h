@@ -128,6 +128,19 @@ struct dataDrawArea: public dataElement
     bool m_showGrid = true;
 };
 
+struct dataControl: public dataElement
+{
+    dataControl() {}
+    dataControl(std::ifstream &instream):
+        dataElement(instream) {}
+    ~dataControl() = default;
+    void m_saveToFile(std::ofstream &outstream)
+    {
+        dataElement::m_saveToFile(outstream);
+    }
+    bool m_zoom = false;
+};
+
 class graphObjects;
 struct dataGraph
 {
@@ -144,6 +157,7 @@ struct dataGraph
     std::shared_ptr<dataAxisY2> m_Y2;
     std::shared_ptr<dataLegend> m_legend;
     std::shared_ptr<dataDrawArea> m_drawArea;
+    std::shared_ptr<dataControl> m_control;
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
     enum GRAPH_SETTINGS {TITLE, X, Y1, Y2, LEGEND, DRAWAREA};
 };
