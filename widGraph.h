@@ -37,12 +37,13 @@ public:
     virtual void m_setDimensions() override {};
     void m_setAxisMinMax(double startX, double endX,
         double startY1, double endY1, double startY2, double endY2);
+    void m_cancelOperation();
 private:
     void m_drawHorGrid(painterAntiAl &painter);
     void m_drawVertGrid(painterAntiAl &painter);
 protected:
-// For zoom
-    bool m_isMouseMoving = false;
+    bool m_isMouseZooming = false;
+    bool m_isMouseDragging = false;
     QPoint m_startingPoint;
 };
 
@@ -54,6 +55,7 @@ public:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void m_setDimensions() override;
+    virtual void m_loadValues() {}
 private:
     virtual void m_onClick() = 0;
     virtual void m_drawInside(painterAntiAl &painter) = 0;
@@ -92,6 +94,16 @@ class widGraphButtonZoom: public widGraphButton
 {
 public:
     widGraphButtonZoom(widGraph *graph);
+    virtual void m_loadValues() override;
+    virtual void m_onClick() override;
+    virtual void m_drawInside(painterAntiAl &painter) override;
+};
+
+class widGraphButtonMove: public widGraphButton
+{
+public:
+    widGraphButtonMove(widGraph *graph);
+    virtual void m_loadValues() override;
     virtual void m_onClick() override;
     virtual void m_drawInside(painterAntiAl &painter) override;
 };
@@ -119,6 +131,7 @@ protected:
     widGraphButtonAutoAxes *m_butAuto;
     widGraphButtonShowGrid *m_butShowGrid;
     widGraphButtonZoom *m_butZoom;
+    widGraphButtonMove *m_butMove;
     widGraphButtonScreenshot *m_butScreenshot;
 };
 
@@ -139,6 +152,7 @@ public:
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
     void m_setAxis();
     void m_setAxisMinMax(double start, double end);
+    void m_cancelOperation();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual double m_getValueFromPosition(double position) = 0;
@@ -159,7 +173,7 @@ protected:
     const double m_rowSpacing = 1.0;
 
 // For zoom
-    bool m_isMouseMoving = false;
+    bool m_isMouseZooming = false;
     QPoint m_startingPoint;
     const double m_zoomCursorWidth = 20;
 };
@@ -270,6 +284,7 @@ public:
     widGraph();
     widGraph(const widGraph&) = delete;
     widGraph& operator=(const widGraph&) = delete;
+    void keyPressEvent(QKeyEvent *event) override;
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)

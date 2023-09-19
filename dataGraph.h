@@ -138,7 +138,9 @@ struct dataControl: public dataElement
     {
         dataElement::m_saveToFile(outstream);
     }
-    bool m_zoom = false;
+    bool m_zoom = false, m_move = false;
+    void m_setMove(bool status);
+    void m_setZoom(bool status);
 };
 
 class graphObjects;
