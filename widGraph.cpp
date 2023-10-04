@@ -31,10 +31,16 @@ widGraph::widGraph()
 void widGraph::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape) {
-        m_widArea->m_cancelOperation();
-        m_widX->m_cancelOperation();
-        m_widY1->m_cancelOperation();
-        m_widY2->m_cancelOperation();
+        // Cancel zoom or drag operation
+            bool a = m_widArea->m_cancelOperation();
+            bool b = m_widX->m_cancelOperation();
+            bool c = m_widY1->m_cancelOperation();
+            bool d = m_widY2->m_cancelOperation();
+        // If nothing was done, cancel moving or dragging mode
+            if (!(a || b || c || d)) {
+                m_data->m_control->m_zoom = false;
+                m_data->m_control->m_move = false;
+            }
         m_loadValues();
     }
 }
@@ -58,6 +64,14 @@ void widGraph::m_loadValues()
         m_widX->m_setAxis();
         m_widY1->m_setAxis();
         m_widY2->m_setAxis();
+
+    // Set mouse cursor
+        if (m_data->m_control->m_zoom)
+            setCursor(Qt::CrossCursor);
+        else if (m_data->m_control->m_move)
+            setCursor(Qt::SizeAllCursor);
+        else
+            setCursor(Qt::ArrowCursor);
     setUpdatesEnabled(true);
 }
 
@@ -150,10 +164,12 @@ void widGraphDrawArea::m_setAxisMinMax(double startX, double endX, double startY
     ptr_graph->m_getY2Axis()->m_setAxisMinMax(startY2, endY2);
 }
 
-void widGraphDrawArea::m_cancelOperation()
+bool widGraphDrawArea::m_cancelOperation()
 {
+    bool res = m_isMouseZooming  || m_isMouseDragging;
     m_isMouseZooming = false;
     m_isMouseDragging = false;
+    return res;
 }
 
 widGraphDrawArea::widGraphDrawArea(widGraph *graph):
@@ -439,19 +455,24 @@ void widGraphXAxis::m_drawLine(painterAntiAl &painter)
 
 void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
 {
+    auto drawTick = [this](painterAntiAl &painter, double location) {
+        double posX = m_getPositionFromValue(location);
+        painter.drawLine(QPoint(posX,m_getTicksStart()),
+                         QPoint(posX,m_getTicksEnd()));
+    };
     painter.save();
     auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
 
     double minX = ptr_dataX->m_min;
     double maxX = ptr_dataX->m_max;
     double stepX = ptr_dataX->m_step;
-
-    double numberX = minX;
+    auto [niceMin, b, c] = m_calculateNiceMaxMin(minX, maxX);
+    drawTick(painter, minX);
+    drawTick(painter, maxX);
+    double numberX = niceMin + stepX;
     while (numberX <= maxX)
     {
-        double posX = m_getPositionFromValue(numberX);
-        painter.drawLine(QPoint(posX,m_getTicksStart()),
-                         QPoint(posX,m_getTicksEnd()));
+        drawTick(painter, numberX);
         numberX = numberX + stepX;
     }
     painter.restore();
@@ -459,6 +480,14 @@ void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
 
 void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
 {
+    auto drawNuber = [this](painterAntiAl &painter, double location, double numberLength) {
+        double posX = m_getPositionFromValue(location);
+        QRect rect(QPoint(posX - numberLength, m_getNumbersStart()),
+                   QPoint(posX + numberLength, m_getNumbersEnd()));
+        painter.drawText(rect, QString::number(location, 'f', 2),
+                         QTextOption(Qt::AlignCenter));
+    };
+
     painter.save();
     auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
     QFont font;
@@ -469,16 +498,17 @@ void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
     double maxX = ptr_dataX->m_max;
     double stepX = ptr_dataX->m_step;
 
+    auto [niceMin, b, c] = m_calculateNiceMaxMin(minX, maxX);
     int nSteps = (maxX - minX)/stepX;
     double numberLength = width()/nSteps/2;
-    double numberX = minX;
+
+    drawNuber(painter, minX, numberLength);
+    drawNuber(painter, maxX, numberLength);
+
+    double numberX = niceMin + stepX;
     while (numberX <= maxX)
     {
-        double posX = m_getPositionFromValue(numberX);
-        QRect rect(QPoint(posX - numberLength, m_getNumbersStart()),
-                   QPoint(posX + numberLength, m_getNumbersEnd()));
-        painter.drawText(rect, QString::number(numberX, 'f', 2),
-                         QTextOption(Qt::AlignCenter));
+        drawNuber(painter, numberX, numberLength);
         numberX = numberX + stepX;
     }
     painter.restore();
@@ -658,18 +688,23 @@ void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
 
 void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
 {
+    auto drawTick = [this](painterAntiAl &painter, double location) {
+        double posY = m_getPositionFromValue(location);
+        painter.drawLine(QPoint(m_getTicksStart(),posY),
+                         QPoint(m_getTicksEnd(),posY));
+    };
     painter.save();
     auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
      double minY = ptr_dataY->m_min;
      double maxY = ptr_dataY->m_max;
      double stepY = ptr_dataY->m_step;
-
-     double numberY = minY;
+     auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
+     drawTick(painter, minY);
+     drawTick(painter, maxY);
+     double numberY = niceMin + stepY;
      while (numberY <= maxY)
      {
-         double posY = m_getPositionFromValue(numberY);
-         painter.drawLine(QPoint(m_getTicksStart(),posY),
-                          QPoint(m_getTicksEnd(),posY));
+         drawTick(painter, numberY);
          numberY = numberY + stepY;
      }
      painter.restore();
@@ -677,6 +712,13 @@ void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
 
 void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
 {
+     auto drawNuber = [this](painterAntiAl &painter, double location, double fontNumbers) {
+         double posY = m_getPositionFromValue(location);
+         QRect rect(QPoint(m_getNumbersEnd(), posY - fontNumbers/2),
+                    QPoint(m_getNumbersStart(), posY + fontNumbers/2));
+         painter.drawText(rect, QString::number(location, 'f', 2),
+                          QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+     };
     painter.save();
     auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
     QFont font;
@@ -687,14 +729,15 @@ void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
     double maxY = ptr_dataY->m_max;
     double stepY = ptr_dataY->m_step;
 
-    double numberY = minY;
+    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
+
+    drawNuber(painter, minY, ptr_dataY->m_fontNumbers);
+    drawNuber(painter, maxY, ptr_dataY->m_fontNumbers);
+
+    double numberY = niceMin + stepY;
     while (numberY <= maxY)
     {
-        double posY = m_getPositionFromValue(numberY);
-        QRect rect(QPoint(m_getNumbersEnd(), posY - ptr_dataY->m_fontNumbers/2),
-                   QPoint(m_getNumbersStart(), posY + ptr_dataY->m_fontNumbers/2));
-        painter.drawText(rect, QString::number(numberY, 'f', 2),
-                         QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+        drawNuber(painter, numberY, ptr_dataY->m_fontNumbers);
         numberY = numberY + stepY;
     }
     painter.restore();
@@ -869,7 +912,7 @@ double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
 
 std::tuple<double, double, double> widGraphAxis::m_calculateNiceMaxMin(double min, double max)
 {
-    int maxTicks = 7;
+    int maxTicks = 8;
     double range = m_supCalculateNiceNumbers(max - min, false);
     double tickSpacing = m_supCalculateNiceNumbers(range / (maxTicks - 1), true);
     double niceMin = floor(min / tickSpacing) * tickSpacing;
@@ -910,9 +953,12 @@ void widGraphAxis::m_setAxisMinMax(double start, double end)
     ptr_data->m_setMinMaxStep(min, max, niceStep);
 }
 
-void widGraphAxis::m_cancelOperation()
+bool widGraphAxis::m_cancelOperation()
 {
+    bool res = m_isMouseZooming  || m_isMouseDragging;
     m_isMouseZooming = false;
+    m_isMouseDragging = false;
+    return res;
 }
 
 bool widGraphAxis::m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2)
@@ -1010,23 +1056,37 @@ void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
 
 void widGraphY2Axis::m_drawTicks(painterAntiAl &painter)
 {
+    auto drawTick = [this](painterAntiAl &painter, double location) {
+        double posY = m_getPositionFromValue(location);
+        painter.drawLine(QPoint(m_getTicksStart(),posY),
+                         QPoint(m_getTicksEnd(),posY));
+    };
+
     auto ptr_dataY = m_getData().lock();
     double minY = ptr_dataY->m_min;
     double maxY = ptr_dataY->m_max;
     double stepY = ptr_dataY->m_step;
-
-    double numberY = minY;
+    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
+    drawTick(painter, minY);
+    drawTick(painter, maxY);
+    double numberY = niceMin + stepY;
     while (numberY <= maxY)
     {
-        double posY = m_getPositionFromValue(numberY);
-        painter.drawLine(QPoint(m_getTicksStart(),posY),
-                         QPoint(m_getTicksEnd(),posY));
+        drawTick(painter, numberY);
         numberY = numberY + stepY;
     }
 }
 
 void widGraphY2Axis::m_drawNumbers(painterAntiAl &painter)
 {
+    auto drawNuber = [this](painterAntiAl &painter, double location, double fontNumbers) {
+        double posY = m_getPositionFromValue(location);
+        QRect rect(QPoint(m_getNumbersStart(), posY - fontNumbers/2),
+                   QPoint(m_getNumbersEnd(), posY + fontNumbers/2));
+        painter.drawText(rect, QString::number(location, 'f', 2),
+                         QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+    };
+
     auto ptr_dataY = m_getData().lock();
     QFont font;
     font.setPixelSize(ptr_dataY->m_fontNumbers);
@@ -1035,14 +1095,13 @@ void widGraphY2Axis::m_drawNumbers(painterAntiAl &painter)
     double minY = ptr_dataY->m_min;
     double maxY = ptr_dataY->m_max;
     double stepY = ptr_dataY->m_step;
-    double numberY = minY;
+    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
+    drawNuber(painter, minY, ptr_dataY->m_fontNumbers);
+    drawNuber(painter, maxY, ptr_dataY->m_fontNumbers);
+    double numberY = niceMin + stepY;
     while (numberY <= maxY)
     {
-        double posY = m_getPositionFromValue(numberY);
-        QRect rect(QPoint(m_getNumbersStart(), posY - ptr_dataY->m_fontNumbers/2),
-                   QPoint(m_getNumbersEnd(), posY + ptr_dataY->m_fontNumbers/2));
-        painter.drawText(rect, QString::number(numberY, 'f', 2),
-                         QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+        drawNuber(painter, numberY, ptr_dataY->m_fontNumbers);
         numberY = numberY + stepY;
     }
 

@@ -37,7 +37,7 @@ public:
     virtual void m_setDimensions() override {};
     void m_setAxisMinMax(double startX, double endX,
         double startY1, double endY1, double startY2, double endY2);
-    void m_cancelOperation();
+    bool m_cancelOperation();
 private:
     void m_moveByMouse();
     void m_zoomByMouse();
@@ -159,7 +159,7 @@ public:
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
     void m_setAxis();
     void m_setAxisMinMax(double start, double end);
-    void m_cancelOperation();
+    bool m_cancelOperation();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual double m_getValueFromPosition(double position) = 0;
@@ -181,6 +181,7 @@ protected:
 
 // For zoom
     bool m_isMouseZooming = false;
+    bool m_isMouseDragging = false;
     QPoint m_startingPoint;
     const double m_zoomCursorWidth = 20;
 };
