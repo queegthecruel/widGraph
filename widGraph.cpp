@@ -166,9 +166,9 @@ void widGraphDrawArea::m_setAxisMinMax(double startX, double endX, double startY
 
 bool widGraphDrawArea::m_cancelOperation()
 {
-    bool res = m_isMouseZooming  || m_isMouseDragging;
+    bool res = m_isMouseZooming  || m_isMouseMoving;
     m_isMouseZooming = false;
-    m_isMouseDragging = false;
+    m_isMouseMoving = false;
     return res;
 }
 
@@ -181,12 +181,12 @@ void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
 {
     m_startingPoint = event->pos();
     m_isMouseZooming = false;
-    m_isMouseDragging = false;
+    m_isMouseMoving = false;
     auto ptr_control = ptr_graph->m_getData().lock()->m_control;
     if (ptr_control->m_zoom)
         m_isMouseZooming = true;
     else if (ptr_control->m_move)
-        m_isMouseDragging = true;
+        m_isMouseMoving = true;
 }
 
 void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
@@ -196,7 +196,7 @@ void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
 
 void widGraphDrawArea::m_moveByMouse()
 {
-    m_isMouseDragging = false;
+    m_isMouseMoving = false;
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
     double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
     double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
@@ -222,7 +222,7 @@ void widGraphDrawArea::m_zoomByMouse()
     m_isMouseZooming = false;
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
 
-    if (widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+    if (widGraphAxis::m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
         double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
         double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
         double startY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
@@ -232,7 +232,6 @@ void widGraphDrawArea::m_zoomByMouse()
         double endY2 = ptr_graph->m_getY2Axis()->m_getValueFromDrawAreaPosition(currentPoint.y());
 
         m_setAxisMinMax(startX, endX, startY1, endY1, startY2, endY2);
-            ptr_graph->m_loadValues();
     }
 }
 
@@ -240,7 +239,7 @@ void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if (m_isMouseZooming)
         m_zoomByMouse();
-    if (m_isMouseDragging)
+    if (m_isMouseMoving)
         m_moveByMouse();
     ptr_graph->m_loadValues();
 }
@@ -249,7 +248,7 @@ void widGraphDrawArea::m_drawMove(painterAntiAl &painter)
 {
     painter.save();
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
-    if (m_isMouseDragging) {
+    if (m_isMouseMoving) {
         QPen penRect(Qt::black, 1, Qt::DashLine);
         painter.setPen(penRect);
         QLine line(m_startingPoint, currentPoint);
@@ -265,7 +264,7 @@ void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
     painter.save();
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
     if (m_isMouseZooming
-        && widGraphAxis::m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+        && widGraphAxis::m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
         QPen penRect(Qt::black, 1, Qt::DashLine);
         painter.setPen(penRect);
         QRect rect(m_startingPoint, currentPoint);
@@ -539,7 +538,7 @@ void widGraphXAxis::m_drawZoomCursor(painterAntiAl &painter)
     painter.save();
     if (m_isMouseZooming) {
         QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
             int top = m_getTicksEnd();
             int bottom = top + m_zoomCursorWidth;
             // Start line
@@ -554,6 +553,26 @@ void widGraphXAxis::m_drawZoomCursor(painterAntiAl &painter)
                 painter.drawLine(rightLine);
             // Long line
                 painter.drawLine(leftLine.center(), rightLine.center());
+        }
+    }
+    painter.restore();
+}
+
+void widGraphXAxis::m_drawMoveCursor(painterAntiAl &painter)
+{
+    painter.save();
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_isMouseMoving) {
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+            QPen penRect(Qt::black, 1, Qt::DashLine);
+            painter.setPen(penRect);
+            int y = (m_getNumbersStart() + m_getNumbersEnd())/2;
+            QPoint start(m_startingPoint.x(), y);
+            QPoint end(currentPoint.x(), y);
+            QLine line(start, end);
+            painter.setBrush(Qt::red);
+            painter.drawEllipse(QPoint(m_startingPoint.x(), y), 2, 2);
+            painter.drawLine(line);
         }
     }
     painter.restore();
@@ -766,9 +785,10 @@ void widGraphY1Axis::m_drawZoomCursor(painterAntiAl &painter)
     painter.save();
     if (m_isMouseZooming) {
         QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-            int right = m_getNumbersStart();
-            int left = right - m_zoomCursorWidth;
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+            int center = (m_getNumbersStart() + m_getNumbersEnd())/2;
+            int left = center - m_zoomCursorWidth/2;
+            int right = center + m_zoomCursorWidth/2;
             // Start line
                 QPoint startLeft(left, m_startingPoint.y());
                 QPoint startRight(right, m_startingPoint.y());
@@ -781,6 +801,26 @@ void widGraphY1Axis::m_drawZoomCursor(painterAntiAl &painter)
                 painter.drawLine(bottomLine);
             // Long line
                 painter.drawLine(topLine.center(), bottomLine.center());
+        }
+    }
+    painter.restore();
+}
+
+void widGraphY1Axis::m_drawMoveCursor(painterAntiAl &painter)
+{
+    painter.save();
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_isMouseMoving) {
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+            QPen penRect(Qt::black, 1, Qt::DashLine);
+            painter.setPen(penRect);
+            int x = (m_getNumbersStart() + m_getNumbersEnd())/2;
+            QPoint start(x, m_startingPoint.y());
+            QPoint end(x, currentPoint.y());
+            QLine line(start, end);
+            painter.setBrush(Qt::red);
+            painter.drawEllipse(QPoint(x, m_startingPoint.y()), 2, 2);
+            painter.drawLine(line);
         }
     }
     painter.restore();
@@ -826,35 +866,51 @@ widGraphAxis::widGraphAxis(widGraph *graph, int elementNumber):
 
 void widGraphAxis::mousePressEvent(QMouseEvent *event)
 {
+    m_startingPoint = event->pos();
+    m_isMouseZooming = false;
+    m_isMouseMoving = false;
     auto ptr_control = ptr_graph->m_getData().lock()->m_control;
-    if (ptr_control->m_zoom) {
+    if (ptr_control->m_zoom)
         m_isMouseZooming = true;
-        m_startingPoint = event->pos();
-    }
-    else {
-        m_isMouseZooming = false;
-        m_startingPoint = QPoint(0,0);
-    }
+    else if (ptr_control->m_move)
+        m_isMouseMoving = true;
 }
 
-void widGraphAxis::mouseMoveEvent(QMouseEvent *event)
+void widGraphAxis::mouseMoveEvent(QMouseEvent */*event*/)
 {
     update();
 }
 
-void widGraphAxis::mouseReleaseEvent(QMouseEvent *event)
+
+void widGraphAxis::mouseReleaseEvent(QMouseEvent */*event*/)
 {
-    if (m_isMouseZooming) {
-        m_isMouseZooming = false;
-        QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-            auto [start, end] = m_getStartAndEndFromMouse(m_startingPoint, currentPoint);
-            m_setAxisMinMax(start, end);
-            ptr_graph->m_loadValues();
-        }
-        else
-            update();
-        m_startingPoint = QPoint(0,0);
+    if (m_isMouseZooming)
+        m_zoomByMouse();
+    if (m_isMouseMoving)
+        m_moveByMouse();
+    ptr_graph->m_loadValues();
+}
+
+void widGraphAxis::m_zoomByMouse()
+{
+    m_isMouseZooming = false;
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+        auto [start, end] = m_getStartAndEndFromMouse(m_startingPoint, currentPoint);
+        m_setAxisMinMax(start, end);
+    }
+}
+
+void widGraphAxis::m_moveByMouse()
+{
+    m_isMouseMoving = false;
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+        double min = m_getData().lock()->m_min;
+        double max = m_getData().lock()->m_max;
+        auto [start, end] = m_getStartAndEndFromMouse(m_startingPoint, currentPoint);
+        double diff = end - start;
+        m_setAxisMinMax(min - diff, max - diff);
     }
 }
 
@@ -875,6 +931,8 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         m_drawText(painter);
     // Draw zoom cursor
         m_drawZoomCursor(painter);
+    // Draw move cursor
+        m_drawMoveCursor(painter);
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -955,13 +1013,13 @@ void widGraphAxis::m_setAxisMinMax(double start, double end)
 
 bool widGraphAxis::m_cancelOperation()
 {
-    bool res = m_isMouseZooming  || m_isMouseDragging;
+    bool res = m_isMouseZooming  || m_isMouseMoving;
     m_isMouseZooming = false;
-    m_isMouseDragging = false;
+    m_isMouseMoving = false;
     return res;
 }
 
-bool widGraphAxis::m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2)
+bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2)
 {
     int dist_x = x1.x() - x2.x();
     int dist_y = x1.y() - x2.y();
@@ -1130,9 +1188,10 @@ void widGraphY2Axis::m_drawZoomCursor(painterAntiAl &painter)
     painter.save();
     if (m_isMouseZooming) {
         QPoint currentPoint = mapFromGlobal(QCursor::pos());
-        if (m_supDistanceForZoomIsSufficient(m_startingPoint, currentPoint)) {
-            int right = m_getNumbersEnd();
-            int left = right - m_zoomCursorWidth;
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+            int center = (m_getNumbersStart() + m_getNumbersEnd())/2;
+            int left = center - m_zoomCursorWidth/2;
+            int right = center + m_zoomCursorWidth/2;
             // Start line
                 QPoint startLeft(left, m_startingPoint.y());
                 QPoint startRight(right, m_startingPoint.y());
@@ -1145,6 +1204,26 @@ void widGraphY2Axis::m_drawZoomCursor(painterAntiAl &painter)
                 painter.drawLine(bottomLine);
             // Long line
                 painter.drawLine(topLine.center(), bottomLine.center());
+        }
+    }
+    painter.restore();
+}
+
+void widGraphY2Axis::m_drawMoveCursor(painterAntiAl &painter)
+{
+    painter.save();
+    QPoint currentPoint = mapFromGlobal(QCursor::pos());
+    if (m_isMouseMoving) {
+        if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
+            QPen penRect(Qt::black, 1, Qt::DashLine);
+            painter.setPen(penRect);
+            int x = (m_getNumbersStart() + m_getNumbersEnd())/2;
+            QPoint start(x, m_startingPoint.y());
+            QPoint end(x, currentPoint.y());
+            QLine line(start, end);
+            painter.setBrush(Qt::red);
+            painter.drawEllipse(QPoint(x, m_startingPoint.y()), 2, 2);
+            painter.drawLine(line);
         }
     }
     painter.restore();

@@ -50,7 +50,7 @@ private:
     void m_drawGraphObjects(painterAntiAl &painter);
 protected:
     bool m_isMouseZooming = false;
-    bool m_isMouseDragging = false;
+    bool m_isMouseMoving = false;
     QPoint m_startingPoint;
 };
 
@@ -169,8 +169,12 @@ private:
     virtual void m_drawNumbers(painterAntiAl &painter) = 0;
     virtual void m_drawText(painterAntiAl &painter) = 0;
     virtual void m_drawZoomCursor(painterAntiAl &painter) = 0;
+    virtual void m_drawMoveCursor(painterAntiAl &painter) = 0;
+    void m_zoomByMouse();
+    void m_moveByMouse();
+
 public:
-    static bool m_supDistanceForZoomIsSufficient(const QPoint &x1, const QPoint &x2);
+    static bool m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2);
 protected:
 // For positions
     const double m_tickLength = 10,
@@ -181,7 +185,7 @@ protected:
 
 // For zoom
     bool m_isMouseZooming = false;
-    bool m_isMouseDragging = false;
+    bool m_isMouseMoving = false;
     QPoint m_startingPoint;
     const double m_zoomCursorWidth = 20;
 };
@@ -205,6 +209,7 @@ private:
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
+    virtual void m_drawMoveCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
@@ -235,6 +240,7 @@ private:
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
+    virtual void m_drawMoveCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
@@ -265,6 +271,7 @@ private:
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
+    virtual void m_drawMoveCursor(painterAntiAl &painter) override;
 
     double m_getTicksStart();
     double m_getTicksEnd();
