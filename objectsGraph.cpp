@@ -131,3 +131,43 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double width)
 
     return path;
 }
+
+graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
+    w_dataY(ptr_dataY)
+{
+    s_dataY = w_dataY.lock();
+
+    qDebug() << "Curve 3";
+}
+
+void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
+{
+    painter->save();
+    painter->setPen(QPen(QColor(m_data->m_R, m_data->m_G, m_data->m_B), 3));
+    // Get appropriate axes
+        widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
+        widGraphAxis* ptr_y;
+        if (m_getPrefferedYAxis() == 0)
+            ptr_y = ptr_graph->m_getY1Axis();
+        else
+            ptr_y = ptr_graph->m_getY2Axis();
+    // Get apinter paths
+        QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
+    // Draw
+        painter->drawPath(pathCurve);
+        painter->restore();
+}
+
+QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+{
+    QPainterPath pathCurve;
+    // Move to the first point
+        double minX = ptr_x->m_getData().lock()->m_min;
+        double maxX = ptr_x->m_getData().lock()->m_max;
+        pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(minX),
+                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
+    // All points
+        pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(maxX),
+                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
+    return pathCurve;
+}

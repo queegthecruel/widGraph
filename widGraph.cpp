@@ -395,7 +395,7 @@ double widGraphXAxis::m_getValueFromDrawAreaPosition(double position)
     return ret;
 }
 
-std::tuple<double, double> widGraphXAxis::m_getMinAndMax()
+std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
 {
     // Graph data
         auto ptr_graphData = ptr_graph->m_getData().lock();
@@ -622,34 +622,8 @@ widGraphY1Axis::widGraphY1Axis(widGraph *graph):
 {
 
 }
-/*
-double widGraphY1Axis::m_getDrawAreaPositionFromValue(double value)
-{
-    auto ptr_data = ptr_graph->m_getData().lock();
-    double titleHeight = ptr_data->m_title->m_height;
-    double xAXisHeight = ptr_data->m_X->m_height;
-    double yStart = height() - xAXisHeight;
 
-    double minY = ptr_data->m_Y1->m_min;
-    double maxY = ptr_data->m_Y1->m_max;
-    return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
-}
-*/
-/*
-double widGraphY1Axis::m_getValueFromDrawAreaPosition(double position)
-{
-    auto ptr_data = ptr_graph->m_getData().lock();
-    double titleHeight = ptr_data->m_title->m_height;
-    double xAXisHeight = ptr_data->m_X->m_height;
-    double yStart = height() - xAXisHeight;
-
-    double minY = ptr_data->m_Y1->m_min;
-    double maxY = ptr_data->m_Y1->m_max;
-    return - position*(maxY-minY)/(yStart-titleHeight) + maxY;
-}
-*/
-
-std::tuple<double, double> widGraphYAxes::m_getMinAndMax()
+std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
 {
     auto ptr_graphData = ptr_graph->m_getData().lock();
     double minY = 0;
@@ -926,7 +900,7 @@ void widGraphAxis::m_setAxis()
     auto ptr_axisData = m_getData().lock();
     if (ptr_axisData->m_autoAxis) {
         // Min and max values
-            auto [min, max] = m_getMinAndMax();
+            auto [min, max] = m_getMinAndMaxOfObjects();
         // Calculate nice numbers
             auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
         // Save them

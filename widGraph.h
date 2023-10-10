@@ -149,7 +149,7 @@ public:
     ~widGraphAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) = 0;
     virtual double m_getValueFromDrawAreaPosition(double position) = 0;
-    virtual std::tuple<double, double> m_getMinAndMax() = 0;
+    virtual std::tuple<double, double> m_getMinAndMaxOfObjects() = 0;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -211,7 +211,7 @@ public:
     {}
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual double m_getValueFromDrawAreaPosition(double position) override;
-    virtual std::tuple<double, double> m_getMinAndMax() override;
+    virtual std::tuple<double, double> m_getMinAndMaxOfObjects() override;
 protected:
     virtual void m_drawMoveCursor(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
@@ -229,7 +229,7 @@ public:
     ~widGraphXAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual double m_getValueFromDrawAreaPosition(double position) override;
-    virtual std::tuple<double, double> m_getMinAndMax() override;
+    virtual std::tuple<double, double> m_getMinAndMaxOfObjects() override;
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
