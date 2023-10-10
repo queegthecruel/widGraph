@@ -1,6 +1,7 @@
 #ifndef DATAGRAPH_H
 #define DATAGRAPH_H
 
+#include "qcolor.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -162,14 +163,6 @@ struct dataGraph
     std::shared_ptr<dataControl> m_control;
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
     enum GRAPH_SETTINGS {TITLE, X, Y1, Y2, LEGEND, DRAWAREA};
-};
-
-
-struct dataGraphObject
-{
-    int m_prefferedYAxis = 0;
-    int m_R = 0, m_G = 0, m_B = 0;
-    std::string m_name;
 };
 
 

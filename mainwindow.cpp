@@ -42,9 +42,10 @@ MainWindow::MainWindow(QWidget *parent):
         m_widGraph->m_setCurveStyle(-1, 0, 255, 0, 1);
         m_widGraph->m_setCurveName(-1, "Curve 2");
     // Dataset 3
-        double numbers3 = 5;
+        double numbers3 = 15;
         m_data3 = std::make_shared<double>(numbers3);
         m_widGraph->m_addObject(std::make_shared<graphYValue>(m_data3));
+        m_widGraph->m_setCurveStyle(-1, 0, 0, 255, 0);
         m_widGraph->m_setCurveName(-1, "Curve 3");
 
     // Reload graph

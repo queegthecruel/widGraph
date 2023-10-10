@@ -8,7 +8,17 @@
 // Graph objects
 class widGraph;
 class widGraphAxis;
-class dataGraphObject;
+
+struct dataGraphObject
+{
+    inline QColor m_getColor()
+        {return QColor(m_R, m_G, m_B);}
+    int m_prefferedYAxis = 0;
+    int m_R = 0, m_G = 0, m_B = 0;
+    std::string m_name;
+};
+
+
 class graphObjects
 {
 public:
@@ -22,6 +32,8 @@ public:
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
     static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double width = 10);
+protected:
+    std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
 protected:
     std::shared_ptr<dataGraphObject> m_data;
 };
@@ -46,25 +58,22 @@ protected:
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 
-
 class graphYValue: public graphObjects
 {
 public:
     graphYValue(std::shared_ptr<double> ptr_dataY);
     ~graphYValue() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
-  //  virtual double m_getMinX() override;
-  //  virtual double m_getMaxX() override;
-  //  virtual double m_getMinY() override;
-  //  virtual double m_getMaxY() override;
+    virtual double m_getMinY() override
+        {return *s_dataY;}
+    virtual double m_getMaxY() override
+        {return *s_dataY;}
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
     std::weak_ptr<double> w_dataY;
     std::shared_ptr<double> s_dataY;
 };
-
-
 
 
 #endif // OBJECTSGRAPH_H

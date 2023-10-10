@@ -1,4 +1,5 @@
 #include "objectsGraph.h"
+#include "dataGraph.h"
 #include "widGraph.h"
 
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
@@ -38,14 +39,9 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
 void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
-    painter->setPen(QPen(QColor(m_data->m_R, m_data->m_G, m_data->m_B), 3));
+    painter->setPen(QPen(m_data->m_getColor(), 3));
     // Get appropriate axes
-        widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
-        widGraphAxis* ptr_y;
-        if (m_getPrefferedYAxis() == 0)
-            ptr_y = ptr_graph->m_getY1Axis();
-        else
-            ptr_y = ptr_graph->m_getY2Axis();
+        auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
     // Get apinter paths
         QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
         QPainterPath pathPoints = m_getPointsPainterPath(ptr_x, ptr_y);
@@ -132,6 +128,17 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double width)
     return path;
 }
 
+std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(widGraph *ptr_graph)
+{
+    widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
+    widGraphAxis* ptr_y;
+    if (m_getPrefferedYAxis() == 0)
+        ptr_y = ptr_graph->m_getY1Axis();
+    else
+        ptr_y = ptr_graph->m_getY2Axis();
+    return {ptr_x, ptr_y};
+}
+
 graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
     w_dataY(ptr_dataY)
 {
@@ -143,15 +150,10 @@ graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
 void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
-    painter->setPen(QPen(QColor(m_data->m_R, m_data->m_G, m_data->m_B), 3));
+    painter->setPen(QPen(m_data->m_getColor(), 3));
     // Get appropriate axes
-        widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
-        widGraphAxis* ptr_y;
-        if (m_getPrefferedYAxis() == 0)
-            ptr_y = ptr_graph->m_getY1Axis();
-        else
-            ptr_y = ptr_graph->m_getY2Axis();
-    // Get apinter paths
+        auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
+    // Get painter paths
         QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
     // Draw
         painter->drawPath(pathCurve);
