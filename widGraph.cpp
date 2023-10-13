@@ -122,18 +122,13 @@ void widGraph::m_slotDialogClosed(int /*status*/)
 void widGraphDrawArea::m_drawHorGrid(painterAntiAl &painter)
 {
     auto ptr_y = ptr_graph->m_getY1Axis();
-    auto ptr_data = ptr_graph->m_getData().lock();
-    auto ptr_dataY = ptr_data->m_Y1;
-    double minY = ptr_dataY->m_min;
-    double maxY = ptr_dataY->m_max;
-    double stepY = ptr_dataY->m_step;
-
-    double numberY = minY;
-    while (numberY <= maxY)
-    {
-        double posY = ptr_y->m_getDrawAreaPositionFromValue(numberY);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_Y1;
+    auto [min, max, step] = ptr_data->m_getMinMaxStep();
+    auto [niceMin, niceMax, c] = widGraphAxis::m_calculateNiceMaxMin(min, max);
+    std::vector<double> vTicks = widGraphAxis::m_getTicksPosition(niceMin, max, step);
+    for (const auto &var: vTicks) {
+        double posY = ptr_y->m_getDrawAreaPositionFromValue(var);
         painter.drawLine(0,posY,width(),posY);
-        numberY = numberY + stepY;
     }
 }
 
@@ -141,16 +136,12 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
 {
     auto ptr_x = ptr_graph->m_getXAxis();
     auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    double minX = ptr_dataX->m_min;
-    double maxX = ptr_dataX->m_max;
-    double stepX = ptr_dataX->m_step;
-
-    double numberX = minX;
-    while (numberX <= maxX)
-    {
-        double posX = ptr_x->m_getDrawAreaPositionFromValue(numberX);
+    auto [min, max, step] = ptr_dataX->m_getMinMaxStep();
+    auto [niceMin, niceMax, c] = widGraphAxis::m_calculateNiceMaxMin(min, max);
+    std::vector<double> vTicks = widGraphAxis::m_getTicksPosition(niceMin, max, step);
+    for (const auto &var: vTicks) {
+        double posX = ptr_x->m_getDrawAreaPositionFromValue(var);
         painter.drawLine(posX,0,posX,width());
-        numberX = numberX + stepX;
     }
 }
 
@@ -374,21 +365,19 @@ double widGraphXAxis::m_getDrawAreaPositionFromValue(double value)
     double startScreenX = ptr_data->m_Y1->m_width;
     double endScreenX = width() - ptr_data->m_Y2->m_width;
 
-    double minX = ptr_data->m_X->m_min;
-    double maxX = ptr_data->m_X->m_max;
-    return (endScreenX-startScreenX)*(value-minX)/(maxX-minX);
+    auto [min, max, step] = ptr_data->m_X->m_getMinMaxStep();
+    return (endScreenX-startScreenX)*(value-min)/(max-min);
 }
 
 double widGraphXAxis::m_getValueFromDrawAreaPosition(double position)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
-    double y2axisWidth= ptr_data->m_Y2->m_width;
+    double y2axisWidth = ptr_data->m_Y2->m_width;
     double endScreenX = width() - y2axisWidth;
 
-    double minX = ptr_data->m_X->m_min;
-    double maxX = ptr_data->m_X->m_max;
-    double ret = position*(maxX-minX)/(endScreenX-startScreenX) + minX;
+    auto [min, max, step] = ptr_data->m_X->m_getMinMaxStep();
+    double ret = position*(max-min)/(endScreenX-startScreenX) + min;
     return ret;
 }
 
@@ -419,7 +408,7 @@ std::weak_ptr<dataAxis> widGraphXAxis::m_getData()
     return ptr_graph->m_getData().lock()->m_X;
 }
 
-double widGraphXAxis::m_getPositionFromValue(double value)
+double widGraphXAxes::m_getPositionFromValue(double value)
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
@@ -451,62 +440,39 @@ void widGraphXAxis::m_drawLine(painterAntiAl &painter)
 
 void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
 {
-    auto drawTick = [this](painterAntiAl &painter, double location) {
-        double posX = m_getPositionFromValue(location);
-        painter.drawLine(QPoint(posX,m_getTicksStart()),
-                         QPoint(posX,m_getTicksEnd()));
-    };
     painter.save();
-    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_X;
 
-    double minX = ptr_dataX->m_min;
-    double maxX = ptr_dataX->m_max;
-    double stepX = ptr_dataX->m_step;
-    auto [niceMin, b, c] = m_calculateNiceMaxMin(minX, maxX);
-    drawTick(painter, minX);
-    drawTick(painter, maxX);
-    double numberX = niceMin + stepX;
-    while (numberX <= maxX)
-    {
-        drawTick(painter, numberX);
-        numberX = numberX + stepX;
-    }
+    auto [min, max, step] = ptr_data->m_getMinMaxStep();
+    auto [niceMin, niceMax, c] = m_calculateNiceMaxMin(min, max);
+    m_supDrawTick(painter, min);
+    m_supDrawTick(painter, max);
+    std::vector<double> vTicks = m_getTicksPosition(niceMin, max, step);
+    for (const auto &var: vTicks)
+        m_supDrawTick(painter, var);
     painter.restore();
 }
 
 void widGraphXAxis::m_drawNumbers(painterAntiAl &painter)
 {
-    auto drawNuber = [this](painterAntiAl &painter, double location, double numberLength) {
-        double posX = m_getPositionFromValue(location);
-        QRect rect(QPoint(posX - numberLength, m_getNumbersStart()),
-                   QPoint(posX + numberLength, m_getNumbersEnd()));
-        painter.drawText(rect, QString::number(location, 'f', 2),
-                         QTextOption(Qt::AlignCenter));
-    };
-
     painter.save();
-    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_X;
     QFont font;
-    font.setPixelSize(ptr_dataX->m_fontNumbers);
+    font.setPixelSize(ptr_data->m_fontNumbers);
     painter.setFont(font);
 
-    double minX = ptr_dataX->m_min;
-    double maxX = ptr_dataX->m_max;
-    double stepX = ptr_dataX->m_step;
-
-    auto [niceMin, b, c] = m_calculateNiceMaxMin(minX, maxX);
-    int nSteps = (maxX - minX)/stepX;
+    auto [min, max, step] = ptr_data->m_getMinMaxStep();
+    auto [niceMin, niceMax, c] = m_calculateNiceMaxMin(min, max);
+    int nSteps = (max - min)/step;
     double numberLength = width()/nSteps/2;
 
-    drawNuber(painter, minX, numberLength);
-    drawNuber(painter, maxX, numberLength);
+    m_supDrawNumber(painter, min, numberLength);
+    m_supDrawNumber(painter, max, numberLength);
 
-    double numberX = niceMin + stepX;
-    while (numberX <= maxX)
-    {
-        drawNuber(painter, numberX, numberLength);
-        numberX = numberX + stepX;
-    }
+    std::vector<double> vTicks = m_getTicksPosition(niceMin, max, step);
+    for (const auto &var: vTicks)
+        m_supDrawNumber(painter, var, numberLength);
+
     painter.restore();
 }
 
@@ -614,6 +580,22 @@ double widGraphXAxis::m_getEndFromTop()
     return m_getTextEnds() + m_spaceBorder;
 }
 
+void widGraphXAxes::m_supDrawNumber(painterAntiAl &painter, double location, double length)
+{
+    double posX = m_getPositionFromValue(location);
+    QRect rect(QPoint(posX - length, m_getNumbersStart()),
+               QPoint(posX + length, m_getNumbersEnd()));
+    painter.drawText(rect, QString::number(location, 'f', 2),
+                     QTextOption(Qt::AlignCenter));
+}
+
+void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
+{
+    double posX = m_getPositionFromValue(location);
+    painter.drawLine(QPoint(posX,m_getTicksStart()),
+                     QPoint(posX,m_getTicksEnd()));
+}
+
 widGraphY1Axis::widGraphY1Axis(widGraph *graph):
     widGraphYAxes(graph, dataGraph::Y1, 0)
 {
@@ -653,79 +635,70 @@ std::tuple<double, double> widGraphYAxes::m_getStartAndEndFromMouse(QPointF star
     return {startY, endY};
 }
 
+void widGraphYAxes::m_supDrawNumber(painterAntiAl &painter, double location, double length)
+{
+    double posY = m_getPositionFromValue(location);
+    QPoint leftTop(std::min(m_getNumbersStart(), m_getNumbersEnd()), posY - length/2);
+    QPoint rightBottom(std::max(m_getNumbersStart(), m_getNumbersEnd()), posY + length/2);
+    QRect rect(leftTop, rightBottom);
+    painter.drawText(rect, QString::number(location, 'f', 2),
+                     QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+}
+
+void widGraphYAxes::m_supDrawTick(painterAntiAl &painter, double location)
+{
+    double pos = m_getPositionFromValue(location);
+    painter.drawLine(QPoint(m_getTicksStart(),pos),
+                     QPoint(m_getTicksEnd(),pos));
+}
+
 void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
 {
     painter.save();
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenY = ptr_data->m_title->m_height;
     double endScreenY = height() - ptr_data->m_X->m_height;
-    //double right = width() - 1;
     double right = m_getTicksStart() - 1;
     painter.drawLine(right,startScreenY,right,endScreenY);
     painter.restore();
 }
 
-void widGraphY1Axis::m_drawTicks(painterAntiAl &painter)
+void widGraphYAxes::m_drawTicks(painterAntiAl &painter)
 {
-    auto drawTick = [this](painterAntiAl &painter, double location) {
-        double posY = m_getPositionFromValue(location);
-        painter.drawLine(QPoint(m_getTicksStart(),posY),
-                         QPoint(m_getTicksEnd(),posY));
-    };
     painter.save();
-    auto ptr_dataY = m_getData().lock();
-     double minY = ptr_dataY->m_min;
-     double maxY = ptr_dataY->m_max;
-     double stepY = ptr_dataY->m_step;
-     auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
-     drawTick(painter, minY);
-     drawTick(painter, maxY);
-     double numberY = niceMin + stepY;
-     while (numberY <= maxY)
-     {
-         drawTick(painter, numberY);
-         numberY = numberY + stepY;
-     }
+    auto ptr_data = m_getData().lock();
+    auto [min, max, step] = ptr_data->m_getMinMaxStep();
+     auto [niceMin, niceMax, c] = m_calculateNiceMaxMin(min, max);
+     m_supDrawTick(painter, min);
+     m_supDrawTick(painter, max);
+     std::vector<double> vTicks = m_getTicksPosition(niceMin, max, step);
+     for (const auto &var: vTicks)
+         m_supDrawTick(painter, var);
      painter.restore();
 }
 
-void widGraphY1Axis::m_drawNumbers(painterAntiAl &painter)
+void widGraphYAxes::m_drawNumbers(painterAntiAl &painter)
 {
-     auto drawNumber = [this](painterAntiAl &painter, double location, double fontNumbers) {
-         double posY = m_getPositionFromValue(location);
-         QRect rect(QPoint(m_getNumbersEnd(), posY - fontNumbers/2),
-                    QPoint(m_getNumbersStart(), posY + fontNumbers/2));
-         painter.drawText(rect, QString::number(location, 'f', 2),
-                          QTextOption(Qt::AlignRight | Qt::AlignVCenter));
-     };
     painter.save();
-    auto ptr_dataY = m_getData().lock();
+    auto ptr_data = m_getData().lock();
     QFont font;
-    font.setPixelSize(ptr_dataY->m_fontNumbers);
+    font.setPixelSize(ptr_data->m_fontNumbers);
     painter.setFont(font);
 
-    double minY = ptr_dataY->m_min;
-    double maxY = ptr_dataY->m_max;
-    double stepY = ptr_dataY->m_step;
-
-    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
-
-    drawNumber(painter, minY, ptr_dataY->m_fontNumbers);
-    drawNumber(painter, maxY, ptr_dataY->m_fontNumbers);
-
-    double numberY = niceMin + stepY;
-    while (numberY <= maxY)
-    {
-        drawNumber(painter, numberY, ptr_dataY->m_fontNumbers);
-        numberY = numberY + stepY;
-    }
+    auto [min, max, step] = ptr_data->m_getMinMaxStep();
+    auto [niceMin, niceMax, c] = m_calculateNiceMaxMin(min, max);
+    m_supDrawNumber(painter, min, ptr_data->m_fontNumbers);
+    m_supDrawNumber(painter, max, ptr_data->m_fontNumbers);
+    std::vector<double> vTicks = m_getTicksPosition(niceMin, max, step);
+    for (const auto &var: vTicks)
+        m_supDrawNumber(painter, var, ptr_data->m_fontNumbers);
     painter.restore();
 }
 
-void widGraphY1Axis::m_drawText(painterAntiAl &painter)
+void widGraphYAxes::m_drawText(painterAntiAl &painter)
 {
     painter.save();
-    auto ptr_dataY = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY = m_getData().lock();
     QFont font;
     font.setPixelSize(ptr_dataY->m_fontText);
     painter.setFont(font);
@@ -820,8 +793,8 @@ void widGraphAxis::m_moveByMouse()
     m_isMouseMoving = false;
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
     if (m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
-        double min = m_getData().lock()->m_min;
-        double max = m_getData().lock()->m_max;
+        auto ptr_data = m_getData().lock();
+        auto [min, max, step] = ptr_data->m_getMinMaxStep();
         auto [start, end] = m_getStartAndEndFromMouse(m_startingPoint, currentPoint);
         double diff = end - start;
         m_setAxisMinMax(min - diff, max - diff);
@@ -905,8 +878,7 @@ void widGraphAxis::m_setAxis()
     }
     else if (ptr_axisData->m_autoStep) {
         // Min and max values
-            double min = ptr_axisData->m_min;
-            double max = ptr_axisData->m_max;
+            auto [min, max, step] = ptr_axisData->m_getMinMaxStep();
         // Calculate nice numbers
             auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
         // Save them
@@ -933,6 +905,18 @@ bool widGraphAxis::m_cancelOperation()
     return res;
 }
 
+std::vector<double> widGraphAxis::m_getTicksPosition(double min, double max, double step)
+{
+    std::vector<double> vTicks;
+    double numberX = min + step;
+    while (numberX < max)
+    {
+        vTicks.push_back(numberX);
+        numberX = numberX + step;
+    }
+    return vTicks;
+}
+
 bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2)
 {
     int dist_x = x1.x() - x2.x();
@@ -953,10 +937,8 @@ double widGraphYAxes::m_getDrawAreaPositionFromValue(double value)
     double titleHeight = ptr_data->m_title->m_height;
     double xAXisHeight = ptr_data->m_X->m_height;
     double yStart = height() - xAXisHeight;
-
-    double minY = m_getData().lock()->m_min;
-    double maxY = m_getData().lock()->m_max;
-    return - (yStart-titleHeight)*(value-maxY)/(maxY-minY);
+    auto [min, max, step] = m_getData().lock()->m_getMinMaxStep();
+    return - (yStart-titleHeight)*(value-max)/(max-min);
 }
 
 double widGraphYAxes::m_getValueFromDrawAreaPosition(double position)
@@ -965,10 +947,8 @@ double widGraphYAxes::m_getValueFromDrawAreaPosition(double position)
     double titleHeight = ptr_data->m_title->m_height;
     double xAXisHeight = ptr_data->m_X->m_height;
     double yStart = height() - xAXisHeight;
-
-    double minY = m_getData().lock()->m_min;
-    double maxY = m_getData().lock()->m_max;
-    return - position*(maxY-minY)/(yStart-titleHeight) + maxY;
+    auto [min, max, step] = m_getData().lock()->m_getMinMaxStep();
+    return - position*(max-min)/(yStart-titleHeight) + max;
 }
 
 void widGraphY2Axis::m_setDimensions()
@@ -1005,77 +985,6 @@ void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
     double endScreenY = height() - ptr_data->m_X->m_height;
     double right = m_getTicksStart();
     painter.drawLine(right,startScreenY,right,endScreenY);
-    painter.restore();
-}
-
-void widGraphY2Axis::m_drawTicks(painterAntiAl &painter)
-{
-    auto drawTick = [this](painterAntiAl &painter, double location) {
-        double posY = m_getPositionFromValue(location);
-        painter.drawLine(QPoint(m_getTicksStart(),posY),
-                         QPoint(m_getTicksEnd(),posY));
-    };
-
-    auto ptr_dataY = m_getData().lock();
-    double minY = ptr_dataY->m_min;
-    double maxY = ptr_dataY->m_max;
-    double stepY = ptr_dataY->m_step;
-    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
-    drawTick(painter, minY);
-    drawTick(painter, maxY);
-    double numberY = niceMin + stepY;
-    while (numberY <= maxY)
-    {
-        drawTick(painter, numberY);
-        numberY = numberY + stepY;
-    }
-}
-
-void widGraphY2Axis::m_drawNumbers(painterAntiAl &painter)
-{
-    auto drawNumber = [this](painterAntiAl &painter, double location, double fontNumbers) {
-        double posY = m_getPositionFromValue(location);
-        QRect rect(QPoint(m_getNumbersStart(), posY - fontNumbers/2),
-                   QPoint(m_getNumbersEnd(), posY + fontNumbers/2));
-        painter.drawText(rect, QString::number(location, 'f', 2),
-                         QTextOption(Qt::AlignRight | Qt::AlignVCenter));
-    };
-
-    auto ptr_dataY = m_getData().lock();
-    QFont font;
-    font.setPixelSize(ptr_dataY->m_fontNumbers);
-    painter.setFont(font);
-
-    double minY = ptr_dataY->m_min;
-    double maxY = ptr_dataY->m_max;
-    double stepY = ptr_dataY->m_step;
-    auto [niceMin, b, c] = m_calculateNiceMaxMin(minY, maxY);
-    drawNumber(painter, minY, ptr_dataY->m_fontNumbers);
-    drawNumber(painter, maxY, ptr_dataY->m_fontNumbers);
-    double numberY = niceMin + stepY;
-    while (numberY <= maxY)
-    {
-        drawNumber(painter, numberY, ptr_dataY->m_fontNumbers);
-        numberY = numberY + stepY;
-    }
-
-}
-
-void widGraphY2Axis::m_drawText(painterAntiAl &painter)
-{
-    painter.save();
-    auto ptr_dataY = m_getData().lock();
-    QFont font;
-    font.setPixelSize(ptr_dataY->m_fontText);
-    painter.setFont(font);
-
-    std::string text = ptr_dataY->m_text;
-    if (ptr_dataY->m_unit != "")
-        text = text + " [" + ptr_dataY->m_unit + "]";
-    QRect rect(QPoint(0, m_getTextEnds()),
-               QPoint(-height(), m_getTextStart()));
-    painter.rotate(270);
-    painter.drawText(rect, Qt::AlignCenter, QString::fromStdString(text));
     painter.restore();
 }
 

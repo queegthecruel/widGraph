@@ -161,6 +161,7 @@ public:
     void m_setAxis();
     void m_setAxisMinMax(double start, double end);
     bool m_cancelOperation();
+    static std::vector<double> m_getTicksPosition(double min, double max, double step);
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual double m_getValueFromPosition(double position) = 0;
@@ -180,6 +181,8 @@ protected:
     virtual double m_getNumbersEnd() = 0;
     virtual double m_getTextStart() = 0;
     virtual double m_getTextEnds() = 0;
+    virtual void m_supDrawNumber(painterAntiAl &painter, double location, double length) = 0;
+    virtual void m_supDrawTick(painterAntiAl &painter, double location) = 0;
 public:
     static bool m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2);
 protected:
@@ -202,6 +205,10 @@ public:
     widGraphXAxes(widGraph *graph, int elementNumber):
         widGraphAxis(graph, elementNumber)
     {}
+protected:
+    virtual void m_supDrawNumber(painterAntiAl &painter, double location, double length) override;
+    virtual void m_supDrawTick(painterAntiAl &painter, double location) override;
+    virtual double m_getPositionFromValue(double value) override;
 };
 
 class widGraphYAxes: public widGraphAxis
@@ -219,6 +226,11 @@ protected:
     virtual double m_getPositionFromValue(double value) override;
     virtual double m_getValueFromPosition(double position) override;
     virtual std::tuple<double, double> m_getStartAndEndFromMouse(QPointF start, QPointF end) override;
+    virtual void m_supDrawNumber(painterAntiAl &painter, double location, double length) override;
+    virtual void m_supDrawTick(painterAntiAl &painter, double location) override;
+    virtual void m_drawTicks(painterAntiAl &painter) override;
+    virtual void m_drawNumbers(painterAntiAl &painter) override;
+    virtual void m_drawText(painterAntiAl &painter) override;
 protected:
     const int m_axisPosition;
 };
@@ -234,7 +246,6 @@ public:
     virtual void m_setDimensions() override;
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
-    virtual double m_getPositionFromValue(double value) override;
     virtual double m_getValueFromPosition(double position) override;
     virtual std::tuple<double, double> m_getStartAndEndFromMouse(QPointF start, QPointF end) override;
     virtual void m_drawLine(painterAntiAl &painter) override;
@@ -262,9 +273,6 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
-    virtual void m_drawTicks(painterAntiAl &painter) override;
-    virtual void m_drawNumbers(painterAntiAl &painter) override;
-    virtual void m_drawText(painterAntiAl &painter) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -285,9 +293,6 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
-    virtual void m_drawTicks(painterAntiAl &painter) override;
-    virtual void m_drawNumbers(painterAntiAl &painter) override;
-    virtual void m_drawText(painterAntiAl &painter) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;

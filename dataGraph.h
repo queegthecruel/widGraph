@@ -53,6 +53,8 @@ struct dataAxis: public dataElement
     ~dataAxis() = default;
     void m_saveToFile(std::ofstream &outstream);
     void m_setMinMaxStep(double min, double max, double step);
+    inline std::tuple<double, double, double> m_getMinMaxStep()
+        {return {m_min, m_max, m_step};}
     void m_setStep(double step);
 
     bool m_autoAxis = true, m_autoStep  = true;
