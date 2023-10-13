@@ -133,7 +133,7 @@ public:
 protected:
     const double m_rowSpacing = 1.0;
     const double m_spaceAbove = 5, m_spaceBelow = 5;
-    HBoxLayout *m_layBackground;
+    QHBoxLayout *m_layBackground;
     widGraphTitleText *m_text;
     widGraphButtonAutoAxes *m_butAuto;
     widGraphButtonShowGrid *m_butShowGrid;
@@ -318,7 +318,7 @@ public:
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)
-            {*m_data = *newData;}
+            {m_data = newData;}
     widGraphXAxis* m_getXAxis()
         {return m_widX;}
     widGraphY1Axis* m_getY1Axis()
@@ -327,7 +327,7 @@ public:
         {return m_widY2;}
     void m_addObject(std::shared_ptr<graphObjects> ptr_object);
     void m_loadValues();
-    void m_setCurveStyle(int curveIndex, int R, int G, int B, int axis = 0);
+    void m_setCurveStyle(int curveIndex, QColor color, int axis = 0);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog(int tabIndex = 0);
     void m_takeScreenshot();
@@ -347,6 +347,18 @@ protected:
         std::unique_ptr<dialogGraph> m_dialog;
 };
 
+class graphLayout: public QGridLayout
+{
+public:
+    graphLayout(QWidget *parent);
+    ~graphLayout() = default;
+};
+
+class painterAntiAl: public QPainter
+{
+public:
+    painterAntiAl(QPaintDevice *device);
+};
 
 
 

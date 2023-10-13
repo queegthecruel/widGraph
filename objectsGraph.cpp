@@ -113,7 +113,7 @@ graphObjects::graphObjects()
 
 int graphObjects::m_getPrefferedYAxis()
 {
-    return m_data->m_prefferedYAxis;
+    return m_data->m_getPrefferedYAxis();
 }
 
 QPainterPath graphObjects::m_createPoint(QPointF point, double width)
@@ -121,11 +121,25 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double width)
     double widthHalf = width/2;
     QPainterPath path;
     path.moveTo(point + QPointF(-widthHalf, -widthHalf));
-    path.lineTo(point + QPointF(widthHalf,widthHalf));
+    path.lineTo(point + QPointF(widthHalf, widthHalf));
     path.moveTo(point + QPointF(-widthHalf, widthHalf));
-    path.lineTo(point + QPointF(widthHalf,-widthHalf));
+    path.lineTo(point + QPointF(widthHalf, -widthHalf));
 
     return path;
+}
+
+std::shared_ptr<graphObjects> graphObjects::m_createGraphObject(int type)
+{
+std::shared_ptr<graphObjects> ptr_object = nullptr;
+  /*  switch (type) {
+    case CURVE:
+        ptr_object = std::make_shared<graphCurve>();
+        break;
+    case YVALUE:
+        ptr_object = std::make_shared<graphYValue>();
+        break;
+    }*/
+    return ptr_object;
 }
 
 std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(widGraph *ptr_graph)
@@ -172,4 +186,36 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
         pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(maxX),
                     ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
     return pathCurve;
+}
+
+dataGraphObject::dataGraphObject()
+{
+
+}
+
+dataGraphObject::dataGraphObject(std::ifstream &instream)
+{
+    // Axis
+        m_prefferedYAxis = readInt(instream);
+    // Name
+        m_name = readString(instream);
+    // Color
+        m_R = readInt(instream);
+        m_G = readInt(instream);
+        m_B = readInt(instream);
+        m_A = readInt(instream);
+}
+
+void dataGraphObject::m_saveToFile(std::ofstream &outstream)
+{
+    // Axis
+        writeInt(outstream, m_prefferedYAxis);
+    // Name
+        writeString(outstream, m_name);
+    // Color
+        writeInt(outstream, m_R);
+        writeInt(outstream, m_G);
+        writeInt(outstream, m_B);
+        writeInt(outstream, m_A);
+
 }

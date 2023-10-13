@@ -1,7 +1,6 @@
 #ifndef DATAGRAPH_H
 #define DATAGRAPH_H
 
-#include "qcolor.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,9 +19,9 @@ void writeBool(std::ofstream &outstream, const bool& value);
 struct dataElement
 {
     dataElement() {}
-    dataElement(std::ifstream &instream) {}
+    dataElement(std::ifstream &/*instream*/) {}
     ~dataElement() = default;
-    void m_saveToFile(std::ofstream &outstream)
+    void m_saveToFile(std::ofstream &/*outstream*/)
     {
     }
 };
@@ -150,7 +149,7 @@ struct dataGraph
     dataGraph();
     dataGraph(std::ifstream &instream);
     dataGraph(const dataGraph&) = delete;
-    dataGraph& operator=(const dataGraph& oldData);
+    dataGraph& operator=(const dataGraph& oldData) = delete;
     ~dataGraph() = default;
     void m_saveToFile(std::ofstream &outstream);
 
@@ -161,6 +160,7 @@ struct dataGraph
     std::shared_ptr<dataLegend> m_legend;
     std::shared_ptr<dataDrawArea> m_drawArea;
     std::shared_ptr<dataControl> m_control;
+
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
     enum GRAPH_SETTINGS {TITLE, X, Y1, Y2, LEGEND, DRAWAREA};
 };

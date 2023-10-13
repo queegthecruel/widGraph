@@ -2,11 +2,6 @@
 #include "dataGraph.h"
 #include "widGraph.h"
 
-dialogs::dialogs()
-{
-
-}
-
 dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data, int tabIndex):
     ptr_graph(graph), ptr_data(data)
 {
@@ -33,6 +28,11 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data, int tab
     resize(800,600);
 }
 
+void dialogGraph::m_slotClose()
+{
+    close();
+}
+
 void dialogGraph::m_slotApply()
 {
     m_saveValues();
@@ -43,6 +43,14 @@ void dialogGraph::m_slotSaveFile()
 {
     std::ofstream saveFile("example.txt", std::ios::binary);
     ptr_graph->m_getData().lock()->m_saveToFile(saveFile);
+    saveFile.close();
+
+    std::ofstream saveFileContent("exampleContent.txt", std::ios::binary);
+    const auto &vObjects = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+    writeInt(saveFileContent, vObjects.size());
+    for (const auto& var: vObjects)
+        var->m_getData().lock()->m_saveToFile(saveFileContent);
+    saveFileContent.close();
 }
 
 void dialogGraph::m_slotLoadFile()
@@ -50,6 +58,18 @@ void dialogGraph::m_slotLoadFile()
     std::ifstream loadFile("example.txt", std::ios::binary);
     auto newData = std::make_shared<dataGraph>(loadFile);
     ptr_graph->m_setData(newData);
+    loadFile.close();
+
+    std::ifstream loadFileContent("exampleContent.txt", std::ios::binary);
+    int nGraphObjects = readInt(loadFileContent);
+    for (int i = 0; i < nGraphObjects; ++i) {
+        int type = readInt(loadFileContent);
+        auto ptr_object = graphObjects::m_createGraphObject(type);
+        auto ptr_objectData = std::make_shared<dataGraphObject>(loadFileContent);
+        ptr_object->m_setData(ptr_objectData);
+        ptr_graph->m_addObject(ptr_object);
+    }
+    loadFileContent.close();
 }
 
 tabGraphSettings::tabGraphSettings()

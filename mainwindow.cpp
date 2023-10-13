@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent):
         auto numbers1 = std::vector<double>{4, 4, 12, 4, 4, 4};
         m_data1 = std::make_shared<std::vector<double>>(numbers1);
         m_widGraph->m_addObject(std::make_shared<graphCurve>(m_data1));
-        m_widGraph->m_setCurveStyle(-1, 255, 0, 0);
+        m_widGraph->m_setCurveStyle(-1, QColor(255,0,0,128));
         m_widGraph->m_setCurveName(-1, "Curve 1");
     // Dataset 2
         auto numbers2x = std::vector<double>{0, 1, 2, 7, 8, 9};
@@ -39,13 +39,13 @@ MainWindow::MainWindow(QWidget *parent):
         m_data2x = std::make_shared<std::vector<double>>(numbers2x);
         m_data2y = std::make_shared<std::vector<double>>(numbers2y);
         m_widGraph->m_addObject(std::make_shared<graphCurve>(m_data2x, m_data2y));
-        m_widGraph->m_setCurveStyle(-1, 0, 255, 0, 1);
+        m_widGraph->m_setCurveStyle(-1, Qt::green, 1);
         m_widGraph->m_setCurveName(-1, "Curve 2");
     // Dataset 3
         double numbers3 = 15;
         m_data3 = std::make_shared<double>(numbers3);
         m_widGraph->m_addObject(std::make_shared<graphYValue>(m_data3));
-        m_widGraph->m_setCurveStyle(-1, 0, 0, 255, 0);
+        m_widGraph->m_setCurveStyle(-1, Qt::blue, 0);
         m_widGraph->m_setCurveName(-1, "Curve 3");
 
     // Reload graph

@@ -65,39 +65,24 @@ dataLegend::dataLegend()
 
 dataGraph::dataGraph()
 {
-     m_title = std::make_shared<dataTitle>();
-     m_X = std::make_shared<dataAxisX>();
-     m_Y1 = std::make_shared<dataAxisY1>();
-     m_Y2 = std::make_shared<dataAxisY2>();
-     m_legend = std::make_shared<dataLegend>();
-     m_drawArea = std::make_shared<dataDrawArea>();
-     m_control = std::make_shared<dataControl>();
+    m_title = std::make_shared<dataTitle>();
+    m_X = std::make_shared<dataAxisX>();
+    m_Y1 = std::make_shared<dataAxisY1>();
+    m_Y2 = std::make_shared<dataAxisY2>();
+    m_legend = std::make_shared<dataLegend>();
+    m_drawArea = std::make_shared<dataDrawArea>();
+    m_control = std::make_shared<dataControl>();
 }
 
 dataGraph::dataGraph(std::ifstream &instream)
 {
-     m_title = std::make_shared<dataTitle>(instream);
-     m_X = std::make_shared<dataAxisX>(instream);
-     m_Y1 = std::make_shared<dataAxisY1>(instream);
-     m_Y2 = std::make_shared<dataAxisY2>(instream);
-     m_legend = std::make_shared<dataLegend>(instream);
-     m_drawArea = std::make_shared<dataDrawArea>(instream);
-     m_control = std::make_shared<dataControl>(instream);
-}
-
-dataGraph &dataGraph::operator=(const dataGraph &oldData)
-{
-    *m_title = *oldData.m_title;
-    *m_X = *oldData.m_X;
-    *m_Y1 = *oldData.m_Y1;
-    *m_Y2 = *oldData.m_Y2;
-    *m_legend = *oldData.m_legend;
-    *m_drawArea = *oldData.m_drawArea;
-
-    m_vectorOfObjects.clear();
-    for(const auto &var: oldData.m_vectorOfObjects)
-        m_vectorOfObjects.push_back(var);
-    return *this;
+    m_title = std::make_shared<dataTitle>(instream);
+    m_X = std::make_shared<dataAxisX>(instream);
+    m_Y1 = std::make_shared<dataAxisY1>(instream);
+    m_Y2 = std::make_shared<dataAxisY2>(instream);
+    m_legend = std::make_shared<dataLegend>(instream);
+    m_drawArea = std::make_shared<dataDrawArea>(instream);
+    m_control = std::make_shared<dataControl>(instream);
 }
 
 void dataGraph::m_saveToFile(std::ofstream &outstream)

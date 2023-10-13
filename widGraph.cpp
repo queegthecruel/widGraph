@@ -1,5 +1,4 @@
 #include "widGraph.h"
-#include "widOthers.h"
 #include "dialogGraph.h"
 #include <QApplication>
 #include <QClipboard>
@@ -75,16 +74,14 @@ void widGraph::m_loadValues()
     setUpdatesEnabled(true);
 }
 
-void widGraph::m_setCurveStyle(int curveIndex, int R, int G, int B, int axis)
+void widGraph::m_setCurveStyle(int curveIndex, QColor color, int axis)
 {
     if (curveIndex == -1)
         curveIndex = m_data->m_vectorOfObjects.size() - 1;
 
-    auto ptr_curveData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
-    ptr_curveData->m_R = R;
-    ptr_curveData->m_G = G;
-    ptr_curveData->m_B = B;
-    ptr_curveData->m_prefferedYAxis = axis;
+    auto ptr_objectData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
+    ptr_objectData->m_setColor(color);
+    ptr_objectData->m_setPrefferedAxis(axis);
 }
 
 void widGraph::m_setCurveName(int curveIndex, const std::string &name)
@@ -93,7 +90,7 @@ void widGraph::m_setCurveName(int curveIndex, const std::string &name)
         curveIndex = m_data->m_vectorOfObjects.size() - 1;
 
     auto ptr_curveData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
-    ptr_curveData->m_name = name;
+    ptr_curveData->m_setName(name);
 }
 
 void widGraph::m_openDialog(int tabIndex)
@@ -117,7 +114,7 @@ void widGraph::m_takeScreenshot()
     setStyleSheet(".QWidget {background: transparent;}");
 }
 
-void widGraph::m_slotDialogClosed(int status)
+void widGraph::m_slotDialogClosed(int /*status*/)
 {
     m_dialog = nullptr;
 }
@@ -189,7 +186,7 @@ void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
         m_isMouseMoving = true;
 }
 
-void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
+void widGraphDrawArea::mouseMoveEvent(QMouseEvent */*event*/)
 {
     update();
 }
@@ -235,7 +232,7 @@ void widGraphDrawArea::m_zoomByMouse()
     }
 }
 
-void widGraphDrawArea::mouseReleaseEvent(QMouseEvent *event)
+void widGraphDrawArea::mouseReleaseEvent(QMouseEvent */*event*/)
 {
     if (m_isMouseZooming)
         m_zoomByMouse();
@@ -330,7 +327,7 @@ widGraphTitle::widGraphTitle(widGraph *graph):
     m_butZoom = new widGraphButtonZoom(ptr_graph);
     m_butMove = new widGraphButtonMove(ptr_graph);
     m_butScreenshot = new widGraphButtonScreenshot(ptr_graph);
-    m_layBackground = new HBoxLayout(this);
+    m_layBackground = new QHBoxLayout(this);
     m_layBackground->setSpacing(2);
     m_layBackground->addWidget(m_text);
     m_layBackground->addWidget(m_butZoom);
@@ -1139,14 +1136,14 @@ void widGraphLegend::m_drawTexts(painterAntiAl &painter)
     for (const auto &var: listCurves) {
         QRect rect(startLeft, i*rowHeight, width() - startLeft, rowHeight);
         auto ptr_curveData = var->m_getData().lock();
-        QString axis = ptr_curveData->m_prefferedYAxis == 0 ? "L" : "R";
-        QString text = QString::fromStdString(ptr_curveData->m_name) + " [" + axis + "]" ;
+        QString axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
+        QString text = QString::fromStdString(ptr_curveData->m_getName()) + " [" + axis + "]" ;
         painter.drawText(rect, text, QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
         ++i;
     }
 }
 
-void widGraphLegend::paintEvent(QPaintEvent *event)
+void widGraphLegend::paintEvent(QPaintEvent */*event*/)
 {
     painterAntiAl painter(this);
     m_drawTopLine(painter);
@@ -1176,7 +1173,7 @@ widGraphButton::widGraphButton(widGraph *graph, const QString &tooltip):
     setToolTip(tooltip);
 }
 
-void widGraphButton::paintEvent(QPaintEvent *event)
+void widGraphButton::paintEvent(QPaintEvent */*event*/)
 {
     // Painter
     painterAntiAl painter(this);
@@ -1208,7 +1205,7 @@ void widGraphButton::mouseDoubleClickEvent(QMouseEvent *event)
     event->accept();
 }
 
-void widGraphButton::mouseReleaseEvent(QMouseEvent *event)
+void widGraphButton::mouseReleaseEvent(QMouseEvent */*event*/)
 {
     m_isChecked = !m_isChecked;
     m_onClick();
@@ -1225,7 +1222,7 @@ widGraphTitleText::widGraphTitleText(widGraph *graph):
 {
 }
 
-void widGraphTitleText::paintEvent(QPaintEvent *event)
+void widGraphTitleText::paintEvent(QPaintEvent */*event*/)
 {
     // Painter
         painterAntiAl painter(this);
@@ -1488,4 +1485,17 @@ void widGraphYAxes::m_drawMoveCursor(painterAntiAl &painter)
         }
     }
     painter.restore();
+}
+
+graphLayout::graphLayout(QWidget *parent):
+    QGridLayout(parent)
+{
+    setContentsMargins(0,0,0,0);
+    setSpacing(0);
+}
+
+painterAntiAl::painterAntiAl(QPaintDevice *device):
+    QPainter(device)
+{
+    setRenderHint(QPainter::Antialiasing);
 }

@@ -9,13 +9,31 @@
 class widGraph;
 class widGraphAxis;
 
-struct dataGraphObject
+class dataGraphObject
 {
+public:
+    dataGraphObject();
+    dataGraphObject(std::ifstream &instream);
+    void m_saveToFile(std::ofstream &outstream);
     inline QColor m_getColor()
-        {return QColor(m_R, m_G, m_B);}
+        {return QColor(m_R, m_G, m_B, m_A);}
+    void m_setColor(const QColor &color)
+    {m_R = color.red();
+     m_G = color.green();
+     m_B = color.blue();
+     m_A = color.alpha();}
+    inline const std::string &m_getName()
+        {return m_name;}
+    inline void m_setName(const std::string name)
+        {m_name = name;}
+    inline int m_getPrefferedYAxis()
+        {return m_prefferedYAxis;}
+    inline void m_setPrefferedAxis(int axisIndex)
+        {m_prefferedYAxis = axisIndex;}
+protected:
     int m_prefferedYAxis = 0;
-    int m_R = 0, m_G = 0, m_B = 0;
     std::string m_name;
+    int m_R = 0, m_G = 0, m_B = 0, m_A = 0;
 };
 
 
@@ -28,13 +46,17 @@ public:
     virtual double m_getMaxX() {return 0;}
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
+    void m_setData(std::shared_ptr<dataGraphObject> data)
+        {m_data = data;};
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
     static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double width = 10);
+    static std::shared_ptr<graphObjects> m_createGraphObject(int type);
 protected:
     std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
 protected:
+    enum type {CURVE, YVALUE};
     std::shared_ptr<dataGraphObject> m_data;
 };
 

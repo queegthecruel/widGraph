@@ -1,17 +1,10 @@
 #ifndef DIALOGGRAPH_H
 #define DIALOGGRAPH_H
 
-#include "widOthers.h"
+#include "widPretty.h"
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QPushButton>
-
-class dialogs: public QDialog
-{
-public:
-    dialogs();
-    ~dialogs() = default;
-};
 
 struct dataGraph;
 class widGraph;
@@ -172,8 +165,7 @@ public:
     inline void m_saveValues()
         {m_tabbed->m_saveValues();}
 public slots:
-    inline void m_slotClose()
-        {close();}
+    void m_slotClose();
     void m_slotApply();
     void m_slotSaveFile();
     void m_slotLoadFile();
