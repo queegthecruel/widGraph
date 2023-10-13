@@ -1,4 +1,8 @@
-QT       += core gui
+QT -= gui
+QT += widgets
+
+TEMPLATE = lib
+DEFINES += WIDGRAPH_LIBRARY
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -12,21 +16,20 @@ CONFIG += c++20
 SOURCES += \
     dataGraph.cpp \
     dialogGraph.cpp \
-    main.cpp \
-    mainwindow.cpp \
     objectsGraph.cpp \
     widGraph.cpp
 
 HEADERS += \
     dataGraph.h \
     dialogGraph.h \
-    mainwindow.h \
+    graph_global.h \
     objectsGraph.h \
     widGraph.h
 
 # Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
+unix {
+    target.path = /usr/lib
+}
 !isEmpty(target.path): INSTALLS += target
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-widPretty-Desktop_Qt_6_4_1_MinGW_64_bit-Release/release/ -lwidPretty

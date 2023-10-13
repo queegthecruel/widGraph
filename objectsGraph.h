@@ -1,6 +1,7 @@
 #ifndef OBJECTSGRAPH_H
 #define OBJECTSGRAPH_H
 
+#include "graph_global.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QDebug>
@@ -60,7 +61,7 @@ protected:
     std::shared_ptr<dataGraphObject> m_data;
 };
 
-class graphCurve: public graphObjects
+class WIDGRAPH_EXPORT graphCurve: public graphObjects
 {
 public:
     graphCurve(std::shared_ptr<std::vector<double>> ptr_dataY);
@@ -80,7 +81,7 @@ protected:
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 
-class graphYValue: public graphObjects
+class WIDGRAPH_EXPORT graphYValue: public graphObjects
 {
 public:
     graphYValue(std::shared_ptr<double> ptr_dataY);

@@ -1,6 +1,7 @@
 #ifndef WIDGRAPH_H
 #define WIDGRAPH_H
 
+#include "graph_global.h"
 #include "dataGraph.h"
 #include "objectsGraph.h"
 #include "dialogGraph.h"
@@ -307,7 +308,7 @@ private:
     void m_drawTexts(painterAntiAl &painter);
 };
 
-class widGraph: public QWidget
+class WIDGRAPH_EXPORT widGraph: public QWidget
 {
     Q_OBJECT
 public:
