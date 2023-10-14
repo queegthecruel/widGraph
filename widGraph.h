@@ -58,7 +58,7 @@ protected:
 class widGraphButton: public widGraphElement
 {
 public:
-    widGraphButton(widGraph *graph, const QString &tooltip);
+    widGraphButton(widGraph *graph, const QImage &icon, const QImage &iconActive, const QString &tooltip);
     void paintEvent(QPaintEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -66,12 +66,13 @@ public:
     virtual void m_loadValues() {}
 private:
     virtual void m_onClick() = 0;
-    virtual void m_drawInside(painterAntiAl &painter) = 0;
+    virtual void m_drawInside(painterAntiAl &painter);
     void m_drawBorder(painterAntiAl &painter);
 protected:
     QSizeF m_size = QSize(20,20);
     bool m_isChecked = false;
     bool m_isCheckable = false;
+    QImage m_icon, m_iconActive;
 };
 
 class widGraphButtonAutoAxes: public widGraphButton
@@ -79,7 +80,6 @@ class widGraphButtonAutoAxes: public widGraphButton
 public:
     widGraphButtonAutoAxes(widGraph *graph);
     virtual void m_onClick() override;
-    virtual void m_drawInside(painterAntiAl &painter) override;
 };
 
 class widGraphButtonScreenshot: public widGraphButton
@@ -87,7 +87,6 @@ class widGraphButtonScreenshot: public widGraphButton
 public:
     widGraphButtonScreenshot(widGraph *graph);
     virtual void m_onClick() override;
-    virtual void m_drawInside(painterAntiAl &painter) override;
 };
 
 class widGraphButtonShowGrid: public widGraphButton
@@ -104,7 +103,6 @@ public:
     widGraphButtonZoom(widGraph *graph);
     virtual void m_loadValues() override;
     virtual void m_onClick() override;
-    virtual void m_drawInside(painterAntiAl &painter) override;
 };
 
 class widGraphButtonMove: public widGraphButton
@@ -113,7 +111,6 @@ public:
     widGraphButtonMove(widGraph *graph);
     virtual void m_loadValues() override;
     virtual void m_onClick() override;
-    virtual void m_drawInside(painterAntiAl &painter) override;
 };
 
 class widGraphTitleText: public widGraphElement

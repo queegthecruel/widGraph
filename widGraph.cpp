@@ -1076,10 +1076,14 @@ void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
     event->accept();
 }
 
-widGraphButton::widGraphButton(widGraph *graph, const QString &tooltip):
-    widGraphElement(graph, -1)
+widGraphButton::widGraphButton(widGraph *graph,
+    const QImage &icon, const QImage &iconActive,
+    const QString &tooltip):
+    widGraphElement(graph, -1),
+    m_icon(icon), m_iconActive(iconActive)
 {
     setToolTip(tooltip);
+    setCursor(Qt::ArrowCursor);
 }
 
 void widGraphButton::paintEvent(QPaintEvent */*event*/)
@@ -1114,16 +1118,41 @@ void widGraphButton::mouseDoubleClickEvent(QMouseEvent *event)
     event->accept();
 }
 
-void widGraphButton::mouseReleaseEvent(QMouseEvent */*event*/)
+void widGraphButton::mouseReleaseEvent(QMouseEvent *event)
 {
-    m_isChecked = !m_isChecked;
-    m_onClick();
-    ptr_graph->m_loadValues();
+    qDebug() << event->buttons();
+    if (event->button() == Qt::LeftButton) {
+        m_isChecked = !m_isChecked;
+        m_onClick();
+        ptr_graph->m_loadValues();
+    }
 }
 
 void widGraphButton::m_setDimensions()
 {
     setFixedSize(m_size.toSize());
+}
+
+void widGraphButton::m_drawInside(painterAntiAl &painter)
+{
+    painter.save();
+  //  auto buttons = QApplication::mouseButtons();
+  //  qDebug() << buttons;
+  //  if (buttons == Qt::LeftButton)
+  //      qDebug() << "Left";
+
+   /* if (underMouse())
+        painter.drawImage(QRect(0, 0, width(), height()),
+                          m_iconActive);*/
+    if (m_isCheckable && m_isChecked) {
+        painter.drawImage(QRect(0, 0, width(), height()),
+                          m_iconActive);
+    }
+    else {
+        painter.drawImage(QRect(0, 0, width(), height()),
+                          m_icon);
+    }
+    painter.restore();
 }
 
 widGraphTitleText::widGraphTitleText(widGraph *graph):
@@ -1164,7 +1193,7 @@ void widGraphTitleText::m_setDimensions()
 }
 
 widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
-    widGraphButton(graph, "Set automatic axes")
+    widGraphButton(graph, QImage(":/images/autoAxes.png"), QImage(":/images/autoAxes.png"), "Set automatic axes")
 {
 
 }
@@ -1184,7 +1213,7 @@ void widGraphButtonAutoAxes::m_onClick()
 }
 
 widGraphButtonZoom::widGraphButtonZoom(widGraph *graph):
-    widGraphButton(graph, "Enable/disable zoom")
+    widGraphButton(graph, QImage(":/images/zoomOff.png"), QImage(":/images/zoomOn.png"),  "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1204,28 +1233,8 @@ void widGraphButtonZoom::m_onClick()
     ptr_data->m_control->m_setZoom(m_isChecked);
 }
 
-void widGraphButtonZoom::m_drawInside(painterAntiAl &painter)
-{
-    painter.save();
-    // Pen
-        QPen pen;
-        if (m_isChecked)
-            pen = QPen(Qt::blue, 2);
-        else
-            pen = QPen(Qt::black, 1);
-    // Font
-        QFont font;
-        font.setPixelSize(18);
-        painter.setFont(font);
-    // Draw
-        painter.drawText(QRect(0, 0, width(), height()),
-                         "Z", QTextOption(Qt::AlignCenter));
-    painter.restore();
-}
-
-
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, "Enable/disable Move")
+    widGraphButton(graph, QImage(":/images/moveOff.png"), QImage(":/images/moveOn.png"),  "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1245,28 +1254,8 @@ void widGraphButtonMove::m_onClick()
     ptr_data->m_control->m_setMove(m_isChecked);
 }
 
-void widGraphButtonMove::m_drawInside(painterAntiAl &painter)
-{
-    painter.save();
-    // Pen
-        QPen pen;
-        if (m_isChecked)
-            pen = QPen(Qt::blue, 2);
-        else
-            pen = QPen(Qt::black, 1);
-    // Font
-        QFont font;
-        font.setPixelSize(18);
-        painter.setFont(font);
-    // Draw
-        painter.drawText(QRect(0, 0, width(), height()),
-                         "M", QTextOption(Qt::AlignCenter));
-    painter.restore();
-}
-
-
 widGraphButtonShowGrid::widGraphButtonShowGrid(widGraph *graph):
-    widGraphButton(graph, "Show/hide grid")
+    widGraphButton(graph, QImage(), QImage(),  "Show/hide grid")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1304,7 +1293,7 @@ void widGraphButtonShowGrid::m_drawInside(painterAntiAl &painter)
         painter.drawLine(0, 3*h, width(), 3*h);
     painter.restore();
 }
-
+/*
 void widGraphButtonAutoAxes::m_drawInside(painterAntiAl &painter)
 {
     painter.save();
@@ -1320,10 +1309,10 @@ void widGraphButtonAutoAxes::m_drawInside(painterAntiAl &painter)
         painter.drawText(QRect(0, 0, width(), height()),
                          "A", QTextOption(Qt::AlignCenter));
     painter.restore();
-}
+}*/
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, "Take a screenshot")
+    widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"),  "Take a screenshot")
 {
 
 }
@@ -1332,7 +1321,7 @@ void widGraphButtonScreenshot::m_onClick()
 {
     ptr_graph->m_takeScreenshot();
 }
-
+/*
 void widGraphButtonScreenshot::m_drawInside(painterAntiAl &painter)
 {
     painter.save();
@@ -1348,7 +1337,7 @@ void widGraphButtonScreenshot::m_drawInside(painterAntiAl &painter)
         painter.drawText(QRect(0, 0, width(), height()),
                          "S", QTextOption(Qt::AlignCenter));
     painter.restore();
-}
+}*/
 
 void widGraphYAxes::m_drawZoomCursor(painterAntiAl &painter)
 {

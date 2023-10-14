@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/zoomOff.png</file>
+        <file>images/moveOff.png</file>
+        <file>images/moveOn.png</file>
+        <file>images/zoomOn.png</file>
+        <file>images/screenshot.png</file>
+        <file>images/autoAxes.png</file>
+    </qresource>
+</RCC>

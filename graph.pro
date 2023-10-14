@@ -43,3 +43,6 @@ LIBS += -L$$PWD/../widPretty/ -lwidPretty
 INCLUDEPATH += $$PWD/../widPretty
 DEPENDPATH += $$PWD/../widPretty
 
+RESOURCES += \
+    images.qrc
+
