@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <QGridLayout>
 #include <QMouseEvent>
+#include <QTimer>
 
 // Graph widgets
 class widGraph;
@@ -57,6 +58,7 @@ protected:
 
 class widGraphButton: public widGraphElement
 {
+    Q_OBJECT
 public:
     widGraphButton(widGraph *graph, const QImage &icon, const QImage &iconActive, const QString &tooltip);
     void paintEvent(QPaintEvent *event) override;
@@ -64,15 +66,25 @@ public:
     void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void m_setDimensions() override;
     virtual void m_loadValues() {}
+    inline void m_show()
+        {m_isVisible = true;}
+    inline void m_hide()
+        {m_isVisible = false;}
+public slots:
+    void m_slotAnimationTimer();
 private:
     virtual void m_onClick() = 0;
+    virtual void m_doAnimation();
     virtual void m_drawInside(painterAntiAl &painter);
     void m_drawBorder(painterAntiAl &painter);
 protected:
     QSizeF m_size = QSize(20,20);
     bool m_isChecked = false;
     bool m_isCheckable = false;
+    bool m_isAnimation = false;
+    bool m_isVisible = false;
     QImage m_icon, m_iconActive;
+    QTimer *m_timerAnimation;
 };
 
 class widGraphButtonAutoAxes: public widGraphButton
@@ -126,8 +138,13 @@ class widGraphTitle: public widGraphElement
 {
 public:
     widGraphTitle(widGraph *graph);
-    void paintEvent(QPaintEvent *event) override;;
+    void paintEvent(QPaintEvent *event) override;
+    virtual void enterEvent(QEnterEvent *event) override;
+    virtual void leaveEvent(QEvent *event) override;
     virtual void m_setDimensions() override;
+    void m_showButtons();
+    void m_hideButtons();
+
 protected:
     const double m_rowSpacing = 1.0;
     const double m_spaceAbove = 5, m_spaceBelow = 5;

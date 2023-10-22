@@ -333,6 +333,19 @@ void widGraphTitle::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
 }
 
+void widGraphTitle::enterEvent(QEnterEvent *event)
+{
+    QWidget::enterEvent(event);
+    m_showButtons();
+    update();
+}
+
+void widGraphTitle::leaveEvent(QEvent *event)
+{
+    QWidget::leaveEvent(event);
+    m_hideButtons();
+}
+
 void widGraphTitle::m_setDimensions()
 {
     auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
@@ -351,6 +364,25 @@ void widGraphTitle::m_setDimensions()
     m_butAuto->m_setDimensions();
     m_butShowGrid->m_setDimensions();
     m_butScreenshot->m_setDimensions();
+}
+
+void widGraphTitle::m_showButtons()
+{
+    m_butZoom->m_show();
+    m_butMove->m_show();
+    m_butAuto->m_show();
+    m_butShowGrid->m_show();
+    m_butScreenshot->m_show();
+}
+
+void widGraphTitle::m_hideButtons()
+{
+    m_butZoom->m_hide();
+    m_butMove->m_hide();
+    m_butAuto->m_hide();
+    m_butShowGrid->m_hide();
+    m_butScreenshot->m_hide();
+    update();
 }
 
 widGraphXAxis::widGraphXAxis(widGraph *graph):
@@ -1084,16 +1116,19 @@ widGraphButton::widGraphButton(widGraph *graph,
 {
     setToolTip(tooltip);
     setCursor(Qt::ArrowCursor);
+    m_timerAnimation = new QTimer(this);
 }
 
 void widGraphButton::paintEvent(QPaintEvent */*event*/)
 {
-    // Painter
-    painterAntiAl painter(this);
-    // Pen
-        m_drawBorder(painter);
-    // Draw inside
-        m_drawInside(painter);
+    if (m_isVisible) {
+        // Painter
+        painterAntiAl painter(this);
+        // Pen
+            m_drawBorder(painter);
+        // Draw inside
+            m_drawInside(painter);
+    }
 }
 
 void widGraphButton::m_drawBorder(painterAntiAl &painter)
@@ -1101,7 +1136,8 @@ void widGraphButton::m_drawBorder(painterAntiAl &painter)
     painter.save();
     // Pen
         QPen pen;
-        if (m_isCheckable && m_isChecked)
+        if ((m_isCheckable && m_isChecked)
+            || (!m_isCheckable && m_isAnimation))
             pen = QPen(Qt::blue, 2);
         else
             pen = QPen(Qt::black, 1);
@@ -1109,6 +1145,7 @@ void widGraphButton::m_drawBorder(painterAntiAl &painter)
     // Draw border
         QRectF rectButton = QRectF(QPointF(0,0), m_size);
         painter.drawRect(rectButton);
+
     painter.restore();
 }
 
@@ -1120,10 +1157,10 @@ void widGraphButton::mouseDoubleClickEvent(QMouseEvent *event)
 
 void widGraphButton::mouseReleaseEvent(QMouseEvent *event)
 {
-    qDebug() << event->buttons();
     if (event->button() == Qt::LeftButton) {
         m_isChecked = !m_isChecked;
         m_onClick();
+        m_doAnimation();
         ptr_graph->m_loadValues();
     }
 }
@@ -1133,17 +1170,26 @@ void widGraphButton::m_setDimensions()
     setFixedSize(m_size.toSize());
 }
 
+void widGraphButton::m_slotAnimationTimer()
+{
+    m_isAnimation = false;
+    m_timerAnimation->stop();
+    update();
+}
+
+void widGraphButton::m_doAnimation()
+{
+    int ms = 500;
+    connect(m_timerAnimation, &QTimer::timeout,
+            this, &widGraphButton::m_slotAnimationTimer);
+    m_timerAnimation->setInterval(ms);
+    m_timerAnimation->start();
+    m_isAnimation = true;
+}
+
 void widGraphButton::m_drawInside(painterAntiAl &painter)
 {
     painter.save();
-  //  auto buttons = QApplication::mouseButtons();
-  //  qDebug() << buttons;
-  //  if (buttons == Qt::LeftButton)
-  //      qDebug() << "Left";
-
-   /* if (underMouse())
-        painter.drawImage(QRect(0, 0, width(), height()),
-                          m_iconActive);*/
     if (m_isCheckable && m_isChecked) {
         painter.drawImage(QRect(0, 0, width(), height()),
                           m_iconActive);
@@ -1177,7 +1223,7 @@ void widGraphTitleText::paintEvent(QPaintEvent */*event*/)
         QRectF rect = QRectF(QPointF(0,0),
                              QSizeF(width(), height()));
         painter.drawText(rect, QString::fromStdString(title),
-                         QTextOption(Qt::AlignCenter));
+                         QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
 }
 
 void widGraphTitleText::mouseDoubleClickEvent(QMouseEvent *event)
