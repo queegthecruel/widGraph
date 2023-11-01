@@ -32,11 +32,11 @@ unix {
 }
 !isEmpty(target.path): INSTALLS += target
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-widPretty-Desktop_Qt_6_4_1_MinGW_64_bit-Release/release/ -lwidPretty
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-widPretty-Desktop_Qt_6_4_1_MinGW_64_bit-Debug/debug/ -lwidPretty
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-widPretty-Release/release/ -lwidPretty
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-widPretty-Debug/debug/ -lwidPretty
 
-INCLUDEPATH += $$PWD/../build-widPretty-Desktop_Qt_6_4_1_MinGW_64_bit-Release/release
-DEPENDPATH += $$PWD/../build-widPretty-Desktop_Qt_6_4_1_MinGW_64_bit-Release/release
+INCLUDEPATH += $$PWD/../build-widPrtetty-Release/release
+DEPENDPATH += $$PWD/../build-widPretty-Release/release
 
 LIBS += -L$$PWD/../widPretty/ -lwidPretty
 
