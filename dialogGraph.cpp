@@ -2,16 +2,10 @@
 #include "dataGraph.h"
 #include "widGraph.h"
 
-dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data, int tabIndex):
+dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     ptr_graph(graph), ptr_data(data)
 {
-    m_tabbed = new graphSettingsTabWidget();
-    m_tabbed->m_addTab(new tabGraphSettingsTitle(ptr_data.lock()->m_title), "Title");
-    m_tabbed->m_addTab(new tabGraphSettingsXAxis(ptr_data.lock()->m_X), "X-axis");
-    m_tabbed->m_addTab(new tabGraphSettingsY1Axis(ptr_data.lock()->m_Y1), "Y1-axis");
-    m_tabbed->m_addTab(new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2), "Y2-axis");
-    m_tabbed->m_addTab(new tabGraphSettingsLegend(ptr_data.lock()->m_legend), "Legend");
-    m_tabbed->m_addTab(new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea), "Draw area");
+    m_content = new graphSettingsWidget(ptr_data);
 
     m_footer = new footerDialogGraph();
     connect(m_footer, &footerDialogGraph::m_emitApply, this, &dialogGraph::m_slotApply);
@@ -20,11 +14,10 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data, int tab
     connect(m_footer, &footerDialogGraph::m_emitLoadFile, this, &dialogGraph::m_slotLoadFile);
 
     m_layBackground = new VBoxLayout(this);
-    m_layBackground->addWidget(m_tabbed);
+    m_layBackground->addWidget(m_content);
     m_layBackground->addWidget(m_footer);
 
     m_loadValues();
-    m_setTab(tabIndex);
     resize(800,600);
 }
 
@@ -72,14 +65,20 @@ void dialogGraph::m_slotLoadFile()
     loadFileContent.close();
 }
 
-tabGraphSettings::tabGraphSettings()
+tabGraphSettings::tabGraphSettings(const QString &title)
 {
     m_tree = new treeWidget();
     m_layBackground = new VBoxLayout(this);
+    m_layBackground->setContentsMargins(2,2,2,2);
+    m_layBackground->setSpacing(1);
+    m_layBackground->addWidget(new label(title, true));
     m_layBackground->addWidget(m_tree);
+    setStyleSheet(".tabGraphSettings "
+                  "{background:black;}");
 }
 
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
+    tabGraphSettingsAxis("X axis"),
     ptr_data(data)
 {
 }
@@ -97,6 +96,7 @@ void tabGraphSettingsXAxis::m_saveValues()
 }
 
 tabGraphSettingsY1Axis::tabGraphSettingsY1Axis(std::weak_ptr<dataAxisY1> data):
+    tabGraphSettingsAxis("Y axis left"),
     ptr_data(data)
 {
 }
@@ -114,6 +114,7 @@ void tabGraphSettingsY1Axis::m_saveValues()
 }
 
 tabGraphSettingsY2Axis::tabGraphSettingsY2Axis(std::weak_ptr<dataAxisY2> data):
+    tabGraphSettingsAxis("Y axis right"),
     ptr_data(data)
 {
 }
@@ -131,6 +132,7 @@ void tabGraphSettingsY2Axis::m_saveValues()
 }
 
 tabGraphSettingsTitle::tabGraphSettingsTitle(std::weak_ptr<dataTitle> data):
+    tabGraphSettings("Title"),
     ptr_data(data)
 {
     m_editText = new lineEdit(validator::NONE);
@@ -154,6 +156,7 @@ void tabGraphSettingsTitle::m_saveValues()
 }
 
 tabGraphSettingsDrawArea::tabGraphSettingsDrawArea(std::weak_ptr<dataDrawArea> data):
+    tabGraphSettings("Draw area"),
     ptr_data(data)
 {
     //m_editFontSizeNumbers = new lineEdit();
@@ -173,6 +176,7 @@ void tabGraphSettingsDrawArea::m_saveValues()
 }
 
 tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
+    tabGraphSettings("Legend"),
     ptr_data(data)
 {
     m_editFontSizeText = new lineEdit(validator::INT_POS);
@@ -191,25 +195,60 @@ void tabGraphSettingsLegend::m_saveValues()
     s_data->m_fontText = m_editFontSizeText->m_number();
 }
 
-graphSettingsTabWidget::graphSettingsTabWidget()
+graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
+    ptr_data(data)
 {
-  //  tabBar()->setExpanding(true);
+    m_layBackground = new QVBoxLayout(this);
+    m_layBackground->setContentsMargins(2,2,2,2);
+//    m_layBackground->setSpacing(0);
+    setStyleSheet(""
+                  ".QSplitter"
+                        "{background: gray;}"
+                  ".QSplitter::handle"
+                        "{width: 5px;}");
+
+    m_title = new tabGraphSettingsTitle(ptr_data.lock()->m_title);
+    m_xAxis = new tabGraphSettingsXAxis(ptr_data.lock()->m_X);
+    m_yAxis1 = new tabGraphSettingsY1Axis(ptr_data.lock()->m_Y1);
+    m_yAxis2 = new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2);
+    m_legend = new tabGraphSettingsLegend(ptr_data.lock()->m_legend);
+    m_drawArea = new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea);
+    m_objects = new tabGraphSettingsObjects(ptr_data.lock()->m_vectorOfObjects);
+
+    m_tabs.push_back(m_title);
+    m_tabs.push_back(m_xAxis);
+    m_tabs.push_back(m_yAxis1);
+    m_tabs.push_back(m_yAxis2);
+    m_tabs.push_back(m_legend);
+    m_tabs.push_back(m_drawArea);
+    m_tabs.push_back(m_objects);
+
+
+    QSplitter *splitGeneral = new QSplitter(Qt::Horizontal);
+    splitGeneral->addWidget(m_title);
+    splitGeneral->addWidget(m_drawArea);
+    splitGeneral->addWidget(m_legend);
+    QSplitter *splitAxes = new QSplitter(Qt::Horizontal);
+    splitAxes->addWidget(m_yAxis1);
+    splitAxes->addWidget(m_xAxis);
+    splitAxes->addWidget(m_yAxis2);
+
+    QSplitter *splitMain = new QSplitter(Qt::Vertical);
+    splitMain->addWidget(splitGeneral);
+    splitMain->addWidget(splitAxes);
+    splitMain->addWidget(m_objects);
+
+    m_layBackground->addWidget(splitMain);
+    splitMain->setSizes({200,600,200});
 }
 
-void graphSettingsTabWidget::m_addTab(tabGraphSettings *tab,
-                                      const std::string &title)
-{
-    addTab(tab, QString::fromStdString(title));
-    m_tabs.push_back(tab);
-}
-
-void graphSettingsTabWidget::m_loadValues()
+void graphSettingsWidget::m_loadValues()
 {
     for (auto &var: m_tabs)
         var->m_loadValues();
 }
 
-void graphSettingsTabWidget::m_saveValues()
+void graphSettingsWidget::m_saveValues()
 {
     for (auto &var: m_tabs)
         var->m_saveValues();
@@ -235,7 +274,8 @@ footerDialogGraph::footerDialogGraph()
     m_layBackground->addWidget(m_butClose);
 }
 
-tabGraphSettingsAxis::tabGraphSettingsAxis()
+tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
+    tabGraphSettings(title)
 {
     m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
     m_editFontSizeText = new lineEdit(validator::INT_POS);
@@ -248,7 +288,7 @@ tabGraphSettingsAxis::tabGraphSettingsAxis()
     m_editStep = new lineEdit(validator::DOUBLE);
     m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
     m_tree->m_addChild("Text size", m_editFontSizeText);
-    auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAutoAxis);
+    auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAutoAxis, nullptr, true);
     m_tree->m_addChild("Min", m_editMin, titleMinMax);
     m_tree->m_addChild("Max", m_editMax, titleMinMax);
     m_tree->m_addChild("Auto step", m_checkAutoStep, titleMinMax);
@@ -292,4 +332,76 @@ void tabGraphSettingsAxis::m_slotAutoStepToggled()
     bool autoStep = m_checkAutoStep->isChecked();
  //   bool autoAxis = m_checkAutoAxis->isChecked();
     m_editStep->setEnabled(!autoStep);
+}
+
+tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_ptr<graphObjects> > &vObjects):
+    tabGraphSettings("Curves"),
+    vGraphObjects(vObjects)
+{
+
+}
+
+void tabGraphSettingsObjects::m_loadValues()
+{
+    m_tree->clear();
+    int nCurves = vGraphObjects.size();
+    for (int i = 0; i < nCurves; ++i)
+        m_tree->m_addChild(vGraphObjects[i]->m_getData().lock()->m_getName(), new widGraphObjectSetting());
+}
+
+void tabGraphSettingsObjects::m_saveValues()
+{
+
+}
+
+widGraphObjectSetting::widGraphObjectSetting()
+{
+    HBoxLayout *lay = new HBoxLayout(this);
+    colorPicker *a = new colorPicker();
+    lay->addWidget(a);
+    lay->addStretch();
+}
+
+colorPicker::colorPicker()
+{
+    HBoxLayout *lay = new HBoxLayout(this);
+    m_button = new QPushButton("AAA");
+    lay->addWidget(m_button);
+
+    m_menu = new QMenu(this);
+   // m_menu->addAction(new QAction("Action"));
+    QGridLayout *layGrid = new QGridLayout(m_menu);
+    layGrid->setContentsMargins(0,0,0,0);
+    layGrid->setSpacing(1);
+    for (int i = 0; i < 5; ++i)
+        for (int j = 0; j < 5; ++j)
+            layGrid->addWidget(new colorButton(Qt::red),i, j);
+
+    connect(m_button, &QAbstractButton::pressed, this, &colorPicker::m_slotShowMenu);
+ //   setEditable(true);
+ //   setFrame(false);
+ /*   HBoxLayout *lay = new HBoxLayout(this);
+    m_combo = new QComboBox();
+    m_combo->setFixedWidth(25+10);
+    m_combo->addItem();
+    lay->addWidget(m_combo);*/
+}
+
+void colorPicker::m_slotShowMenu()
+{
+    m_menu->move(mapToGlobal(m_button->pos() + QPoint(0, m_button->height())));
+    m_menu->setFixedSize(150,100);
+    m_menu->show();
+}
+
+colorButton::colorButton(const QColor &color):
+    m_color(color)
+
+{
+    setFlat(true);
+    QString tempColor = QString::number(m_color.red()) + "," +
+                        QString::number(m_color.green()) + "," +
+                        QString::number(m_color.blue());
+    setStyleSheet("background: rgb(" + tempColor + ");"
+                  "border: 1px solid gray;");
 }

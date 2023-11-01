@@ -164,7 +164,6 @@ struct dataGraph
     std::shared_ptr<dataControl> m_control;
 
     std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
-    enum GRAPH_SETTINGS {TITLE, X, Y1, Y2, LEGEND, DRAWAREA};
 };
 
 

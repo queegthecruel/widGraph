@@ -17,15 +17,14 @@ class painterAntiAl;
 class widGraphElement: public QWidget
 {
 public:
-    widGraphElement(widGraph *graph, int elementNumber):
-        ptr_graph(graph), m_elementNumber(elementNumber)
+    widGraphElement(widGraph *graph):
+        ptr_graph(graph)
     {}
     void paintEvent(QPaintEvent *event) override = 0;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     virtual void m_setDimensions() = 0;
 protected:
     widGraph *ptr_graph;
-    const int m_elementNumber;
 };
 
 class widGraphDrawArea: public widGraphElement
@@ -160,7 +159,7 @@ protected:
 class widGraphAxis: public widGraphElement
 {
 public:
-    widGraphAxis(widGraph *graph, int elementNumber);
+    widGraphAxis(widGraph *graph);
     ~widGraphAxis() = default;
     virtual double m_getDrawAreaPositionFromValue(double value) = 0;
     virtual double m_getValueFromDrawAreaPosition(double position) = 0;
@@ -216,8 +215,8 @@ protected:
 class widGraphXAxes: public widGraphAxis
 {
 public:
-    widGraphXAxes(widGraph *graph, int elementNumber):
-        widGraphAxis(graph, elementNumber)
+    widGraphXAxes(widGraph *graph):
+        widGraphAxis(graph)
     {}
 protected:
     virtual void m_supDrawNumber(painterAntiAl &painter, double location, double length) override;
@@ -228,8 +227,8 @@ protected:
 class widGraphYAxes: public widGraphAxis
 {
 public:
-    widGraphYAxes(widGraph *graph, int elementNumber, int position):
-        widGraphAxis(graph, elementNumber), m_axisPosition(position)
+    widGraphYAxes(widGraph *graph, int position):
+        widGraphAxis(graph), m_axisPosition(position)
     {}
     virtual double m_getDrawAreaPositionFromValue(double value) override;
     virtual double m_getValueFromDrawAreaPosition(double position) override;
@@ -349,7 +348,7 @@ public:
     void m_loadValues();
     void m_setCurveStyle(int curveIndex, QColor color, int axis = 0);
     void m_setCurveName(int curveIndex, const std::string& name);
-    void m_openDialog(int tabIndex = 0);
+    void m_openDialog();
     void m_takeScreenshot();
 public slots:
     void m_slotDialogClosed(int status);

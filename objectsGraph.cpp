@@ -128,7 +128,7 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double width)
     return path;
 }
 
-std::shared_ptr<graphObjects> graphObjects::m_createGraphObject(int type)
+std::shared_ptr<graphObjects> graphObjects::m_createGraphObject(int /*type*/)
 {
 std::shared_ptr<graphObjects> ptr_object = nullptr;
   /*  switch (type) {

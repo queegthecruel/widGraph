@@ -4,7 +4,10 @@
 #include "widPretty.h"
 #include <QDialog>
 #include <QVBoxLayout>
+#include <QSplitter>
 #include <QPushButton>
+#include <QComboBox>
+#include <QMenu>
 
 struct dataGraph;
 class widGraph;
@@ -15,11 +18,12 @@ struct dataAxisY1;
 struct dataAxisY2;
 struct dataDrawArea;
 struct dataLegend;
+struct graphObjects;
 
 class tabGraphSettings: public QWidget
 {
 public:
-    tabGraphSettings();
+    tabGraphSettings(const QString &title);
     ~tabGraphSettings() = default;
     virtual void m_loadValues() = 0;
     virtual void m_saveValues() = 0;
@@ -45,7 +49,7 @@ class tabGraphSettingsAxis: public tabGraphSettings
 {
     Q_OBJECT
 public:
-    tabGraphSettingsAxis();
+    tabGraphSettingsAxis(const QString &title);
     ~tabGraphSettingsAxis() = default;
     void m_loadGeneralValues(std::shared_ptr<dataAxis> s_data);
     void m_saveGeneralValues(std::shared_ptr<dataAxis> s_data);
@@ -102,6 +106,51 @@ protected:
     std::weak_ptr<dataDrawArea> ptr_data;
 };
 
+class colorButton: public QPushButton
+{
+public:
+    colorButton(const QColor &color);
+    ~colorButton() = default;
+protected:
+    QColor m_color;
+};
+
+enum class prettyColors {RED, BLUE};
+class colorPicker: public QWidget
+{
+    Q_OBJECT
+public:
+    colorPicker();
+    ~colorPicker() = default;
+protected slots:
+    void m_slotShowMenu();
+protected:
+    QPushButton *m_button;
+    QMenu *m_menu;
+};
+
+class widGraphObjectSetting: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSetting();
+    ~widGraphObjectSetting() = default;
+protected:
+
+
+};
+
+class tabGraphSettingsObjects: public tabGraphSettings
+{
+public:
+    tabGraphSettingsObjects(const std::vector<std::shared_ptr<graphObjects>> &vObjects);
+    ~tabGraphSettingsObjects() = default;
+    virtual void m_loadValues() override;
+    virtual void m_saveValues() override;
+protected:
+    std::vector<std::shared_ptr<graphObjects>> vGraphObjects;
+};
+
 class tabGraphSettingsLegend: public tabGraphSettings
 {
 public:
@@ -114,16 +163,26 @@ protected:
     lineEdit *m_editFontSizeText;
 };
 
-class graphSettingsTabWidget: public QTabWidget
+class graphSettingsWidget: public QWidget
 {
 public:
-    graphSettingsTabWidget();
-    ~graphSettingsTabWidget() = default;
-    void m_addTab(tabGraphSettings *tab, const std::string &title);
+    graphSettingsWidget(std::weak_ptr<dataGraph> data);
+    ~graphSettingsWidget() = default;
     void m_loadValues();
     void m_saveValues();
 protected:
+    std::weak_ptr<dataGraph> ptr_data;
     std::vector<tabGraphSettings*> m_tabs;
+
+    tabGraphSettingsTitle *m_title;
+    tabGraphSettingsXAxis *m_xAxis;
+    tabGraphSettingsY1Axis *m_yAxis1;
+    tabGraphSettingsY2Axis *m_yAxis2;
+    tabGraphSettingsLegend *m_legend;
+    tabGraphSettingsDrawArea *m_drawArea;
+    tabGraphSettingsObjects *m_objects;
+
+    QVBoxLayout *m_layBackground;
 };
 
 class footerDialogGraph: public QWidget
@@ -156,14 +215,12 @@ class dialogGraph: public dialogs
 {
     Q_OBJECT
 public:
-    dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data, int tabIndex = 0);
+    dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data);
     ~dialogGraph() = default;
-    inline void m_setTab(int index)
-        {m_tabbed->setCurrentIndex(index);}
     inline void m_loadValues()
-        {m_tabbed->m_loadValues();}
+        {m_content->m_loadValues();}
     inline void m_saveValues()
-        {m_tabbed->m_saveValues();}
+        {m_content->m_saveValues();}
 public slots:
     void m_slotClose();
     void m_slotApply();
@@ -173,7 +230,7 @@ protected:
     widGraph *ptr_graph;
     std::weak_ptr<dataGraph> ptr_data;
     VBoxLayout *m_layBackground;
-    graphSettingsTabWidget *m_tabbed;
+    graphSettingsWidget *m_content;
     footerDialogGraph *m_footer;
 };
 

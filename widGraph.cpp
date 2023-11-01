@@ -93,10 +93,10 @@ void widGraph::m_setCurveName(int curveIndex, const std::string &name)
     ptr_curveData->m_setName(name);
 }
 
-void widGraph::m_openDialog(int tabIndex)
+void widGraph::m_openDialog()
 {
     if (m_dialog == nullptr) {
-        m_dialog = std::make_unique<dialogGraph>(this, m_data, tabIndex);
+        m_dialog = std::make_unique<dialogGraph>(this, m_data);
         connect(m_dialog.get(), &QDialog::finished, this, &widGraph::m_slotDialogClosed);
         m_dialog->show();
     }
@@ -161,7 +161,7 @@ bool widGraphDrawArea::m_cancelOperation()
 }
 
 widGraphDrawArea::widGraphDrawArea(widGraph *graph):
-    widGraphElement(graph, dataGraph::DRAWAREA)
+    widGraphElement(graph)
 {
 }
 
@@ -310,7 +310,7 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
 }
 
 widGraphTitle::widGraphTitle(widGraph *graph):
-    widGraphElement(graph, dataGraph::TITLE)
+    widGraphElement(graph)
 {
     m_text = new widGraphTitleText(ptr_graph);
     m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
@@ -386,7 +386,7 @@ void widGraphTitle::m_hideButtons()
 }
 
 widGraphXAxis::widGraphXAxis(widGraph *graph):
-    widGraphXAxes(graph, dataGraph::X)
+    widGraphXAxes(graph)
 {
 
 }
@@ -629,7 +629,7 @@ void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
 }
 
 widGraphY1Axis::widGraphY1Axis(widGraph *graph):
-    widGraphYAxes(graph, dataGraph::Y1, 0)
+    widGraphYAxes(graph, 0)
 {
 
 }
@@ -779,8 +779,8 @@ double widGraphY1Axis::m_getTextEnds()
     return 0 + m_spaceBorder;
 }
 
-widGraphAxis::widGraphAxis(widGraph *graph, int elementNumber):
-    widGraphElement(graph, elementNumber)
+widGraphAxis::widGraphAxis(widGraph *graph):
+    widGraphElement(graph)
 {}
 
 void widGraphAxis::mousePressEvent(QMouseEvent *event)
@@ -959,7 +959,7 @@ bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QP
 }
 
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):
-    widGraphYAxes(graph, dataGraph::Y2, 1)
+    widGraphYAxes(graph, 1)
 {
 }
 
@@ -1055,7 +1055,7 @@ double widGraphY2Axis::m_getTextEnds()
 }
 
 widGraphLegend::widGraphLegend(widGraph *graph):
-    widGraphElement(graph, dataGraph::LEGEND)
+    widGraphElement(graph)
 {
 }
 
@@ -1104,14 +1104,14 @@ void widGraphLegend::m_setDimensions()
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    ptr_graph->m_openDialog(m_elementNumber);
+    ptr_graph->m_openDialog();
     event->accept();
 }
 
 widGraphButton::widGraphButton(widGraph *graph,
     const QImage &icon, const QImage &iconActive,
     const QString &tooltip):
-    widGraphElement(graph, -1),
+    widGraphElement(graph),
     m_icon(icon), m_iconActive(iconActive)
 {
     setToolTip(tooltip);
@@ -1202,7 +1202,7 @@ void widGraphButton::m_drawInside(painterAntiAl &painter)
 }
 
 widGraphTitleText::widGraphTitleText(widGraph *graph):
-    widGraphElement(graph, -1)
+    widGraphElement(graph)
 {
 }
 
