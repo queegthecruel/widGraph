@@ -143,6 +143,8 @@ public:
     virtual void m_setDimensions() override;
     void m_showButtons();
     void m_hideButtons();
+    void m_setButtonsDimensions();
+    void m_loadButtonsValues();
 
 protected:
     const double m_rowSpacing = 1.0;

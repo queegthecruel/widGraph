@@ -357,13 +357,8 @@ void widGraphTitle::m_setDimensions()
 
     m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
     m_text->m_setDimensions();
-    m_butZoom->m_setDimensions();
-    m_butZoom->m_loadValues();
-    m_butMove->m_setDimensions();
-    m_butMove->m_loadValues();
-    m_butAuto->m_setDimensions();
-    m_butShowGrid->m_setDimensions();
-    m_butScreenshot->m_setDimensions();
+    m_setButtonsDimensions();
+    m_loadButtonsValues();
 }
 
 void widGraphTitle::m_showButtons()
@@ -383,6 +378,24 @@ void widGraphTitle::m_hideButtons()
     m_butShowGrid->m_hide();
     m_butScreenshot->m_hide();
     update();
+}
+
+void widGraphTitle::m_setButtonsDimensions()
+{
+    m_butZoom->m_setDimensions();
+    m_butMove->m_setDimensions();
+    m_butAuto->m_setDimensions();
+    m_butShowGrid->m_setDimensions();
+    m_butScreenshot->m_setDimensions();
+}
+
+void widGraphTitle::m_loadButtonsValues()
+{
+    m_butZoom->m_loadValues();
+    m_butMove->m_loadValues();
+    m_butAuto->m_loadValues();
+    m_butShowGrid->m_loadValues();
+    m_butScreenshot->m_loadValues();
 }
 
 widGraphXAxis::widGraphXAxis(widGraph *graph):
