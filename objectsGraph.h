@@ -10,19 +10,13 @@
 class widGraph;
 class widGraphAxis;
 
+enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE};
 class dataGraphObject
 {
 public:
-    dataGraphObject();
+    dataGraphObject(bool hasCurve, bool hasPoints);
     dataGraphObject(std::ifstream &instream);
     void m_saveToFile(std::ofstream &outstream);
-    inline QColor m_getColor()
-        {return QColor(m_R, m_G, m_B, m_A);}
-    void m_setColor(const QColor &color)
-    {m_R = color.red();
-     m_G = color.green();
-     m_B = color.blue();
-     m_A = color.alpha();}
     inline const std::string &m_getName()
         {return m_name;}
     inline void m_setName(const std::string name)
@@ -31,12 +25,57 @@ public:
         {return m_prefferedYAxis;}
     inline void m_setPrefferedAxis(int axisIndex)
         {m_prefferedYAxis = axisIndex;}
+    inline bool m_getHasCurve()
+        {return m_hasCurve;}
+    inline bool m_getHasPoints()
+        {return m_hasPoints;}
+    // Curve
+        void m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show = true);
+        std::tuple<QColor, int, int, bool> m_getStyleOfCurve();
+        static Qt::PenStyle getPenStyleFromIndex(int index);
+    // Points
+        void m_setStyleOfPoints(QColor color, int penWidth, double shapeSize, int styleIndex, bool show = true);
+        std::tuple<QColor, int, int, int, bool> m_getStyleOfPoints();
+        static pointsShapes getShapeStyleFromIndex(int index);
+protected:
+    // Curve
+        inline QColor m_getCurveColor()
+            {return QColor(m_curveR, m_curveG, m_curveB, m_curveA);}
+        void m_setCurveColor(const QColor &color);
+        inline void m_setCurveWidth(double newWidth)
+            {m_curveWidth = newWidth;}
+        inline void m_setCurveStyleIndex(int newStyle)
+            {m_curveStyleIndex = newStyle;}
+        inline void m_setShowCurve(bool show)
+            {m_showCurve = show;}
+    // Points
+        inline QColor m_getPointsColor()
+            {return QColor(m_pointsR, m_pointsG, m_pointsB, m_pointsA);}
+        void m_setPointsColor(const QColor &color);
+        inline void m_setPointsWidth(double newWidth)
+            {m_pointsWidth = newWidth;}
+        inline void m_setPointsShapeSize(double newShapeSize)
+            {m_pointsShapeSize = newShapeSize;}
+        inline void m_setPointsStyleIndex(int newStyle)
+            {m_pointsStyleIndex = newStyle;}
+        inline void m_setShowPoints(bool show)
+            {m_showPoints = show;}
+public:
+    const bool m_hasCurve, m_hasPoints;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
-    int m_R = 0, m_G = 0, m_B = 0, m_A = 0;
+    // Curve
+        bool m_showCurve = true;
+        int m_curveR = 0, m_curveG = 0, m_curveB = 0, m_curveA = 255;
+        double m_curveWidth = 3;
+        int m_curveStyleIndex = 1;
+    // Points
+        bool m_showPoints = true;
+        int m_pointsR = 0, m_pointsG = 0, m_pointsB = 0, m_pointsA = 255;
+        double m_pointsWidth = 3, m_pointsShapeSize = 10;
+        int m_pointsStyleIndex = 2;
 };
-
 
 class graphObjects
 {
@@ -52,7 +91,7 @@ public:
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
-    static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double width = 10);
+    static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double shapeSize = 10, pointsShapes style = pointsShapes::CROSS);
     static std::shared_ptr<graphObjects> m_createGraphObject(int type);
 protected:
     std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
@@ -75,7 +114,7 @@ public:
     virtual double m_getMaxY() override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
-    QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
+    QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);
 protected:
     std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;

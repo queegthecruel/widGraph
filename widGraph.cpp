@@ -74,23 +74,28 @@ void widGraph::m_loadValues()
     setUpdatesEnabled(true);
 }
 
-void widGraph::m_setCurveStyle(int curveIndex, QColor color, int axis)
+void widGraph::m_setCurveStyle(int curveIndex, QColor color, int curveWidth, int curveStyleIndex, bool showCurve)
 {
-    if (curveIndex == -1)
-        curveIndex = m_data->m_vectorOfObjects.size() - 1;
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setStyleOfCurve(color, curveWidth, curveStyleIndex, showCurve);
+}
 
-    auto ptr_objectData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
-    ptr_objectData->m_setColor(color);
+void widGraph::m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth, int pointsShapeSize, int pointsStyleIndex, bool showPoints)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setStyleOfPoints(color, penPointsWidth, pointsShapeSize, pointsStyleIndex, showPoints);
+}
+
+void widGraph::m_setCurveAxis(int curveIndex, int axis)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
     ptr_objectData->m_setPrefferedAxis(axis);
 }
 
 void widGraph::m_setCurveName(int curveIndex, const std::string &name)
 {
-    if (curveIndex == -1)
-        curveIndex = m_data->m_vectorOfObjects.size() - 1;
-
-    auto ptr_curveData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
-    ptr_curveData->m_setName(name);
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setName(name);
 }
 
 void widGraph::m_openDialog()
@@ -117,6 +122,15 @@ void widGraph::m_takeScreenshot()
 void widGraph::m_slotDialogClosed(int /*status*/)
 {
     m_dialog = nullptr;
+}
+
+std::shared_ptr<dataGraphObject> widGraph::m_getObjectFromIndex(int curveIndex)
+{
+    if (curveIndex == -1)
+        curveIndex = m_data->m_vectorOfObjects.size() - 1;
+
+    auto ptr_objectData = m_data->m_vectorOfObjects[curveIndex]->m_getData().lock();
+    return ptr_objectData;
 }
 
 void widGraphDrawArea::m_drawHorGrid(painterAntiAl &painter)

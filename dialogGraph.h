@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QComboBox>
 #include <QMenu>
 
@@ -60,6 +61,7 @@ protected:
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
     checkbox *m_checkAutoAxis, *m_checkAutoStep;
     lineEdit *m_editMin, *m_editMax, *m_editStep;
+    lineEdit *m_editText;
 };
 
 class tabGraphSettingsXAxis: public tabGraphSettingsAxis
@@ -108,36 +110,105 @@ protected:
 
 class colorButton: public QPushButton
 {
+    Q_OBJECT
 public:
     colorButton(const QColor &color);
     ~colorButton() = default;
+    void m_setColor(const QColor &color);
+signals:
+    void m_signalSelected(QColor);
+protected slots:
+    void m_slotClicked();
 protected:
     QColor m_color;
 };
 
-enum class prettyColors {RED, BLUE};
+class widCustomColor: public QWidget
+{
+    Q_OBJECT
+public:
+    widCustomColor();
+    void m_setColor(const QColor &color);
+protected slots:
+    void m_slotLineEditChanged();
+    void m_slotColorSelected();
+signals:
+    void m_signalColorSelected(QColor color);
+protected:
+    lineEdit *m_editR, *m_editG, *m_editB;
+    colorButton *m_button;
+    QColor m_color;
+};
+
 class colorPicker: public QWidget
 {
     Q_OBJECT
 public:
     colorPicker();
-    ~colorPicker() = default;
+    const QColor &m_getColor()
+        {return m_color;}
+    void m_setColor(const QColor &color);
+    inline static const std::vector<QColor> prettyColors =
+        {Qt::black, Qt::blue, Qt::red, Qt::green, Qt::yellow,
+         Qt::white, Qt::gray, Qt::cyan, Qt::magenta};
 protected slots:
     void m_slotShowMenu();
+    void m_slotColorSelected(QColor color);
+    void m_slotColorConfirmed();
 protected:
-    QPushButton *m_button;
+    colorButton *m_button;
     QMenu *m_menu;
+    widCustomColor *m_customColor;
+    QColor m_color;
 };
 
+class widGraphObjectSettingCurve: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingCurve();
+    void m_setValues(QColor color, int width, int styleIndex, bool enable);
+    std::tuple<QColor, int, int, bool> m_getValues();
+protected slots:
+    void m_slotEnabledToggled();
+protected:
+    label *m_labTitle;
+    checkbox *m_checkEnable;
+    colorPicker *m_colorPickerCurve;
+    spinbox *m_editCurveThick;
+    combobox *m_comboCurveStyle;
+};
+
+class widGraphObjectSettingPoints: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingPoints();
+    void m_setValues(QColor color, int width, int shapeSize, int styleIndex, bool enable);
+    std::tuple<QColor, int, int, int, bool> m_getValues();
+protected slots:
+    void m_slotEnabledToggled();
+protected:
+    label *m_labTitle;
+    checkbox *m_checkEnable;
+    colorPicker *m_colorPickerPoints;
+    spinbox *m_editThickness, *m_editShapeSize;
+    combobox *m_comboShape;
+};
+
+class dataGraphObject;
 class widGraphObjectSetting: public QWidget
 {
     Q_OBJECT
 public:
-    widGraphObjectSetting();
+    widGraphObjectSetting(std::weak_ptr<dataGraphObject> data);
     ~widGraphObjectSetting() = default;
+    void m_loadValues();
+    void m_saveValues();
 protected:
-
-
+    std::weak_ptr<dataGraphObject> ptr_data;
+    widGraphObjectSettingCurve *m_widCurve;
+    widGraphObjectSettingPoints *m_widPoints;
 };
 
 class tabGraphSettingsObjects: public tabGraphSettings
@@ -149,6 +220,8 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::vector<std::shared_ptr<graphObjects>> vGraphObjects;
+    std::vector<widGraphObjectSetting*> vGraphWidgets;
+
 };
 
 class tabGraphSettingsLegend: public tabGraphSettings

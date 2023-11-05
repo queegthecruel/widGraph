@@ -35,7 +35,7 @@ unix {
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-widPretty-Release/release/ -lwidPretty
 #else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-widPretty-Debug/debug/ -lwidPretty
 
-INCLUDEPATH += $$PWD/../build-widPrtetty-Release/release
+INCLUDEPATH += $$PWD/../build-widPretty-Release/release
 DEPENDPATH += $$PWD/../build-widPretty-Release/release
 
 LIBS += -L$$PWD/../widPretty/ -lwidPretty

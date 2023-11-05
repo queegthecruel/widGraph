@@ -5,6 +5,8 @@
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
+    m_data = std::make_shared<dataGraphObject>(true, true);
+
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
     if (noY == 0) return;
@@ -22,6 +24,8 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::sha
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
+    m_data = std::make_shared<dataGraphObject>(true, true);
+
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
     if (noY == 0) return;
@@ -39,15 +43,25 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
 void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
-    painter->setPen(QPen(m_data->m_getColor(), 3));
     // Get appropriate axes
         auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
-    // Get apinter paths
-        QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
-        QPainterPath pathPoints = m_getPointsPainterPath(ptr_x, ptr_y);
-    // Draw
-        painter->drawPath(pathCurve);
-        painter->drawPath(pathPoints);
+    // Draw curve
+        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
+        if (curveEnabled) {
+            QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
+            painter->setPen(QPen(curveColor, curveWidth, dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
+            painter->drawPath(pathCurve);
+        }
+    // Draw points
+        auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled] = m_data->m_getStyleOfPoints();
+        if (pointsEnabled) {
+            QPainterPath pathPoints = m_getPointsPainterPath(ptr_x, ptr_y,
+                                      dataGraphObject::getShapeStyleFromIndex(pointsStyleIndex), pointsShapeSize);
+            painter->setPen(QPen(pointsColor, pointsWidth, Qt::SolidLine));
+            painter->drawPath(pathPoints);
+        }
+    // Draw area
+
     painter->restore();
 }
 
@@ -67,7 +81,8 @@ QPainterPath graphCurve::m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis
     return pathCurve;
 }
 
-QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y,
+                                                pointsShapes style, double shapeSize)
 {
     QPainterPath pathPoints;
     // Move to the first point
@@ -79,7 +94,7 @@ QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxi
              itX++, itY++) {
             QPointF point = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*itX),
                                     ptr_y->m_getDrawAreaPositionFromValue(*itY));
-            QPainterPath pathPoint = graphObjects::m_createPoint(point);
+            QPainterPath pathPoint = graphObjects::m_createPoint(point, shapeSize, style);
             pathPoints.addPath(pathPoint);
         }
         return pathPoints;
@@ -108,7 +123,6 @@ double graphCurve::m_getMaxY() {
 
 graphObjects::graphObjects()
 {
-    m_data = std::make_shared<dataGraphObject>();
 }
 
 int graphObjects::m_getPrefferedYAxis()
@@ -116,14 +130,45 @@ int graphObjects::m_getPrefferedYAxis()
     return m_data->m_getPrefferedYAxis();
 }
 
-QPainterPath graphObjects::m_createPoint(QPointF point, double width)
+QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, pointsShapes style)
 {
-    double widthHalf = width/2;
+    double widthHalf = shapeSize/2;
     QPainterPath path;
-    path.moveTo(point + QPointF(-widthHalf, -widthHalf));
-    path.lineTo(point + QPointF(widthHalf, widthHalf));
-    path.moveTo(point + QPointF(-widthHalf, widthHalf));
-    path.lineTo(point + QPointF(widthHalf, -widthHalf));
+
+    switch (style) {
+        case pointsShapes::NONE:
+
+        break;
+        case pointsShapes::POINT:
+            path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+            path.addEllipse(point, widthHalf, widthHalf);
+        break;
+        case pointsShapes::CROSS:
+            path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+            path.lineTo(point + QPointF(widthHalf, widthHalf));
+            path.moveTo(point + QPointF(-widthHalf, widthHalf));
+            path.lineTo(point + QPointF(widthHalf, -widthHalf));
+        default:
+        break;
+        case pointsShapes::SQUARE:
+            path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+            path.lineTo(point + QPointF(widthHalf, -widthHalf));
+            path.lineTo(point + QPointF(widthHalf, widthHalf));
+            path.lineTo(point + QPointF(-widthHalf, widthHalf));
+            path.lineTo(point + QPointF(-widthHalf, -widthHalf));
+        break;
+        case pointsShapes::CIRCLE:
+            path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+            path.addEllipse(point, widthHalf, widthHalf);
+        break;
+        case pointsShapes::TRIANGLE:
+            path.moveTo(point + QPointF(-0.866*widthHalf, 0.5*widthHalf));
+            path.lineTo(point + QPointF(0.866*widthHalf, 0.5*widthHalf));
+            path.lineTo(point + QPointF(0, -widthHalf));
+            path.lineTo(point + QPointF(-0.866*widthHalf, 0.5*widthHalf));
+        break;
+    }
+
 
     return path;
 }
@@ -156,6 +201,8 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(wi
 graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
     w_dataY(ptr_dataY)
 {
+    m_data = std::make_shared<dataGraphObject>(true, false);
+
     s_dataY = w_dataY.lock();
 
     qDebug() << "Curve 3";
@@ -164,14 +211,16 @@ graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
 void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
-    painter->setPen(QPen(m_data->m_getColor(), 3));
     // Get appropriate axes
         auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
-    // Get painter paths
-        QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
-    // Draw
-        painter->drawPath(pathCurve);
-        painter->restore();
+    // Draw curve
+        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
+        if (curveEnabled) {
+            QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
+            painter->setPen(QPen(curveColor, curveWidth, dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
+            painter->drawPath(pathCurve);
+        }
+    painter->restore();
 }
 
 QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
@@ -188,22 +237,24 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
     return pathCurve;
 }
 
-dataGraphObject::dataGraphObject()
+dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints):
+    m_hasCurve(hasCurve), m_hasPoints(hasPoints)
 {
 
 }
 
-dataGraphObject::dataGraphObject(std::ifstream &instream)
+dataGraphObject::dataGraphObject(std::ifstream &instream):
+    m_hasCurve(true), m_hasPoints(true)
 {
     // Axis
         m_prefferedYAxis = readInt(instream);
     // Name
         m_name = readString(instream);
     // Color
-        m_R = readInt(instream);
-        m_G = readInt(instream);
-        m_B = readInt(instream);
-        m_A = readInt(instream);
+        m_curveR = readInt(instream);
+        m_curveG = readInt(instream);
+        m_curveB = readInt(instream);
+        m_curveA = readInt(instream);
 }
 
 void dataGraphObject::m_saveToFile(std::ofstream &outstream)
@@ -213,9 +264,111 @@ void dataGraphObject::m_saveToFile(std::ofstream &outstream)
     // Name
         writeString(outstream, m_name);
     // Color
-        writeInt(outstream, m_R);
-        writeInt(outstream, m_G);
-        writeInt(outstream, m_B);
-        writeInt(outstream, m_A);
+        writeInt(outstream, m_curveR);
+        writeInt(outstream, m_curveG);
+        writeInt(outstream, m_curveB);
+        writeInt(outstream, m_curveA);
 
+}
+
+void dataGraphObject::m_setCurveColor(const QColor &color)
+{
+    m_curveR = color.red();
+    m_curveG = color.green();
+    m_curveB = color.blue();
+    m_curveA = color.alpha();
+}
+/*
+Qt::PenStyle dataGraphObject::m_getCurveStyle() const
+{
+    return getPenStyleFromIndex(m_curveStyleIndex);
+}*/
+
+void dataGraphObject::m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show)
+{
+    m_setCurveColor(color);
+    m_setCurveWidth(width);
+    m_setCurveStyleIndex(styleIndex);
+    m_setShowCurve(show);
+}
+
+void dataGraphObject::m_setPointsColor(const QColor &color)
+{
+    m_pointsR = color.red();
+    m_pointsG = color.green();
+    m_pointsB = color.blue();
+    m_pointsA = color.alpha();
+}
+
+void dataGraphObject::m_setStyleOfPoints(QColor color, int penWidth, double shapeSize, int styleIndex, bool show)
+{
+    m_setPointsColor(color);
+    m_setPointsWidth(penWidth);
+    m_setPointsShapeSize(shapeSize);
+    m_setPointsStyleIndex(styleIndex);
+    m_setShowPoints(show);
+}
+
+std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
+{
+    return {m_getPointsColor(), m_pointsWidth, m_pointsShapeSize, m_pointsStyleIndex, m_showPoints};
+}
+
+std::tuple<QColor, int, int, bool> dataGraphObject::m_getStyleOfCurve()
+{
+    return {m_getCurveColor(), m_curveWidth, m_curveStyleIndex, m_showCurve};
+}
+
+Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)
+{
+    switch (index) {
+    case 0:
+        return Qt::NoPen;
+        break;
+    case 1:
+        return Qt::SolidLine;
+        break;
+    case 2:
+        return Qt::DashLine;
+        break;
+    case 3:
+        return Qt::DotLine;
+        break;
+    case 4:
+        return Qt::DashDotLine;
+        break;
+    case 5:
+        return Qt::DashDotDotLine;
+        break;
+    default:
+        return Qt::SolidLine;
+        break;
+    }
+}
+
+pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
+{
+    switch (index) {
+    case 0:
+        return pointsShapes::NONE;
+        break;
+    case 1:
+        return pointsShapes::POINT;
+        break;
+    case 2:
+        return pointsShapes::CROSS;
+        break;
+    case 3:
+        return pointsShapes::SQUARE;
+        break;
+    case 4:
+        return pointsShapes::CIRCLE;
+        break;
+    case 5:
+        return pointsShapes::TRIANGLE;
+        break;
+    default:
+        return pointsShapes::CROSS;
+        break;
+    }
 }

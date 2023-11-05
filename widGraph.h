@@ -348,12 +348,16 @@ public:
         {return m_widY2;}
     void m_addObject(std::shared_ptr<graphObjects> ptr_object);
     void m_loadValues();
-    void m_setCurveStyle(int curveIndex, QColor color, int axis = 0);
+    void m_setCurveStyle(int curveIndex, QColor color, int curveWidth = 3, int curveStyleIndex = 1, bool showCurve = true);
+    void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);
+    void m_setCurveAxis(int curveIndex, int axis);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();
     void m_takeScreenshot();
 public slots:
     void m_slotDialogClosed(int status);
+private:
+    std::shared_ptr<dataGraphObject> m_getObjectFromIndex(int curveIndex);
 protected:
     // Data
         std::shared_ptr<dataGraph> m_data;
