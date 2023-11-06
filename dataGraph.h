@@ -143,6 +143,7 @@ struct dataControl: public dataElement
     bool m_zoom = false, m_move = false;
     void m_setMove(bool status);
     void m_setZoom(bool status);
+    void m_setNothing();
 };
 
 class graphObjects;

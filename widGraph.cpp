@@ -1313,6 +1313,7 @@ widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
 void widGraphButtonAutoAxes::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
+    ptr_data->m_control->m_setNothing();
     auto ptr_dataX = ptr_data->m_X;
     auto ptr_dataY1 = ptr_data->m_Y1;
     auto ptr_dataY2 = ptr_data->m_Y2;
@@ -1350,6 +1351,8 @@ widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
 
 void widGraphButtonZoomOut::m_onClick()
 {
+    auto ptr_data = ptr_graph->m_getData().lock();
+    ptr_data->m_control->m_setNothing();
     ptr_graph->m_zoomOut();
 }
 
@@ -1379,6 +1382,8 @@ widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
 
 void widGraphButtonScreenshot::m_onClick()
 {
+    auto ptr_data = ptr_graph->m_getData().lock();
+    ptr_data->m_control->m_setNothing();
     ptr_graph->m_takeScreenshot();
 }
 

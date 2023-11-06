@@ -146,12 +146,18 @@ void writeString(std::ofstream &outstream, const std::string &value)
 
 void dataControl::m_setMove(bool status)
 {
+    m_setNothing();
     m_move = status;
-    m_zoom = false;
 }
 
 void dataControl::m_setZoom(bool status)
 {
+    m_setNothing();
     m_zoom = status;
+}
+
+void dataControl::m_setNothing()
+{
     m_move = false;
+    m_zoom = false;
 }
