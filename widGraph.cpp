@@ -119,6 +119,22 @@ void widGraph::m_takeScreenshot()
     setStyleSheet(".QWidget {background: transparent;}");
 }
 
+void widGraph::m_zoomOut()
+{
+    auto [minX, maxX, stepX] = m_data->m_X->m_getMinMaxStep();
+    auto [minY1, maxY1, stepY1] = m_data->m_Y1->m_getMinMaxStep();
+    auto [minY2, maxY2, stepY2] = m_data->m_Y2->m_getMinMaxStep();
+
+    double zoomFactor = 0.25;
+    double d_x = zoomFactor*(maxX - minX);
+    double d_y1 = zoomFactor*(maxY1 - minY1);
+    double d_y2 = zoomFactor*(maxY2 - minY2);
+
+
+    m_widArea->m_setAxisMinMax(minX - d_x, maxX + d_x, minY1 - d_y1, maxY1 + d_y1, minY2 - d_y2, maxY2 + d_y2);
+    m_loadValues();
+}
+
 void widGraph::m_slotDialogClosed(int /*status*/)
 {
     m_dialog = nullptr;
@@ -191,14 +207,18 @@ void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
         m_isMouseMoving = true;
 }
 
-void widGraphDrawArea::mouseMoveEvent(QMouseEvent */*event*/)
+void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
 {
+    if (m_isMouseMoving) {
+        m_moveByMouse();
+        m_startingPoint = event->pos();
+    }
     update();
 }
 
 void widGraphDrawArea::m_moveByMouse()
 {
-    m_isMouseMoving = false;
+  //  m_isMouseMoving = false;
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
     double startX = ptr_graph->m_getXAxis()->m_getValueFromDrawAreaPosition(m_startingPoint.x());
     double startY1 = ptr_graph->m_getY1Axis()->m_getValueFromDrawAreaPosition(m_startingPoint.y());
@@ -221,7 +241,6 @@ void widGraphDrawArea::m_moveByMouse()
 
 void widGraphDrawArea::m_zoomByMouse()
 {
-    m_isMouseZooming = false;
     QPoint currentPoint = mapFromGlobal(QCursor::pos());
 
     if (widGraphAxis::m_supDistanceForActionIsSufficient(m_startingPoint, currentPoint)) {
@@ -241,8 +260,9 @@ void widGraphDrawArea::mouseReleaseEvent(QMouseEvent */*event*/)
 {
     if (m_isMouseZooming)
         m_zoomByMouse();
-    if (m_isMouseMoving)
-        m_moveByMouse();
+
+    m_isMouseZooming = false;
+    m_isMouseMoving = false;
     ptr_graph->m_loadValues();
 }
 
@@ -328,13 +348,15 @@ widGraphTitle::widGraphTitle(widGraph *graph):
 {
     m_text = new widGraphTitleText(ptr_graph);
     m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
-    m_butZoom = new widGraphButtonZoom(ptr_graph);
+    m_butZoomIn = new widGraphButtonZoomIn(ptr_graph);
+    m_butZoomOut = new widGraphButtonZoomOut(ptr_graph);
     m_butMove = new widGraphButtonMove(ptr_graph);
     m_butScreenshot = new widGraphButtonScreenshot(ptr_graph);
     m_layBackground = new QHBoxLayout(this);
     m_layBackground->setSpacing(2);
     m_layBackground->addWidget(m_text);
-    m_layBackground->addWidget(m_butZoom);
+    m_layBackground->addWidget(m_butZoomIn);
+    m_layBackground->addWidget(m_butZoomOut);
     m_layBackground->addWidget(m_butMove);
     m_layBackground->addWidget(m_butAuto);
     m_layBackground->addWidget(m_butScreenshot);
@@ -392,7 +414,8 @@ void widGraphTitle::m_drawLine(painterAntiAl &painter)
 
 void widGraphTitle::m_showButtons()
 {
-    m_butZoom->m_show();
+    m_butZoomIn->m_show();
+    m_butZoomOut->m_show();
     m_butMove->m_show();
     m_butAuto->m_show();
     m_butScreenshot->m_show();
@@ -400,7 +423,8 @@ void widGraphTitle::m_showButtons()
 
 void widGraphTitle::m_hideButtons()
 {
-    m_butZoom->m_hide();
+    m_butZoomIn->m_hide();
+    m_butZoomOut->m_hide();
     m_butMove->m_hide();
     m_butAuto->m_hide();
     m_butScreenshot->m_hide();
@@ -409,7 +433,8 @@ void widGraphTitle::m_hideButtons()
 
 void widGraphTitle::m_setButtonsDimensions()
 {
-    m_butZoom->m_setDimensions();
+    m_butZoomIn->m_setDimensions();
+    m_butZoomOut->m_setDimensions();
     m_butMove->m_setDimensions();
     m_butAuto->m_setDimensions();
     m_butScreenshot->m_setDimensions();
@@ -417,7 +442,8 @@ void widGraphTitle::m_setButtonsDimensions()
 
 void widGraphTitle::m_loadButtonsValues()
 {
-    m_butZoom->m_loadValues();
+    m_butZoomIn->m_loadValues();
+    m_butZoomOut->m_loadValues();
     m_butMove->m_loadValues();
     m_butAuto->m_loadValues();
     m_butScreenshot->m_loadValues();
@@ -1298,34 +1324,40 @@ void widGraphButtonAutoAxes::m_onClick()
     ptr_dataY2->m_autoStep = true;
 }
 
-widGraphButtonZoom::widGraphButtonZoom(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOff.png"), QImage(":/images/zoomOn.png"),  "Enable/disable zoom")
+widGraphButtonZoomIn::widGraphButtonZoomIn(widGraph *graph):
+    widGraphButton(graph, QImage(":/images/zoomOff.png"), QImage(":/images/zoomOn.png"), "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
-    // Initial value
-//        m_loadValues();
 }
 
-void widGraphButtonZoom::m_loadValues()
+void widGraphButtonZoomIn::m_loadValues()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     m_isChecked = ptr_data->m_control->m_zoom;
 }
 
-void widGraphButtonZoom::m_onClick()
+void widGraphButtonZoomIn::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
     ptr_data->m_control->m_setZoom(m_isChecked);
 }
 
+widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
+    widGraphButton(graph, QImage(":/images/zoomOut.png"), QImage(":/images/zoomOut.png"), "Zoom out")
+{
+}
+
+void widGraphButtonZoomOut::m_onClick()
+{
+    ptr_graph->m_zoomOut();
+}
+
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/moveOff.png"), QImage(":/images/moveOn.png"),  "Enable/disable Move")
+    widGraphButton(graph, QImage(":/images/moveOff.png"), QImage(":/images/moveOn.png"), "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
-    // Initial value
-//        m_loadValues();
 }
 
 void widGraphButtonMove::m_loadValues()
@@ -1341,9 +1373,8 @@ void widGraphButtonMove::m_onClick()
 }
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"),  "Take a screenshot")
+    widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"), "Take a screenshot")
 {
-
 }
 
 void widGraphButtonScreenshot::m_onClick()

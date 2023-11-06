@@ -6,5 +6,6 @@
         <file>images/zoomOn.png</file>
         <file>images/screenshot.png</file>
         <file>images/autoAxes.png</file>
+        <file>images/zoomOut.png</file>
     </qresource>
 </RCC>

@@ -100,11 +100,18 @@ public:
     virtual void m_onClick() override;
 };
 
-class widGraphButtonZoom: public widGraphButton
+class widGraphButtonZoomIn: public widGraphButton
 {
 public:
-    widGraphButtonZoom(widGraph *graph);
+    widGraphButtonZoomIn(widGraph *graph);
     virtual void m_loadValues() override;
+    virtual void m_onClick() override;
+};
+
+class widGraphButtonZoomOut: public widGraphButton
+{
+public:
+    widGraphButtonZoomOut(widGraph *graph);
     virtual void m_onClick() override;
 };
 
@@ -145,7 +152,8 @@ protected:
     QHBoxLayout *m_layBackground;
     widGraphTitleText *m_text;
     widGraphButtonAutoAxes *m_butAuto;
-    widGraphButtonZoom *m_butZoom;
+    widGraphButtonZoomIn *m_butZoomIn;
+    widGraphButtonZoomOut *m_butZoomOut;
     widGraphButtonMove *m_butMove;
     widGraphButtonScreenshot *m_butScreenshot;
 };
@@ -346,6 +354,7 @@ public:
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();
     void m_takeScreenshot();
+    void m_zoomOut();
 public slots:
     void m_slotDialogClosed(int status);
 private:
