@@ -202,15 +202,7 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, points
 
 std::shared_ptr<graphObjects> graphObjects::m_createGraphObject(int /*type*/)
 {
-std::shared_ptr<graphObjects> ptr_object = nullptr;
-  /*  switch (type) {
-    case CURVE:
-        ptr_object = std::make_shared<graphCurve>();
-        break;
-    case YVALUE:
-        ptr_object = std::make_shared<graphYValue>();
-        break;
-    }*/
+    std::shared_ptr<graphObjects> ptr_object = nullptr;
     return ptr_object;
 }
 
@@ -232,7 +224,7 @@ graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
 
     s_dataY = w_dataY.lock();
 
-    qDebug() << "Curve 3";
+    qDebug() << "Curve Y";
 }
 
 void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
@@ -261,6 +253,46 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
     // All points
         pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(maxX),
                     ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
+    return pathCurve;
+}
+
+
+graphXValue::graphXValue(std::shared_ptr<double> ptr_dataX):
+    w_dataX(ptr_dataX)
+{
+    m_data = std::make_shared<dataGraphObject>(true, false, false);
+
+    s_dataX = w_dataX.lock();
+
+    qDebug() << "Curve X";
+}
+
+void graphXValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
+{
+    painter->save();
+    // Get appropriate axes
+        auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
+    // Draw curve
+        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
+        if (curveEnabled) {
+            QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
+            painter->setPen(QPen(curveColor, curveWidth, dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
+            painter->drawPath(pathCurve);
+        }
+    painter->restore();
+}
+
+QPainterPath graphXValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+{
+    QPainterPath pathCurve;
+    // Move to the first point
+        double minY = ptr_y->m_getData().lock()->m_min;
+        double maxY = ptr_y->m_getData().lock()->m_max;
+        pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX),
+                         ptr_y->m_getDrawAreaPositionFromValue(minY));
+    // All points
+        pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX),
+                         ptr_y->m_getDrawAreaPositionFromValue(maxY));
     return pathCurve;
 }
 
@@ -305,11 +337,6 @@ void dataGraphObject::m_setCurveColor(const QColor &color)
     m_curveB = color.blue();
     m_curveA = color.alpha();
 }
-/*
-Qt::PenStyle dataGraphObject::m_getCurveStyle() const
-{
-    return getPenStyleFromIndex(m_curveStyleIndex);
-}*/
 
 void dataGraphObject::m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show)
 {

@@ -158,4 +158,22 @@ protected:
 };
 
 
+class WIDGRAPH_EXPORT graphXValue: public graphObjects
+{
+public:
+    graphXValue(std::shared_ptr<double> ptr_dataX);
+    ~graphXValue() = default;
+    virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
+    virtual double m_getMinX() override
+        {return *s_dataX;}
+    virtual double m_getMaxX() override
+        {return *s_dataX;}
+private:
+    QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
+protected:
+    std::weak_ptr<double> w_dataX;
+    std::shared_ptr<double> s_dataX;
+};
+
+
 #endif // OBJECTSGRAPH_H
