@@ -14,7 +14,7 @@ enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE};
 class dataGraphObject
 {
 public:
-    dataGraphObject(bool hasCurve, bool hasPoints);
+    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea);
     dataGraphObject(std::ifstream &instream);
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
@@ -29,6 +29,8 @@ public:
         {return m_hasCurve;}
     inline bool m_getHasPoints()
         {return m_hasPoints;}
+    inline bool m_getHasArea()
+        {return m_hasArea;}
     // Curve
         void m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show = true);
         std::tuple<QColor, int, int, bool> m_getStyleOfCurve();
@@ -37,6 +39,10 @@ public:
         void m_setStyleOfPoints(QColor color, int penWidth, double shapeSize, int styleIndex, bool show = true);
         std::tuple<QColor, int, int, int, bool> m_getStyleOfPoints();
         static pointsShapes getShapeStyleFromIndex(int index);
+    // Area
+        void m_setStyleOfArea(QColor color, int styleIndex, bool show = true);
+        std::tuple<QColor, int, bool> m_getStyleOfArea();
+        static Qt::BrushStyle getAreaStyleFromIndex(int index);
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -60,8 +66,16 @@ protected:
             {m_pointsStyleIndex = newStyle;}
         inline void m_setShowPoints(bool show)
             {m_showPoints = show;}
+    // Area
+        inline QColor m_getAreaColor()
+            {return QColor(m_areaR, m_areaG, m_areaB, m_areaA);}
+        void m_setAreaColor(const QColor &color);
+        inline void m_setAreaStyleIndex(int newStyle)
+            {m_areaStyleIndex = newStyle;}
+        inline void m_setShowArea(bool show)
+            {m_showArea = show;}
 public:
-    const bool m_hasCurve, m_hasPoints;
+    const bool m_hasCurve, m_hasPoints, m_hasArea;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
@@ -75,6 +89,10 @@ protected:
         int m_pointsR = 0, m_pointsG = 0, m_pointsB = 0, m_pointsA = 255;
         double m_pointsWidth = 3, m_pointsShapeSize = 10;
         int m_pointsStyleIndex = 2;
+    // Area
+        bool m_showArea = false;
+        int m_areaR = 0, m_areaG = 0, m_areaB = 0, m_areaA = 255;
+        int m_areaStyleIndex = 13;
 };
 
 class graphObjects
@@ -91,7 +109,8 @@ public:
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
-    static QPainterPath m_createPoint(QPointF point = QPoint(0,0), double shapeSize = 10, pointsShapes style = pointsShapes::CROSS);
+    static QPainterPath m_createPoint(QPointF point = QPoint(0,0),
+        double shapeSize = 10, pointsShapes style = pointsShapes::CROSS);
     static std::shared_ptr<graphObjects> m_createGraphObject(int type);
 protected:
     std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
@@ -115,6 +134,7 @@ public:
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
     QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);
+    QPainterPath m_getAreaPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
     std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;

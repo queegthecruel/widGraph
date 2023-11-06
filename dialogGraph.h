@@ -106,6 +106,7 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataDrawArea> ptr_data;
+    checkbox *m_checkShowGrid;
 };
 
 class colorButton: public QPushButton
@@ -196,6 +197,23 @@ protected:
     combobox *m_comboShape;
 };
 
+class widGraphObjectSettingArea: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingArea();
+    void m_setValues(QColor color, int styleIndex, bool enable);
+    std::tuple<QColor, int, bool> m_getValues();
+protected slots:
+    void m_slotEnabledToggled();
+protected:
+    label *m_labTitle;
+    checkbox *m_checkEnable;
+    colorPicker *m_colorPickerArea;
+    spinbox *m_editAreaThick;
+    combobox *m_comboAreaStyle;
+};
+
 class dataGraphObject;
 class widGraphObjectSetting: public QWidget
 {
@@ -209,6 +227,7 @@ protected:
     std::weak_ptr<dataGraphObject> ptr_data;
     widGraphObjectSettingCurve *m_widCurve;
     widGraphObjectSettingPoints *m_widPoints;
+    widGraphObjectSettingArea *m_widArea;
 };
 
 class tabGraphSettingsObjects: public tabGraphSettings

@@ -159,20 +159,20 @@ tabGraphSettingsDrawArea::tabGraphSettingsDrawArea(std::weak_ptr<dataDrawArea> d
     tabGraphSettings("Draw area"),
     ptr_data(data)
 {
-    //m_editFontSizeNumbers = new lineEdit();
-    //m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
+    m_checkShowGrid = new checkbox();
+    m_tree->m_addChild("Show grid", m_checkShowGrid);
 }
 
 void tabGraphSettingsDrawArea::m_loadValues()
 {
     auto s_data = ptr_data.lock();
-//    m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
+    m_checkShowGrid->m_setChecked(s_data->m_showGrid);
 }
 
 void tabGraphSettingsDrawArea::m_saveValues()
 {
     auto s_data = ptr_data.lock();
-//    s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
+    s_data->m_showGrid = m_checkShowGrid->isChecked();
 }
 
 tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
@@ -378,9 +378,11 @@ widGraphObjectSetting::widGraphObjectSetting(std::weak_ptr<dataGraphObject> data
 {
     m_widCurve = new widGraphObjectSettingCurve();
     m_widPoints = new widGraphObjectSettingPoints();
+    m_widArea = new widGraphObjectSettingArea();
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addWidget(m_widCurve);
     lay->addWidget(m_widPoints);
+    lay->addWidget(m_widArea);
     lay->addStretch();
 }
 
@@ -392,13 +394,19 @@ void widGraphObjectSetting::m_loadValues()
                 = data->m_getStyleOfCurve();
         m_widCurve->m_setValues(curveColor, curveWidth, curveStyleIndex, curveEnabled);
         if (!data->m_getHasCurve())
-            m_widCurve->setEnabled(false);
+            m_widCurve->setVisible(false);
     // Points
         auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled]
                 = data->m_getStyleOfPoints();
         m_widPoints->m_setValues(pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled);
         if (!data->m_getHasPoints())
-            m_widPoints->setEnabled(false);
+            m_widPoints->setVisible(false);
+    // Area
+        auto [areaColor, areaStyleIndex, areaEnabled]
+                = data->m_getStyleOfArea();
+        m_widArea->m_setValues(areaColor, areaStyleIndex, areaEnabled);
+        if (!data->m_getHasArea())
+            m_widArea->setVisible(false);
  }
 
 void widGraphObjectSetting::m_saveValues()
@@ -410,6 +418,9 @@ void widGraphObjectSetting::m_saveValues()
     // Points
         auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled] = m_widPoints->m_getValues();
         data->m_setStyleOfPoints(pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled);
+    // Points
+        auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
+        data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
 }
 
 colorPicker::colorPicker()
@@ -552,6 +563,7 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
     m_comboCurveStyle = new combobox();
     m_comboCurveStyle->addItems({"None", "Solid", "Dash", "Dot", "Dash dot", "Dash dot dot"});
     lay->addWidget(m_checkEnable);
+    lay->addSpacing(1);
     lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerCurve);
     lay->addWidget(m_editCurveThick);
@@ -600,6 +612,7 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
     m_comboShape = new combobox();
     m_comboShape->addItems({"None", "Point", "Cross", "Rectangle", "Circle", "Triangle"});
     lay->addWidget(m_checkEnable);
+    lay->addSpacing(1);
     lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerPoints);
     lay->addWidget(m_editThickness);
@@ -636,4 +649,51 @@ void widGraphObjectSettingPoints::m_slotEnabledToggled()
     m_editThickness->setEnabled(enabled);
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
+}
+
+widGraphObjectSettingArea::widGraphObjectSettingArea()
+{
+    HBoxLayout *lay = new HBoxLayout(this);
+    lay->addSpacing(2);
+    m_labTitle = new label("Area: ", true);
+    m_checkEnable = new checkbox();
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingArea::m_slotEnabledToggled);
+    m_colorPickerArea = new colorPicker();
+    m_editAreaThick = new spinbox();
+    m_comboAreaStyle = new combobox();
+    m_comboAreaStyle->addItems({"None", "Solid", "Dense 1", "Dense 2", "Dense 3", "Dense 4", "Dense 5", "Dense 6", "Dense 7",
+                                "Horizontal", "Vertical", "Cross", "Back diagonal", "Forward diagonal", "Cross diagonal"});
+    lay->addWidget(m_checkEnable);
+    lay->addSpacing(1);
+    lay->addWidget(m_labTitle);
+    lay->addWidget(m_colorPickerArea);
+    lay->addWidget(m_editAreaThick);
+    lay->addWidget(m_comboAreaStyle);
+    lay->addSpacing(3);
+    lay->addStretch();
+}
+
+void widGraphObjectSettingArea::m_setValues(QColor color, int styleIndex, bool enable)
+{
+    m_colorPickerArea->m_setColor(color);
+    m_comboAreaStyle->setCurrentIndex(styleIndex);
+    m_checkEnable->m_setChecked(enable);
+    m_slotEnabledToggled();
+}
+
+std::tuple<QColor, int, bool> widGraphObjectSettingArea::m_getValues()
+{
+    QColor color = m_colorPickerArea->m_getColor();
+    int styleIndex = m_comboAreaStyle->currentIndex();
+    bool enable = m_checkEnable->isChecked();
+    return {color, styleIndex, enable};
+}
+
+void widGraphObjectSettingArea::m_slotEnabledToggled()
+{
+    bool enabled = m_checkEnable->isChecked();
+    m_colorPickerArea->setEnabled(enabled);
+    m_editAreaThick->setEnabled(enabled);
+    m_comboAreaStyle->setEnabled(enabled);
 }

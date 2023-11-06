@@ -328,7 +328,6 @@ widGraphTitle::widGraphTitle(widGraph *graph):
 {
     m_text = new widGraphTitleText(ptr_graph);
     m_butAuto = new widGraphButtonAutoAxes(ptr_graph);
-    m_butShowGrid = new widGraphButtonShowGrid(ptr_graph);
     m_butZoom = new widGraphButtonZoom(ptr_graph);
     m_butMove = new widGraphButtonMove(ptr_graph);
     m_butScreenshot = new widGraphButtonScreenshot(ptr_graph);
@@ -338,13 +337,16 @@ widGraphTitle::widGraphTitle(widGraph *graph):
     m_layBackground->addWidget(m_butZoom);
     m_layBackground->addWidget(m_butMove);
     m_layBackground->addWidget(m_butAuto);
-    m_layBackground->addWidget(m_butShowGrid);
     m_layBackground->addWidget(m_butScreenshot);
 }
 
 void widGraphTitle::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
+    // Painter
+        painterAntiAl painter(this);
+    // Draw line
+        m_drawLine(painter);
 }
 
 void widGraphTitle::enterEvent(QEnterEvent *event)
@@ -375,12 +377,24 @@ void widGraphTitle::m_setDimensions()
     m_loadButtonsValues();
 }
 
+void widGraphTitle::m_drawLine(painterAntiAl &painter)
+{
+    painter.save();
+    QPen pen(Qt::black, 2);
+    painter.setPen(pen);
+    auto ptr_data = ptr_graph->m_getData().lock();
+    double startScreenX = ptr_data->m_Y1->m_width;
+    double endScreenX = width() - ptr_data->m_Y2->m_width;
+    double bottom = height();
+    painter.drawLine(startScreenX,bottom,endScreenX,bottom);
+    painter.restore();
+}
+
 void widGraphTitle::m_showButtons()
 {
     m_butZoom->m_show();
     m_butMove->m_show();
     m_butAuto->m_show();
-    m_butShowGrid->m_show();
     m_butScreenshot->m_show();
 }
 
@@ -389,7 +403,6 @@ void widGraphTitle::m_hideButtons()
     m_butZoom->m_hide();
     m_butMove->m_hide();
     m_butAuto->m_hide();
-    m_butShowGrid->m_hide();
     m_butScreenshot->m_hide();
     update();
 }
@@ -399,7 +412,6 @@ void widGraphTitle::m_setButtonsDimensions()
     m_butZoom->m_setDimensions();
     m_butMove->m_setDimensions();
     m_butAuto->m_setDimensions();
-    m_butShowGrid->m_setDimensions();
     m_butScreenshot->m_setDimensions();
 }
 
@@ -408,7 +420,6 @@ void widGraphTitle::m_loadButtonsValues()
     m_butZoom->m_loadValues();
     m_butMove->m_loadValues();
     m_butAuto->m_loadValues();
-    m_butShowGrid->m_loadValues();
     m_butScreenshot->m_loadValues();
 }
 
@@ -491,10 +502,12 @@ std::tuple<double, double> widGraphXAxis::m_getStartAndEndFromMouse(QPointF star
 
 void widGraphXAxis::m_drawLine(painterAntiAl &painter)
 {
+    painter.save();
     auto ptr_data = ptr_graph->m_getData().lock();
     double startScreenX = ptr_data->m_Y1->m_width;
     double endScreenX = width() - ptr_data->m_Y2->m_width;
     painter.drawLine(startScreenX,0,endScreenX,0);
+    painter.restore();
 }
 
 void widGraphXAxis::m_drawTicks(painterAntiAl &painter)
@@ -1327,63 +1340,6 @@ void widGraphButtonMove::m_onClick()
     ptr_data->m_control->m_setMove(m_isChecked);
 }
 
-widGraphButtonShowGrid::widGraphButtonShowGrid(widGraph *graph):
-    widGraphButton(graph, QImage(), QImage(),  "Show/hide grid")
-{
-    // Set as checkable
-        m_isCheckable = true;
-    // Initial value
-        auto ptr_data = ptr_graph->m_getData().lock();
-        auto ptr_dataDrawArea = ptr_data->m_drawArea;
-        m_isChecked = ptr_dataDrawArea->m_showGrid;
-}
-
-void widGraphButtonShowGrid::m_onClick()
-{
-    auto ptr_data = ptr_graph->m_getData().lock();
-    auto ptr_dataDrawArea = ptr_data->m_drawArea;
-    ptr_dataDrawArea->m_showGrid = m_isChecked;
-}
-
-void widGraphButtonShowGrid::m_drawInside(painterAntiAl &painter)
-{
-    painter.save();
-    // Pen
-        QPen pen;
-        if (m_isChecked)
-            pen = QPen(Qt::blue, 2);
-        else
-            pen = QPen(Qt::black, 1);
-        painter.setPen(pen);
-    // Draw grid
-        double w = width()/4;
-        double h = height()/4;
-        painter.drawLine(w, 0, w, height());
-        painter.drawLine(2*w, 0, 2*w, height());
-        painter.drawLine(3*w, 0, 3*w, height());
-        painter.drawLine(0, h, width(), h);
-        painter.drawLine(0, 2*h, width(), 2*h);
-        painter.drawLine(0, 3*h, width(), 3*h);
-    painter.restore();
-}
-/*
-void widGraphButtonAutoAxes::m_drawInside(painterAntiAl &painter)
-{
-    painter.save();
-    // Pen
-        QPen pen;
-        pen = QPen(Qt::blue, 1);
-        painter.setPen(pen);
-    // Font
-        QFont font;
-        font.setPixelSize(18);
-        painter.setFont(font);
-    // Draw
-        painter.drawText(QRect(0, 0, width(), height()),
-                         "A", QTextOption(Qt::AlignCenter));
-    painter.restore();
-}*/
-
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
     widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"),  "Take a screenshot")
 {
@@ -1394,23 +1350,6 @@ void widGraphButtonScreenshot::m_onClick()
 {
     ptr_graph->m_takeScreenshot();
 }
-/*
-void widGraphButtonScreenshot::m_drawInside(painterAntiAl &painter)
-{
-    painter.save();
-    // Pen
-        QPen pen;
-        pen = QPen(Qt::blue, 1);
-        painter.setPen(pen);
-    // Font
-        QFont font;
-        font.setPixelSize(18);
-        painter.setFont(font);
-    // Draw
-        painter.drawText(QRect(0, 0, width(), height()),
-                         "S", QTextOption(Qt::AlignCenter));
-    painter.restore();
-}*/
 
 void widGraphYAxes::m_drawZoomCursor(painterAntiAl &painter)
 {

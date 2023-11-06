@@ -5,7 +5,7 @@
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true);
+    m_data = std::make_shared<dataGraphObject>(true, true, true);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -24,7 +24,7 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::sha
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true);
+    m_data = std::make_shared<dataGraphObject>(true, true, true);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -49,7 +49,8 @@ void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
         auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
         if (curveEnabled) {
             QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
-            painter->setPen(QPen(curveColor, curveWidth, dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
+            painter->setPen(QPen(curveColor, curveWidth,
+                                 dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
             painter->drawPath(pathCurve);
         }
     // Draw points
@@ -61,7 +62,13 @@ void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
             painter->drawPath(pathPoints);
         }
     // Draw area
-
+        auto [areaColor, areaStyleIndex, areaEnabled] = m_data->m_getStyleOfArea();
+        if (areaEnabled) {
+            QPainterPath pathArea = m_getAreaPainterPath(ptr_x, ptr_y);
+            painter->setPen(QPen(Qt::transparent));
+            painter->setBrush(QBrush(areaColor, dataGraphObject::getAreaStyleFromIndex(areaStyleIndex)));
+            painter->drawPath(pathArea);
+        }
     painter->restore();
 }
 
@@ -98,6 +105,26 @@ QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxi
             pathPoints.addPath(pathPoint);
         }
         return pathPoints;
+}
+
+QPainterPath graphCurve::m_getAreaPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+{
+    QPainterPath pathArea;
+    // Pre points
+        auto point1 = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX->begin()),
+                              ptr_y->m_getDrawAreaPositionFromValue(0));
+        pathArea.moveTo(point1);
+        auto point2 = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX->begin()),
+                              ptr_y->m_getDrawAreaPositionFromValue(*s_dataY->begin()));
+        pathArea.lineTo(point2);
+    // All points
+        pathArea.addPath(m_getCurvePainterPath(ptr_x, ptr_y));
+        auto point3 = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*(s_dataX->end() - 1)),
+                              ptr_y->m_getDrawAreaPositionFromValue(0));
+    // After points
+        pathArea.lineTo(point3);
+        pathArea.lineTo(point1);
+    return pathArea;
 }
 double graphCurve::m_getMinX() {
     auto it = min_element(std::begin(*s_dataX), std::end(*s_dataX));
@@ -201,7 +228,7 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(wi
 graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false);
+    m_data = std::make_shared<dataGraphObject>(true, false, false);
 
     s_dataY = w_dataY.lock();
 
@@ -237,14 +264,14 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
     return pathCurve;
 }
 
-dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints):
-    m_hasCurve(hasCurve), m_hasPoints(hasPoints)
+dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea):
+    m_hasCurve(hasCurve), m_hasPoints(hasPoints), m_hasArea(hasArea)
 {
 
 }
 
 dataGraphObject::dataGraphObject(std::ifstream &instream):
-    m_hasCurve(true), m_hasPoints(true)
+    m_hasCurve(true), m_hasPoints(true), m_hasArea(true)
 {
     // Axis
         m_prefferedYAxis = readInt(instream);
@@ -300,6 +327,14 @@ void dataGraphObject::m_setPointsColor(const QColor &color)
     m_pointsA = color.alpha();
 }
 
+void dataGraphObject::m_setAreaColor(const QColor &color)
+{
+    m_areaR = color.red();
+    m_areaG = color.green();
+    m_areaB = color.blue();
+    m_areaA = color.alpha();
+}
+
 void dataGraphObject::m_setStyleOfPoints(QColor color, int penWidth, double shapeSize, int styleIndex, bool show)
 {
     m_setPointsColor(color);
@@ -307,6 +342,13 @@ void dataGraphObject::m_setStyleOfPoints(QColor color, int penWidth, double shap
     m_setPointsShapeSize(shapeSize);
     m_setPointsStyleIndex(styleIndex);
     m_setShowPoints(show);
+}
+
+void dataGraphObject::m_setStyleOfArea(QColor color, int styleIndex, bool show)
+{
+    m_setAreaColor(color);
+    m_setAreaStyleIndex(styleIndex);
+    m_setShowArea(show);
 }
 
 std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
@@ -317,6 +359,11 @@ std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
 std::tuple<QColor, int, int, bool> dataGraphObject::m_getStyleOfCurve()
 {
     return {m_getCurveColor(), m_curveWidth, m_curveStyleIndex, m_showCurve};
+}
+
+std::tuple<QColor, int, bool> dataGraphObject::m_getStyleOfArea()
+{
+    return {m_getAreaColor(), m_areaStyleIndex, m_showArea};
 }
 
 Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)
@@ -342,6 +389,60 @@ Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)
         break;
     default:
         return Qt::SolidLine;
+        break;
+    }
+}
+
+Qt::BrushStyle dataGraphObject::getAreaStyleFromIndex(int index)
+{
+    switch (index) {
+    case 0:
+        return Qt::NoBrush;
+        break;
+    case 1:
+        return Qt::SolidPattern;
+        break;
+    case 2:
+        return Qt::Dense1Pattern;
+        break;
+    case 3:
+        return Qt::Dense2Pattern;
+        break;
+    case 4:
+        return Qt::Dense3Pattern;
+        break;
+    case 5:
+        return Qt::Dense4Pattern;
+        break;
+    case 6:
+        return Qt::Dense5Pattern;
+        break;
+    case 7:
+        return Qt::Dense6Pattern;
+        break;
+    case 8:
+        return Qt::Dense7Pattern;
+        break;
+    case 9:
+        return Qt::HorPattern;
+        break;
+    case 10:
+        return Qt::VerPattern;
+        break;
+    case 11:
+        return Qt::CrossPattern;
+        break;
+    case 12:
+        return Qt::BDiagPattern;
+        break;
+    case 13:
+        return Qt::FDiagPattern;
+        break;
+    case 14:
+        return Qt::DiagCrossPattern;
+        break;
+    default:
+        return Qt::SolidPattern;
         break;
     }
 }

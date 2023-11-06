@@ -100,14 +100,6 @@ public:
     virtual void m_onClick() override;
 };
 
-class widGraphButtonShowGrid: public widGraphButton
-{
-public:
-    widGraphButtonShowGrid(widGraph *graph);
-    virtual void m_onClick() override;
-    virtual void m_drawInside(painterAntiAl &painter) override;
-};
-
 class widGraphButtonZoom: public widGraphButton
 {
 public:
@@ -141,18 +133,18 @@ public:
     virtual void enterEvent(QEnterEvent *event) override;
     virtual void leaveEvent(QEvent *event) override;
     virtual void m_setDimensions() override;
+protected:
     void m_showButtons();
     void m_hideButtons();
     void m_setButtonsDimensions();
     void m_loadButtonsValues();
-
+    void m_drawLine(painterAntiAl &painter);
 protected:
     const double m_rowSpacing = 1.0;
     const double m_spaceAbove = 5, m_spaceBelow = 5;
     QHBoxLayout *m_layBackground;
     widGraphTitleText *m_text;
     widGraphButtonAutoAxes *m_butAuto;
-    widGraphButtonShowGrid *m_butShowGrid;
     widGraphButtonZoom *m_butZoom;
     widGraphButtonMove *m_butMove;
     widGraphButtonScreenshot *m_butScreenshot;
