@@ -173,7 +173,6 @@ public:
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    label *m_labTitle;
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerCurve;
     spinbox *m_editCurveThick;
@@ -190,7 +189,6 @@ public:
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    label *m_labTitle;
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerPoints;
     spinbox *m_editThickness, *m_editShapeSize;
@@ -207,7 +205,6 @@ public:
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    label *m_labTitle;
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerArea;
     spinbox *m_editAreaThick;
@@ -224,7 +221,6 @@ public:
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    label *m_labTitle;
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerColumn;
     spinbox *m_editColumnThick;

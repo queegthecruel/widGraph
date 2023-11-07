@@ -223,7 +223,6 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_tabs.push_back(m_drawArea);
     m_tabs.push_back(m_objects);
 
-
     QSplitter *splitGeneral = new QSplitter(Qt::Horizontal);
     splitGeneral->addWidget(m_title);
     splitGeneral->addWidget(m_drawArea);
@@ -561,8 +560,8 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
 {
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addSpacing(2);
-    m_labTitle = new label("Curve: ", true);
-    m_checkEnable = new checkbox();
+//    m_labTitle = new label("Curve: ", true);
+    m_checkEnable = new checkbox("Curve: ");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
     m_colorPickerCurve = new colorPicker();
@@ -571,7 +570,6 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
     m_comboCurveStyle->addItems({"None", "Solid", "Dash", "Dot", "Dash dot", "Dash dot dot"});
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
-    lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerCurve);
     lay->addWidget(m_editCurveThick);
     lay->addWidget(m_comboCurveStyle);
@@ -609,8 +607,7 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
 {
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addSpacing(2);
-    m_labTitle = new label("Points: ", true);
-    m_checkEnable = new checkbox();
+    m_checkEnable = new checkbox("Points: ");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingPoints::m_slotEnabledToggled);
     m_colorPickerPoints = new colorPicker();
@@ -620,7 +617,6 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
     m_comboShape->addItems({"None", "Point", "Cross", "Rectangle", "Circle", "Triangle"});
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
-    lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerPoints);
     lay->addWidget(m_editThickness);
     lay->addWidget(m_editShapeSize);
@@ -662,8 +658,7 @@ widGraphObjectSettingArea::widGraphObjectSettingArea()
 {
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addSpacing(2);
-    m_labTitle = new label("Area: ", true);
-    m_checkEnable = new checkbox();
+    m_checkEnable = new checkbox("Area: ");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingArea::m_slotEnabledToggled);
     m_colorPickerArea = new colorPicker();
@@ -673,7 +668,6 @@ widGraphObjectSettingArea::widGraphObjectSettingArea()
                                 "Horizontal", "Vertical", "Cross", "Back diagonal", "Forward diagonal", "Cross diagonal"});
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
-    lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerArea);
     lay->addWidget(m_editAreaThick);
     lay->addWidget(m_comboAreaStyle);
@@ -710,15 +704,13 @@ widGraphObjectSettingColumn::widGraphObjectSettingColumn()
 {
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addSpacing(2);
-    m_labTitle = new label("Column: ", true);
-    m_checkEnable = new checkbox();
+    m_checkEnable = new checkbox("Column: ");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingColumn::m_slotEnabledToggled);
     m_colorPickerColumn = new colorPicker();
     m_editColumnThick = new spinbox();
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
-    lay->addWidget(m_labTitle);
     lay->addWidget(m_colorPickerColumn);
     lay->addWidget(m_editColumnThick);
     lay->addSpacing(3);
