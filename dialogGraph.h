@@ -214,6 +214,21 @@ protected:
     combobox *m_comboAreaStyle;
 };
 
+class widGraphObjectSettingColumn: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingColumn();
+    void m_setValues(QColor color, int width, bool enable);
+    std::tuple<QColor, int, bool> m_getValues();
+protected slots:
+    void m_slotEnabledToggled();
+protected:
+    label *m_labTitle;
+    checkbox *m_checkEnable;
+    colorPicker *m_colorPickerColumn;
+    spinbox *m_editColumnThick;
+};
 class dataGraphObject;
 class widGraphObjectSetting: public QWidget
 {
@@ -228,6 +243,7 @@ protected:
     widGraphObjectSettingCurve *m_widCurve;
     widGraphObjectSettingPoints *m_widPoints;
     widGraphObjectSettingArea *m_widArea;
+    widGraphObjectSettingColumn *m_widColumn;
 };
 
 class tabGraphSettingsObjects: public tabGraphSettings

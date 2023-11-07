@@ -14,7 +14,7 @@ enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE};
 class dataGraphObject
 {
 public:
-    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea);
+    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns);
     dataGraphObject(std::ifstream &instream);
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
@@ -31,6 +31,8 @@ public:
         {return m_hasPoints;}
     inline bool m_getHasArea()
         {return m_hasArea;}
+    inline bool m_getHasColumn()
+        {return m_hasColumns;}
     // Curve
         void m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show = true);
         std::tuple<QColor, int, int, bool> m_getStyleOfCurve();
@@ -43,6 +45,9 @@ public:
         void m_setStyleOfArea(QColor color, int styleIndex, bool show = true);
         std::tuple<QColor, int, bool> m_getStyleOfArea();
         static Qt::BrushStyle getAreaStyleFromIndex(int index);
+    // Column
+        void m_setStyleOfColumn(QColor color, int columnWidth, bool show = true);
+        std::tuple<QColor, int, bool> m_getStyleOfColumns();
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -74,8 +79,16 @@ protected:
             {m_areaStyleIndex = newStyle;}
         inline void m_setShowArea(bool show)
             {m_showArea = show;}
+    // Column
+        inline QColor m_getColumnsColor()
+            {return QColor(m_columnR, m_columnG, m_columnB, m_columnA);}
+        void m_setColumnColor(const QColor &color);
+        inline void m_setColumnsWidth(double newWidth)
+            {m_columnWidth = newWidth;}
+        inline void m_setShowColumns(bool show)
+            {m_showColumn = show;}
 public:
-    const bool m_hasCurve, m_hasPoints, m_hasArea;
+    const bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
@@ -93,6 +106,10 @@ protected:
         bool m_showArea = false;
         int m_areaR = 0, m_areaG = 0, m_areaB = 0, m_areaA = 255;
         int m_areaStyleIndex = 13;
+    // Column
+        bool m_showColumn = false;
+        int m_columnR = 0, m_columnG = 0, m_columnB = 0, m_columnA = 255;
+        int m_columnWidth = 2;
 };
 
 class graphObjects
@@ -176,4 +193,17 @@ protected:
 };
 
 
+class WIDGRAPH_EXPORT graphColumn: public graphObjects
+{
+public:
+    graphColumn(std::shared_ptr<std::vector<double>> ptr_dataY);
+    ~graphColumn() = default;
+    virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
+private:
+    QPainterPath m_getColumnPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
+    QPainterPath m_getColumnBorderPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
+protected:
+    std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
+    std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
+};
 #endif // OBJECTSGRAPH_H

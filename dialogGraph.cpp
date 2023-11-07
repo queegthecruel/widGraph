@@ -239,7 +239,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     splitMain->addWidget(m_objects);
 
     m_layBackground->addWidget(splitMain);
-    splitMain->setSizes({200,600,200});
+    splitMain->setSizes({200,600,400});
 }
 
 void graphSettingsWidget::m_loadValues()
@@ -379,10 +379,12 @@ widGraphObjectSetting::widGraphObjectSetting(std::weak_ptr<dataGraphObject> data
     m_widCurve = new widGraphObjectSettingCurve();
     m_widPoints = new widGraphObjectSettingPoints();
     m_widArea = new widGraphObjectSettingArea();
+    m_widColumn = new widGraphObjectSettingColumn();
     HBoxLayout *lay = new HBoxLayout(this);
     lay->addWidget(m_widCurve);
     lay->addWidget(m_widPoints);
     lay->addWidget(m_widArea);
+    lay->addWidget(m_widColumn);
     lay->addStretch();
 }
 
@@ -407,6 +409,12 @@ void widGraphObjectSetting::m_loadValues()
         m_widArea->m_setValues(areaColor, areaStyleIndex, areaEnabled);
         if (!data->m_getHasArea())
             m_widArea->setVisible(false);
+    // Column
+        auto [columnColor, columnWidth, columnEnabled]
+                = data->m_getStyleOfColumns();
+        m_widColumn->m_setValues(columnColor, columnWidth, columnEnabled);
+        if (!data->m_getHasColumn())
+            m_widColumn->setVisible(false);
  }
 
 void widGraphObjectSetting::m_saveValues()
@@ -418,9 +426,12 @@ void widGraphObjectSetting::m_saveValues()
     // Points
         auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled] = m_widPoints->m_getValues();
         data->m_setStyleOfPoints(pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled);
-    // Points
+    // Area
         auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
         data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
+    // Column
+        auto [columnColor, columnWidth, columnEnabled] = m_widColumn->m_getValues();
+        data->m_setStyleOfColumn(columnColor, columnWidth, columnEnabled);
 }
 
 colorPicker::colorPicker()
@@ -446,10 +457,6 @@ colorPicker::colorPicker()
     connect(m_customColor, &widCustomColor::m_signalColorSelected,
             this, &colorPicker::m_slotColorSelected);
     menuLayout->addWidget(m_customColor);
-  /*  QPushButton *butOK = new QPushButton("OK");
-    connect(butOK, &QAbstractButton::clicked,
-            this, &colorPicker::m_slotColorConfirmed);
-    menuLayout->addWidget(new QPushButton(butOK));*/
     connect(m_button, &QAbstractButton::pressed, this,
             &colorPicker::m_slotShowMenu);
 }
@@ -696,4 +703,48 @@ void widGraphObjectSettingArea::m_slotEnabledToggled()
     m_colorPickerArea->setEnabled(enabled);
     m_editAreaThick->setEnabled(enabled);
     m_comboAreaStyle->setEnabled(enabled);
+}
+
+
+widGraphObjectSettingColumn::widGraphObjectSettingColumn()
+{
+    HBoxLayout *lay = new HBoxLayout(this);
+    lay->addSpacing(2);
+    m_labTitle = new label("Column: ", true);
+    m_checkEnable = new checkbox();
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingColumn::m_slotEnabledToggled);
+    m_colorPickerColumn = new colorPicker();
+    m_editColumnThick = new spinbox();
+    lay->addWidget(m_checkEnable);
+    lay->addSpacing(1);
+    lay->addWidget(m_labTitle);
+    lay->addWidget(m_colorPickerColumn);
+    lay->addWidget(m_editColumnThick);
+    lay->addSpacing(3);
+    lay->addStretch();
+}
+
+void widGraphObjectSettingColumn::m_setValues(QColor color, int width, bool enable)
+{
+    m_colorPickerColumn->m_setColor(color);
+    m_editColumnThick->setValue(width);
+    m_checkEnable->m_setChecked(enable);
+    m_slotEnabledToggled();
+
+}
+
+std::tuple<QColor, int, bool> widGraphObjectSettingColumn::m_getValues()
+{
+    QColor color = m_colorPickerColumn->m_getColor();
+    int width = m_editColumnThick->value();
+    bool enable = m_checkEnable->isChecked();
+    return {color, width, enable};
+}
+
+void widGraphObjectSettingColumn::m_slotEnabledToggled()
+{
+    bool enabled = m_checkEnable->isChecked();
+    m_colorPickerColumn->setEnabled(enabled);
+    m_editColumnThick->setEnabled(enabled);
 }
