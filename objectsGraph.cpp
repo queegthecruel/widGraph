@@ -5,7 +5,7 @@
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true, true, false);
+    m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -24,7 +24,7 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::sha
 graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true, true, false);
+    m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -161,13 +161,17 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, points
 {
     double widthHalf = shapeSize/2;
     QPainterPath path;
-
+    double k = 0.6;
     switch (style) {
         case pointsShapes::NONE:
 
         break;
         case pointsShapes::POINT:
-            path.moveTo(point + QPointF(-widthHalf, -widthHalf));
+         //   path.moveTo(point + QPointF(-widthHalf/2, -widthHalf/2));
+            path.moveTo(point + QPointF(-widthHalf*k, -widthHalf*k));
+            path.lineTo(point + QPointF(widthHalf*k, widthHalf*k));
+            path.moveTo(point + QPointF(-widthHalf*k, widthHalf*k));
+            path.lineTo(point + QPointF(widthHalf*k, -widthHalf*k));
             path.addEllipse(point, widthHalf, widthHalf);
         break;
         case pointsShapes::CROSS:
@@ -193,6 +197,12 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, points
             path.lineTo(point + QPointF(0.866*widthHalf, 0.5*widthHalf));
             path.lineTo(point + QPointF(0, -widthHalf));
             path.lineTo(point + QPointF(-0.866*widthHalf, 0.5*widthHalf));
+        break;
+        case pointsShapes::TRIANGLE_REV:
+            path.moveTo(point + QPointF(-0.866*widthHalf, -0.5*widthHalf));
+            path.lineTo(point + QPointF(0.866*widthHalf, -0.5*widthHalf));
+            path.lineTo(point + QPointF(0, widthHalf));
+            path.lineTo(point + QPointF(-0.866*widthHalf, -0.5*widthHalf));
         break;
     }
 
@@ -220,7 +230,7 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(wi
 graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false, false, false);
+    m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
 
     s_dataY = w_dataY.lock();
 
@@ -261,7 +271,7 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
 graphXValue::graphXValue(std::shared_ptr<double> ptr_dataX):
     w_dataX(ptr_dataX)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false, false, false);
+    m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
 
     s_dataX = w_dataX.lock();
 
@@ -298,14 +308,13 @@ QPainterPath graphXValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
     return pathCurve;
 }
 
-dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns):
-    m_hasCurve(hasCurve), m_hasPoints(hasPoints), m_hasArea(hasArea), m_hasColumns(hasColumns)
+dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend):
+    m_hasCurve(hasCurve), m_hasPoints(hasPoints), m_hasArea(hasArea), m_hasColumns(hasColumns), m_hasLegend(hasLegend)
 {
-
 }
 
 dataGraphObject::dataGraphObject(std::ifstream &instream):
-    m_hasCurve(true), m_hasPoints(true), m_hasArea(true), m_hasColumns(true)
+    m_hasCurve(true), m_hasPoints(true), m_hasArea(true), m_hasColumns(true), m_hasLegend(true)
 {
     // Axis
         m_prefferedYAxis = readInt(instream);
@@ -330,6 +339,13 @@ void dataGraphObject::m_saveToFile(std::ofstream &outstream)
         writeInt(outstream, m_curveB);
         writeInt(outstream, m_curveA);
 
+}
+
+void dataGraphObject::m_setName(const std::string name)
+{
+    m_name = name;
+    if (!m_legendOverwrite)
+        m_legendText = name;
 }
 
 void dataGraphObject::m_setCurveColor(const QColor &color)
@@ -364,14 +380,6 @@ void dataGraphObject::m_setAreaColor(const QColor &color)
     m_areaA = color.alpha();
 }
 
-void dataGraphObject::m_setColumnColor(const QColor &color)
-{
-    m_columnR = color.red();
-    m_columnG = color.green();
-    m_columnB = color.blue();
-    m_columnA = color.alpha();
-}
-
 void dataGraphObject::m_setStyleOfPoints(QColor color, int penWidth, double shapeSize, int styleIndex, bool show)
 {
     m_setPointsColor(color);
@@ -388,11 +396,17 @@ void dataGraphObject::m_setStyleOfArea(QColor color, int styleIndex, bool show)
     m_setShowArea(show);
 }
 
-void dataGraphObject::m_setStyleOfColumn(QColor color, int columnWidth, bool show)
+void dataGraphObject::m_setStyleOfColumn(int columnWidth, bool show)
 {
-    m_setColumnColor(color);
     m_setColumnsWidth(columnWidth);
     m_setShowColumns(show);
+}
+
+void dataGraphObject::m_setStyleOfLegend(bool overwrite, const std::string &text, bool show)
+{
+    m_setLegendOverwrite(overwrite);
+    m_setLegendText(text);
+    m_setShowLegend(show);
 }
 
 std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
@@ -410,9 +424,14 @@ std::tuple<QColor, int, bool> dataGraphObject::m_getStyleOfArea()
     return {m_getAreaColor(), m_areaStyleIndex, m_showArea};
 }
 
-std::tuple<QColor, int, bool> dataGraphObject::m_getStyleOfColumns()
+std::tuple<int, bool> dataGraphObject::m_getStyleOfColumns()
 {
-    return {m_getColumnsColor(), m_columnWidth, m_showColumn};
+    return {m_columnWidth, m_showColumn};
+}
+
+std::tuple<bool, const std::string &, bool> dataGraphObject::m_getStyleOfLegend()
+{
+    return {m_legendOverwrite, m_legendText, m_showLegend};
 }
 
 Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)
@@ -517,6 +536,9 @@ pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
     case 5:
         return pointsShapes::TRIANGLE;
         break;
+    case 6:
+        return pointsShapes::TRIANGLE_REV;
+        break;
     default:
         return pointsShapes::CROSS;
         break;
@@ -526,8 +548,8 @@ pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
 graphColumn::graphColumn(std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false, false, true);
-    m_data->m_setStyleOfColumn(QColor(Qt::cyan), 30, true);
+    m_data = std::make_shared<dataGraphObject>(true, false, true, true, true);
+    m_data->m_setStyleOfColumn(30, true);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -549,20 +571,23 @@ void graphColumn::m_drawItself(QPainter *painter, widGraph *ptr_graph)
     painter->save();
     // Get appropriate axes
         auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
-        // Draw columns
-        auto [columnsColor, columnsWidth, columnsEnabled] = m_data->m_getStyleOfColumns();
-        if (columnsEnabled) {
-            QPainterPath pathColumns = m_getColumnPainterPath(ptr_x, ptr_y, columnsWidth);
-            pathColumns.setFillRule(Qt::WindingFill);
-            painter->fillPath(pathColumns, columnsColor);
-        }
-        // Draw column border
-        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
-        if (curveEnabled) {
-            QPainterPath pathCurve = m_getColumnBorderPainterPath(ptr_x, ptr_y, columnsWidth);
-            painter->setPen(QPen(curveColor, curveWidth,
-                                 dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
-            painter->drawPath(pathCurve);
+        auto [columnsWidth, columnsEnabled] = m_data->m_getStyleOfColumns();
+        if (columnsEnabled && columnsWidth > 0) {
+            // Draw columns area
+            auto [areaColor, areaStyleIndex, areaEnabled] = m_data->m_getStyleOfArea();
+            if (areaEnabled) {
+                QPainterPath pathColumns = m_getColumnPainterPath(ptr_x, ptr_y, columnsWidth);
+                pathColumns.setFillRule(Qt::WindingFill);
+                painter->fillPath(pathColumns, QBrush(areaColor, dataGraphObject::getAreaStyleFromIndex(areaStyleIndex)));
+            }
+            // Draw column border
+            auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
+            if (curveEnabled) {
+                QPainterPath pathCurve = m_getColumnBorderPainterPath(ptr_x, ptr_y, columnsWidth);
+                painter->setPen(QPen(curveColor, curveWidth,
+                                     dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
+                painter->drawPath(pathCurve);
+            }
         }
     painter->restore();
 }
@@ -597,7 +622,6 @@ QPainterPath graphColumn::m_getColumnBorderPainterPath(widGraphAxis *ptr_x, widG
                                ptr_y->m_getDrawAreaPositionFromValue(0)),
                        QPoint(ptr_x->m_getDrawAreaPositionFromValue(*itX) + widthHalf,
                                ptr_y->m_getDrawAreaPositionFromValue(0 + *itY)));
-            qDebug() << rect;
             pathColumnBorder.addRect(rect);
         }
         return pathColumnBorder;

@@ -10,17 +10,16 @@
 class widGraph;
 class widGraphAxis;
 
-enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE};
+enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE, TRIANGLE_REV};
 class dataGraphObject
 {
 public:
-    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns);
+    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend);
     dataGraphObject(std::ifstream &instream);
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
         {return m_name;}
-    inline void m_setName(const std::string name)
-        {m_name = name;}
+    void m_setName(const std::string name);
     inline int m_getPrefferedYAxis()
         {return m_prefferedYAxis;}
     inline void m_setPrefferedAxis(int axisIndex)
@@ -33,6 +32,8 @@ public:
         {return m_hasArea;}
     inline bool m_getHasColumn()
         {return m_hasColumns;}
+    inline bool m_getHasLegend()
+        {return m_hasLegend;}
     // Curve
         void m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show = true);
         std::tuple<QColor, int, int, bool> m_getStyleOfCurve();
@@ -46,8 +47,11 @@ public:
         std::tuple<QColor, int, bool> m_getStyleOfArea();
         static Qt::BrushStyle getAreaStyleFromIndex(int index);
     // Column
-        void m_setStyleOfColumn(QColor color, int columnWidth, bool show = true);
-        std::tuple<QColor, int, bool> m_getStyleOfColumns();
+        void m_setStyleOfColumn(int columnWidth, bool show = true);
+        std::tuple<int, bool> m_getStyleOfColumns();
+    // Legend
+        void m_setStyleOfLegend(bool overwrite, const std::string &text, bool show = true);
+        std::tuple<bool, const std::string &, bool> m_getStyleOfLegend();
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -80,15 +84,19 @@ protected:
         inline void m_setShowArea(bool show)
             {m_showArea = show;}
     // Column
-        inline QColor m_getColumnsColor()
-            {return QColor(m_columnR, m_columnG, m_columnB, m_columnA);}
-        void m_setColumnColor(const QColor &color);
         inline void m_setColumnsWidth(double newWidth)
             {m_columnWidth = newWidth;}
         inline void m_setShowColumns(bool show)
             {m_showColumn = show;}
+    // Legend
+        inline void m_setLegendText(const std::string &text)
+            {m_legendText = text;}
+        inline void m_setLegendOverwrite(bool overwrite)
+            {m_legendOverwrite = overwrite;}
+        inline void m_setShowLegend(bool show)
+            {m_showLegend = show;}
 public:
-    const bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns;
+    const bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
@@ -108,8 +116,11 @@ protected:
         int m_areaStyleIndex = 13;
     // Column
         bool m_showColumn = false;
-        int m_columnR = 0, m_columnG = 0, m_columnB = 0, m_columnA = 255;
-        int m_columnWidth = 2;
+        int m_columnWidth = 30;
+    // Legend
+        bool m_showLegend = true;
+        bool m_legendOverwrite = false;
+        std::string m_legendText;
 };
 
 class graphObjects

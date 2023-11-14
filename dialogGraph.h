@@ -163,7 +163,15 @@ protected:
     QColor m_color;
 };
 
-class widGraphObjectSettingCurve: public QWidget
+class widGraphObjectSetting: public QWidget
+{
+protected:
+    static QVector<std::tuple<QString, QIcon>> m_getIconsForCurve(int iconWidth = 40, int iconHeight = 15);
+    static QVector<std::tuple<QString, QIcon>> m_getIconsForPoints(int iconSize = 17);
+    static QVector<std::tuple<QString, QIcon>> m_getIconsForArea(int iconWidth = 40, int iconHeight = 15);
+};
+
+class widGraphObjectSettingCurve: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
@@ -179,7 +187,7 @@ protected:
     combobox *m_comboCurveStyle;
 };
 
-class widGraphObjectSettingPoints: public QWidget
+class widGraphObjectSettingPoints: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
@@ -188,6 +196,7 @@ public:
     std::tuple<QColor, int, int, int, bool> m_getValues();
 protected slots:
     void m_slotEnabledToggled();
+private:
 protected:
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerPoints;
@@ -195,7 +204,7 @@ protected:
     combobox *m_comboShape;
 };
 
-class widGraphObjectSettingArea: public QWidget
+class widGraphObjectSettingArea: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
@@ -204,34 +213,48 @@ public:
     std::tuple<QColor, int, bool> m_getValues();
 protected slots:
     void m_slotEnabledToggled();
+private:
 protected:
     checkbox *m_checkEnable;
     colorPicker *m_colorPickerArea;
-    spinbox *m_editAreaThick;
     combobox *m_comboAreaStyle;
 };
 
-class widGraphObjectSettingColumn: public QWidget
+class widGraphObjectSettingColumn: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
     widGraphObjectSettingColumn();
-    void m_setValues(QColor color, int width, bool enable);
-    std::tuple<QColor, int, bool> m_getValues();
+    void m_setValues(int width, bool enable);
+    std::tuple<int, bool> m_getValues();
 protected slots:
     void m_slotEnabledToggled();
 protected:
     checkbox *m_checkEnable;
-    colorPicker *m_colorPickerColumn;
     spinbox *m_editColumnThick;
 };
-class dataGraphObject;
-class widGraphObjectSetting: public QWidget
+
+class widGraphObjectSettingLegend: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
-    widGraphObjectSetting(std::weak_ptr<dataGraphObject> data);
-    ~widGraphObjectSetting() = default;
+    widGraphObjectSettingLegend();
+    void m_setValues(bool overwrite, const std::string &text, bool enable);
+    std::tuple<bool, std::string, bool> m_getValues();
+protected slots:
+    void m_slotEnabledToggled();
+protected:
+    checkbox *m_checkEnable;
+    checkEdit *m_editText;
+};
+
+class dataGraphObject;
+class widGraphObjectSettingMain: public QWidget
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data);
+    ~widGraphObjectSettingMain() = default;
     void m_loadValues();
     void m_saveValues();
 protected:
@@ -240,6 +263,7 @@ protected:
     widGraphObjectSettingPoints *m_widPoints;
     widGraphObjectSettingArea *m_widArea;
     widGraphObjectSettingColumn *m_widColumn;
+    widGraphObjectSettingLegend *m_widLegend;
 };
 
 class tabGraphSettingsObjects: public tabGraphSettings
@@ -251,7 +275,7 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::vector<std::shared_ptr<graphObjects>> vGraphObjects;
-    std::vector<widGraphObjectSetting*> vGraphWidgets;
+    std::vector<widGraphObjectSettingMain*> vGraphWidgets;
 
 };
 

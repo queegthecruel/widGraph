@@ -86,6 +86,18 @@ void widGraph::m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth
     ptr_objectData->m_setStyleOfPoints(color, penPointsWidth, pointsShapeSize, pointsStyleIndex, showPoints);
 }
 
+void widGraph::m_setAreaStyle(int curveIndex, QColor color, int areaStyleIndex, bool showArea)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setStyleOfArea(color, areaStyleIndex, showArea);
+}
+
+void widGraph::m_setColumnsStyle(int curveIndex, int columnWidth, bool showColumn)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setStyleOfColumn(columnWidth, showColumn);
+}
+
 void widGraph::m_setCurveAxis(int curveIndex, int axis)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
@@ -1141,12 +1153,19 @@ void widGraphLegend::m_drawTexts(painterAntiAl &painter)
     painter.setFont(font);
     double startLeft = 10;
     for (const auto &var: listCurves) {
-        QRect rect(startLeft, i*rowHeight, width() - startLeft, rowHeight);
         auto ptr_curveData = var->m_getData().lock();
-        QString axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
-        QString text = QString::fromStdString(ptr_curveData->m_getName()) + " [" + axis + "]" ;
-        painter.drawText(rect, text, QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-        ++i;
+        auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
+        if (showLegend) {
+            std::string legendText;
+            std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
+            if (overwrite)
+                legendText = text;
+            else
+                legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
+            QRect rect(startLeft, i*rowHeight, width() - startLeft, rowHeight);
+            painter.drawText(rect, QString::fromStdString(legendText), QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+            ++i;
+        }
     }
 }
 
@@ -1159,12 +1178,23 @@ void widGraphLegend::paintEvent(QPaintEvent */*event*/)
 
 void widGraphLegend::m_setDimensions()
 {
-    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
-    int numberCurves = listCurves.size();
+    int numberCurves = m_getNCurvesWithLegend();
     auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
     double rowHeight = 1.2*ptr_legendData->m_fontText;
     double height = numberCurves * rowHeight;
     setFixedHeight(height);
+}
+
+int widGraphLegend::m_getNCurvesWithLegend()
+{
+    int nCurvesWithLegend = 0;
+    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+    for (auto &var:listCurves) {
+        auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
+        if (show)
+            ++nCurvesWithLegend;
+    }
+    return nCurvesWithLegend;
 }
 
 

@@ -324,6 +324,7 @@ public:
     void paintEvent(QPaintEvent *event) override;
     virtual void m_setDimensions() override;
 private:
+    int m_getNCurvesWithLegend();
     void m_drawTopLine(painterAntiAl &painter);
     void m_drawTexts(painterAntiAl &painter);
 };
@@ -350,6 +351,8 @@ public:
     void m_loadValues();
     void m_setCurveStyle(int curveIndex, QColor color, int curveWidth = 3, int curveStyleIndex = 1, bool showCurve = true);
     void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);
+    void m_setAreaStyle(int curveIndex, QColor color, int areaStyleIndex = 1, bool showArea = true);
+    void m_setColumnsStyle(int curveIndex, int columnWidth = 30, bool showColumn = true);
     void m_setCurveAxis(int curveIndex, int axis);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();

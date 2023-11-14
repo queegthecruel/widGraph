@@ -18,7 +18,7 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     m_layBackground->addWidget(m_footer);
 
     m_loadValues();
-    resize(800,600);
+    resize(1024,600);
 }
 
 void dialogGraph::m_slotClose()
@@ -357,7 +357,7 @@ void tabGraphSettingsObjects::m_loadValues()
     int nCurves = vGraphObjects.size();
     for (int i = 0; i < nCurves; ++i) {
         auto data = vGraphObjects[i]->m_getData().lock();
-        auto *widget = new widGraphObjectSetting(data);
+        auto *widget = new widGraphObjectSettingMain(data);
         vGraphWidgets.push_back(widget);
         m_tree->m_addChild(data->m_getName(), widget);
         widget->m_loadValues();
@@ -372,22 +372,24 @@ void tabGraphSettingsObjects::m_saveValues()
     }
 }
 
-widGraphObjectSetting::widGraphObjectSetting(std::weak_ptr<dataGraphObject> data):
+widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
     ptr_data(data)
 {
+    m_widColumn = new widGraphObjectSettingColumn();
     m_widCurve = new widGraphObjectSettingCurve();
     m_widPoints = new widGraphObjectSettingPoints();
     m_widArea = new widGraphObjectSettingArea();
-    m_widColumn = new widGraphObjectSettingColumn();
+    m_widLegend = new widGraphObjectSettingLegend();
     HBoxLayout *lay = new HBoxLayout(this);
-    lay->addWidget(m_widCurve);
-    lay->addWidget(m_widPoints);
-    lay->addWidget(m_widArea);
-    lay->addWidget(m_widColumn);
-    lay->addStretch();
+    lay->addWidget(m_widColumn, 1);
+    lay->addWidget(m_widCurve, 1);
+    lay->addWidget(m_widPoints, 1);
+    lay->addWidget(m_widArea, 1);
+    lay->addWidget(m_widLegend);
+    lay->addStretch(10);
 }
 
-void widGraphObjectSetting::m_loadValues()
+void widGraphObjectSettingMain::m_loadValues()
 {
     auto data = ptr_data.lock();
     // Curve
@@ -409,14 +411,19 @@ void widGraphObjectSetting::m_loadValues()
         if (!data->m_getHasArea())
             m_widArea->setVisible(false);
     // Column
-        auto [columnColor, columnWidth, columnEnabled]
-                = data->m_getStyleOfColumns();
-        m_widColumn->m_setValues(columnColor, columnWidth, columnEnabled);
+        auto [columnWidth, columnEnabled] = data->m_getStyleOfColumns();
+        m_widColumn->m_setValues(columnWidth, columnEnabled);
         if (!data->m_getHasColumn())
             m_widColumn->setVisible(false);
+    // Legend
+        auto [legendOverwrite, legendText, legendEnabled]
+                = data->m_getStyleOfLegend();
+        m_widLegend->m_setValues(legendOverwrite, legendText, legendEnabled);
+        if (!data->m_getHasLegend())
+            m_widLegend->setVisible(false);
  }
 
-void widGraphObjectSetting::m_saveValues()
+void widGraphObjectSettingMain::m_saveValues()
 {
     auto data = ptr_data.lock();
     // Curve
@@ -429,9 +436,12 @@ void widGraphObjectSetting::m_saveValues()
         auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
         data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
     // Column
-        auto [columnColor, columnWidth, columnEnabled] = m_widColumn->m_getValues();
-        data->m_setStyleOfColumn(columnColor, columnWidth, columnEnabled);
-}
+        auto [columnWidth, columnEnabled] = m_widColumn->m_getValues();
+        data->m_setStyleOfColumn(columnWidth, columnEnabled);
+    // Column
+        auto [legendOverwrite, legendText, legendEnabled] = m_widLegend->m_getValues();
+        data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
+ }
 
 colorPicker::colorPicker()
 {
@@ -566,8 +576,13 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
             this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
     m_colorPickerCurve = new colorPicker();
     m_editCurveThick = new spinbox();
-    m_comboCurveStyle = new combobox();
-    m_comboCurveStyle->addItems({"None", "Solid", "Dash", "Dot", "Dash dot", "Dash dot dot"});
+    m_comboCurveStyle = new combobox(65);
+
+    int iconWidth = 40;
+    int iconHeight = 15;
+    auto vOptions = m_getIconsForCurve(iconWidth, iconHeight);
+    m_comboCurveStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
+
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
     lay->addWidget(m_colorPickerCurve);
@@ -603,6 +618,48 @@ void widGraphObjectSettingCurve::m_slotEnabledToggled()
     m_comboCurveStyle->setEnabled(enabled);
 }
 
+QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(int iconWidth, int iconHeight)
+{
+    QRect rect(0,0,iconWidth,iconHeight);
+    QPixmap pixmap(rect.size());
+    painterAntiAl painter(&pixmap);
+    painter.setPen(QPen(Qt::black, 2));
+
+    QLine line(0, iconHeight/2, iconWidth, iconHeight/2);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::NoPen));
+    painter.drawLine(line);
+    QIcon iconNone(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::SolidLine));
+    painter.drawLine(line);
+    QIcon iconSolid(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::DashLine));
+    painter.drawLine(line);
+    QIcon iconDash(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::DotLine));
+    painter.drawLine(line);
+    QIcon iconDot(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::DashDotLine));
+    painter.drawLine(line);
+    QIcon iconDashDot(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.setPen(QPen(Qt::black, 2, Qt::DashDotDotLine));
+    painter.drawLine(line);
+    QIcon iconDashDotDot(pixmap);
+
+    auto none = std::tuple<QString, QIcon>("None",iconNone);
+    auto solid = std::tuple<QString, QIcon>("Solid",iconSolid);
+    auto dash = std::tuple<QString, QIcon>("Dash",iconDash);
+    auto dot = std::tuple<QString, QIcon>("Dot",iconDot);
+    auto dashDot = std::tuple<QString, QIcon>("Dash dot",iconDashDot);
+    auto dashDotDot = std::tuple<QString, QIcon>("Dash dot dot",iconDashDotDot);
+    return {none, solid, dash, dot, dashDot, dashDotDot};
+}
+
 widGraphObjectSettingPoints::widGraphObjectSettingPoints()
 {
     HBoxLayout *lay = new HBoxLayout(this);
@@ -613,8 +670,12 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
     m_colorPickerPoints = new colorPicker();
     m_editThickness = new spinbox();
     m_editShapeSize = new spinbox();
-    m_comboShape = new combobox();
-    m_comboShape->addItems({"None", "Point", "Cross", "Rectangle", "Circle", "Triangle"});
+    m_comboShape = new combobox(50);
+
+    int iconSize = 17;
+    auto vOptions = m_getIconsForPoints(iconSize);
+    m_comboShape->m_addItems(vOptions, QSize(iconSize,iconSize), false);
+
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
     lay->addWidget(m_colorPickerPoints);
@@ -654,6 +715,47 @@ void widGraphObjectSettingPoints::m_slotEnabledToggled()
     m_comboShape->setEnabled(enabled);
 }
 
+QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(int iconSize)
+{
+    QRect rect(0,0,iconSize,iconSize);
+    QPoint mid = rect.center();
+    QPixmap pixmap(rect.size());
+    painterAntiAl painter(&pixmap);
+    painter.setPen(QPen(Qt::black, 2));
+
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::NONE));
+    QIcon iconNone(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::POINT));
+    QIcon iconPoint(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CROSS));
+    QIcon iconCross(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::SQUARE));
+    QIcon iconRect(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CIRCLE));
+    QIcon iconCircle(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE));
+    QIcon iconTriangle(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE_REV));
+    QIcon iconRevTriangle(pixmap);
+
+    auto none = std::tuple<QString, QIcon>("None",iconNone);
+    auto point = std::tuple<QString, QIcon>("Point",iconPoint);
+    auto cross = std::tuple<QString, QIcon>("Cross",iconCross);
+    auto square = std::tuple<QString, QIcon>("Square",iconRect);
+    auto circle = std::tuple<QString, QIcon>("Circle",iconCircle);
+    auto triangle = std::tuple<QString, QIcon>("Triangle",iconTriangle);
+    auto revTriangle = std::tuple<QString, QIcon>("Rev. triangle",iconRevTriangle);
+
+    return {none, point, cross, square, circle, triangle, revTriangle};
+}
+
 widGraphObjectSettingArea::widGraphObjectSettingArea()
 {
     HBoxLayout *lay = new HBoxLayout(this);
@@ -662,14 +764,16 @@ widGraphObjectSettingArea::widGraphObjectSettingArea()
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingArea::m_slotEnabledToggled);
     m_colorPickerArea = new colorPicker();
-    m_editAreaThick = new spinbox();
-    m_comboAreaStyle = new combobox();
-    m_comboAreaStyle->addItems({"None", "Solid", "Dense 1", "Dense 2", "Dense 3", "Dense 4", "Dense 5", "Dense 6", "Dense 7",
-                                "Horizontal", "Vertical", "Cross", "Back diagonal", "Forward diagonal", "Cross diagonal"});
+    m_comboAreaStyle = new combobox(65);
+
+    int iconWidth = 40;
+    int iconHeight = 15;
+    auto vOptions = m_getIconsForArea(iconWidth, iconHeight);
+    m_comboAreaStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
+
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
     lay->addWidget(m_colorPickerArea);
-    lay->addWidget(m_editAreaThick);
     lay->addWidget(m_comboAreaStyle);
     lay->addSpacing(3);
     lay->addStretch();
@@ -695,8 +799,96 @@ void widGraphObjectSettingArea::m_slotEnabledToggled()
 {
     bool enabled = m_checkEnable->isChecked();
     m_colorPickerArea->setEnabled(enabled);
-    m_editAreaThick->setEnabled(enabled);
     m_comboAreaStyle->setEnabled(enabled);
+}
+
+QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForArea(int iconWidth, int iconHeight)
+{
+    QRect rect(0,0,iconWidth,iconHeight);
+    QRect rect2(1,1,iconWidth-2,iconHeight-2);
+    QPixmap pixmap(rect.size());
+    painterAntiAl painter(&pixmap);
+    painter.setPen(QPen(Qt::black, 1));
+
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::NoBrush));
+    painter.drawRect(rect2);
+    QIcon iconNone(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::SolidPattern));
+    painter.drawRect(rect2);
+    QIcon iconSolid(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense1Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense1(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense2Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense2(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense3Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense3(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense4Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense4(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense5Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense5(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense6Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense6(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::Dense7Pattern));
+    painter.drawRect(rect2);
+    QIcon iconDense7(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::VerPattern));
+    painter.drawRect(rect2);
+    QIcon iconHorizontal(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::HorPattern));
+    painter.drawRect(rect2);
+    QIcon iconVertical(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::CrossPattern));
+    painter.drawRect(rect2);
+    QIcon iconCross(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::BDiagPattern));
+    painter.drawRect(rect2);
+    QIcon iconBackDiagonal(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::FDiagPattern));
+    painter.drawRect(rect2);
+    QIcon iconForwardDiagonal(pixmap);
+    painter.fillRect(pixmap.rect(), Qt::white);
+    painter.fillRect(rect, QBrush(Qt::black, Qt::DiagCrossPattern));
+    painter.drawRect(rect2);
+    QIcon iconCrossDiagonal(pixmap);
+
+    auto none = std::tuple<QString, QIcon>("None",iconNone);
+    auto solid = std::tuple<QString, QIcon>("Solid",iconSolid);
+    auto dense1 = std::tuple<QString, QIcon>("Dense 1",iconDense1);
+    auto dense2 = std::tuple<QString, QIcon>("Dense 2",iconDense2);
+    auto dense3 = std::tuple<QString, QIcon>("Dense 3",iconDense3);
+    auto dense4 = std::tuple<QString, QIcon>("Dense 4",iconDense4);
+    auto dense5 = std::tuple<QString, QIcon>("Dense 5",iconDense5);
+    auto dense6 = std::tuple<QString, QIcon>("Dense 6",iconDense6);
+    auto dense7 = std::tuple<QString, QIcon>("Dense 7",iconDense7);
+    auto horizontal = std::tuple<QString, QIcon>("Horizontal",iconHorizontal);
+    auto vertical = std::tuple<QString, QIcon>("Vertical",iconVertical);
+    auto cross = std::tuple<QString, QIcon>("Cross",iconCross);
+    auto bdiagonal = std::tuple<QString, QIcon>("Back diagonal",iconBackDiagonal);
+    auto fDiagonal = std::tuple<QString, QIcon>("Forward diagonal",iconForwardDiagonal);
+    auto crossDiagonal = std::tuple<QString, QIcon>("Cross diagonal",iconCrossDiagonal);
+
+    return {none, solid, dense1, dense2, dense3, dense4, dense5, dense6, dense7,
+            horizontal, vertical, cross, bdiagonal, fDiagonal, crossDiagonal};
 }
 
 
@@ -707,36 +899,68 @@ widGraphObjectSettingColumn::widGraphObjectSettingColumn()
     m_checkEnable = new checkbox("Column: ");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingColumn::m_slotEnabledToggled);
-    m_colorPickerColumn = new colorPicker();
     m_editColumnThick = new spinbox();
+
     lay->addWidget(m_checkEnable);
     lay->addSpacing(1);
-    lay->addWidget(m_colorPickerColumn);
     lay->addWidget(m_editColumnThick);
     lay->addSpacing(3);
     lay->addStretch();
 }
 
-void widGraphObjectSettingColumn::m_setValues(QColor color, int width, bool enable)
+void widGraphObjectSettingColumn::m_setValues(int width, bool enable)
 {
-    m_colorPickerColumn->m_setColor(color);
     m_editColumnThick->setValue(width);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
-
 }
 
-std::tuple<QColor, int, bool> widGraphObjectSettingColumn::m_getValues()
+std::tuple<int, bool> widGraphObjectSettingColumn::m_getValues()
 {
-    QColor color = m_colorPickerColumn->m_getColor();
     int width = m_editColumnThick->value();
     bool enable = m_checkEnable->isChecked();
-    return {color, width, enable};
+    return {width, enable};
 }
 
 void widGraphObjectSettingColumn::m_slotEnabledToggled()
 {
     bool enabled = m_checkEnable->isChecked();
-    m_colorPickerColumn->setEnabled(enabled);
     m_editColumnThick->setEnabled(enabled);
+}
+
+widGraphObjectSettingLegend::widGraphObjectSettingLegend()
+{
+    HBoxLayout *lay = new HBoxLayout(this);
+    lay->addSpacing(2);
+    m_checkEnable = new checkbox("Legend: ");
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingLegend::m_slotEnabledToggled);
+    m_editText = new checkEdit(validator::NONE);
+
+    lay->addWidget(m_checkEnable);
+    lay->addSpacing(1);
+    lay->addWidget(m_editText);
+    lay->addSpacing(3);
+    lay->addStretch();
+}
+
+void widGraphObjectSettingLegend::m_setValues(bool overwrite, const std::string &text, bool enable)
+{
+    m_editText->m_setText(overwrite, text);
+    m_checkEnable->m_setChecked(enable);
+    m_slotEnabledToggled();
+}
+
+std::tuple<bool, std::string, bool> widGraphObjectSettingLegend::m_getValues()
+{
+    bool overwrite = m_editText->m_getChecked();
+    std::string text = m_editText->m_getText();
+    bool enable = m_checkEnable->isChecked();
+    return {overwrite, text, enable};
+}
+
+void widGraphObjectSettingLegend::m_slotEnabledToggled()
+{
+    bool enabled = m_checkEnable->isChecked();
+    m_editText->setEnabled(enabled);
 }
