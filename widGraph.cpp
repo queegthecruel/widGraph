@@ -143,9 +143,17 @@ void widGraph::m_zoomOut()
     double d_y1 = zoomFactor*(maxY1 - minY1);
     double d_y2 = zoomFactor*(maxY2 - minY2);
 
-
     m_widArea->m_setAxisMinMax(minX - d_x, maxX + d_x, minY1 - d_y1, maxY1 + d_y1, minY2 - d_y2, maxY2 + d_y2);
     m_loadValues();
+}
+
+QString widGraph::removeTrailingZeros(double number)
+{
+    double a = number;
+    QString textNumber;
+    textNumber = QString::number(a);
+
+    return textNumber;
 }
 
 void widGraph::m_slotDialogClosed(int /*status*/)
@@ -696,8 +704,8 @@ void widGraphXAxes::m_supDrawNumber(painterAntiAl &painter, double location, dou
     double posX = m_getPositionFromValue(location);
     QRect rect(QPoint(posX - length, m_getNumbersStart()),
                QPoint(posX + length, m_getNumbersEnd()));
-    painter.drawText(rect, QString::number(location, 'f', 2),
-                     QTextOption(Qt::AlignCenter));
+    QString number = widGraph::removeTrailingZeros(location);
+    painter.drawText(rect, number, QTextOption(Qt::AlignCenter));
 }
 
 void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
@@ -752,8 +760,8 @@ void widGraphYAxes::m_supDrawNumber(painterAntiAl &painter, double location, dou
     QPoint leftTop(std::min(m_getNumbersStart(), m_getNumbersEnd()), posY - length/2);
     QPoint rightBottom(std::max(m_getNumbersStart(), m_getNumbersEnd()), posY + length/2);
     QRect rect(leftTop, rightBottom);
-    painter.drawText(rect, QString::number(location, 'f', 2),
-                     QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+    QString number = widGraph::removeTrailingZeros(location);
+    painter.drawText(rect, number, QTextOption(Qt::AlignRight | Qt::AlignVCenter));
 }
 
 void widGraphYAxes::m_supDrawTick(painterAntiAl &painter, double location)

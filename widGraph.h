@@ -358,6 +358,7 @@ public:
     void m_openDialog();
     void m_takeScreenshot();
     void m_zoomOut();
+    static QString removeTrailingZeros(double number);
 public slots:
     void m_slotDialogClosed(int status);
 private:
