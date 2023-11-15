@@ -140,9 +140,9 @@ public:
     virtual void enterEvent(QEnterEvent *event) override;
     virtual void leaveEvent(QEvent *event) override;
     virtual void m_setDimensions() override;
-protected:
     void m_showButtons();
     void m_hideButtons();
+protected:
     void m_setButtonsDimensions();
     void m_loadButtonsValues();
     void m_drawLine(painterAntiAl &painter);

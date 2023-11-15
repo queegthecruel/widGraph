@@ -23,7 +23,8 @@ widGraph::widGraph()
         layBackground->addWidget(m_widArea, 1,1, 1,1);
         layBackground->addWidget(m_widLegend, 3,0, 1,3);
      // Stylesheet
-        setStyleSheet("background: transparent;");
+        setStyleSheet(".widGraph {background: white;}"
+                      ".QWidget {background: transparent;}");
         setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -115,20 +116,20 @@ void widGraph::m_openDialog()
     if (m_dialog == nullptr) {
         m_dialog = std::make_unique<dialogGraph>(this, m_data);
         connect(m_dialog.get(), &QDialog::finished, this, &widGraph::m_slotDialogClosed);
-        m_dialog->show();
     }
+    m_dialog->show();
 }
 
 void widGraph::m_takeScreenshot()
 {
-    setStyleSheet(".QWidget {background: white;}");
+    m_widTitle->m_hideButtons();
     int ratio = 5;
     QSize imageSize = size()*ratio;
     QImage image = QImage(imageSize, QImage::Format_RGB32);
     image.setDevicePixelRatio(ratio);
     render(&image);
     QApplication::clipboard()->setImage(image);
-    setStyleSheet(".QWidget {background: transparent;}");
+    m_widTitle->m_showButtons();
 }
 
 void widGraph::m_zoomOut()
