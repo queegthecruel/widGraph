@@ -338,7 +338,6 @@ public:
     widGraph(const widGraph&) = delete;
     widGraph& operator=(const widGraph&) = delete;
     void keyPressEvent(QKeyEvent *event) override;
-    void closeEvent(QCloseEvent *event) override;
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)
