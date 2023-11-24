@@ -26,6 +26,13 @@ widGraph::widGraph()
         setStyleSheet(".widGraph {background: white;}"
                       ".QWidget {background: transparent;}");
         setFocusPolicy(Qt::StrongFocus);
+  //      setWindowFlags(Qt::SubWindow);
+        setAttribute(Qt::WA_DeleteOnClose);
+}
+
+widGraph::~widGraph()
+{
+    emit m_signalClose();
 }
 
 void widGraph::keyPressEvent(QKeyEvent *event)
@@ -114,8 +121,10 @@ void widGraph::m_setCurveName(int curveIndex, const std::string &name)
 void widGraph::m_openDialog()
 {
     if (m_dialog == nullptr) {
-        m_dialog = std::make_unique<dialogGraph>(this, m_data);
-        connect(m_dialog.get(), &QDialog::finished, this, &widGraph::m_slotDialogClosed);
+        m_dialog = new dialogGraph(this, m_data);
+        connect(this, &widGraph::m_signalClose, this, [](){qDebug() << "signalClose";});
+        connect(this, &widGraph::m_signalClose, m_dialog, &dialogGraph::m_slotClose);
+        connect(m_dialog, &QDialog::finished, this, &widGraph::m_slotDialogClosed);
     }
     m_dialog->show();
 }
@@ -151,7 +160,7 @@ QString widGraph::removeTrailingZeros(double number)
 {
     double a = number;
     QString textNumber;
-    textNumber = QString::number(a);
+    textNumber = QString::number(a, 'f', 2);
 
     return textNumber;
 }
@@ -515,9 +524,12 @@ std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
 
 void widGraphXAxis::m_setDimensions()
 {
-    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    ptr_dataX->m_height = m_getEndFromTop();
-    setFixedHeight(ptr_dataX->m_height);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_X;
+    if (ptr_data->m_manualSize)
+        ptr_data->m_height = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_height = m_getEndFromTop();
+    setFixedHeight(ptr_data->m_height);
 }
 
 std::weak_ptr<dataAxis> widGraphXAxis::m_getData()
@@ -737,9 +749,12 @@ std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
 
 void widGraphY1Axis::m_setDimensions()
 {
-    auto ptr_dataY = m_getData().lock();
-    ptr_dataY->m_width = m_getTicksStart();
-    setFixedWidth(ptr_dataY->m_width);
+    auto ptr_data = m_getData().lock();
+    if (ptr_data->m_manualSize)
+        ptr_data->m_width = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_width = m_getTicksStart();
+    setFixedWidth(ptr_data->m_width);
 }
 
 std::weak_ptr<dataAxis> widGraphY1Axis::m_getData()
@@ -922,23 +937,25 @@ void widGraphAxis::m_moveByMouse()
 
 void widGraphAxis::paintEvent(QPaintEvent *)
 {
-    // Painter
-    painterAntiAl painter(this);
-    // Pen
-        QPen pen(Qt::black, 2);
-        painter.setPen(pen);
-    // Draw line
-        m_drawLine(painter);
-    // Draw ticks
-        m_drawTicks(painter);
-    // Draw numbers
-        m_drawNumbers(painter);
-    // Draw text
-        m_drawText(painter);
-    // Draw zoom cursor
-        m_drawZoomCursor(painter);
-    // Draw move cursor
-        m_drawMoveCursor(painter);
+    if (m_getData().lock()->m_show) {
+        // Painter
+        painterAntiAl painter(this);
+        // Pen
+            QPen pen(Qt::black, 2);
+            painter.setPen(pen);
+        // Draw line
+            m_drawLine(painter);
+        // Draw ticks
+            m_drawTicks(painter);
+        // Draw numbers
+            m_drawNumbers(painter);
+        // Draw text
+            m_drawText(painter);
+        // Draw zoom cursor
+            m_drawZoomCursor(painter);
+        // Draw move cursor
+            m_drawMoveCursor(painter);
+    }
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -1072,9 +1089,12 @@ double widGraphYAxes::m_getValueFromDrawAreaPosition(double position)
 
 void widGraphY2Axis::m_setDimensions()
 {
-    auto ptr_dataY = m_getData().lock();
-    ptr_dataY->m_width = m_getTextEnds() + m_spaceBorder;
-    setFixedWidth(ptr_dataY->m_width);
+    auto ptr_data = m_getData().lock();
+    if (ptr_data->m_manualSize)
+        ptr_data->m_width = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_width = m_getTextEnds() + m_spaceBorder;
+    setFixedWidth(ptr_data->m_width);
 }
 
 std::weak_ptr<dataAxis> widGraphY2Axis::m_getData()

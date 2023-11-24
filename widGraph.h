@@ -334,9 +334,11 @@ class WIDGRAPH_EXPORT widGraph: public QWidget
     Q_OBJECT
 public:
     widGraph();
+    ~widGraph();
     widGraph(const widGraph&) = delete;
     widGraph& operator=(const widGraph&) = delete;
     void keyPressEvent(QKeyEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)
@@ -359,10 +361,12 @@ public:
     void m_takeScreenshot();
     void m_zoomOut();
     static QString removeTrailingZeros(double number);
-public slots:
+protected slots:
     void m_slotDialogClosed(int status);
 private:
     std::shared_ptr<dataGraphObject> m_getObjectFromIndex(int curveIndex);
+signals:
+    void m_signalClose();
 protected:
     // Data
         std::shared_ptr<dataGraph> m_data;
@@ -374,7 +378,7 @@ protected:
         widGraphY2Axis *m_widY2;
         widGraphLegend *m_widLegend;
     // Dialog
-        std::unique_ptr<dialogGraph> m_dialog;
+        dialogGraph* m_dialog = nullptr;
 };
 
 class graphLayout: public QGridLayout

@@ -24,6 +24,10 @@ struct dataElement
     void m_saveToFile(std::ofstream &/*outstream*/)
     {
     }
+
+    bool m_show = true;
+    bool m_manualSize = false;
+    int m_manualSizeValue = 20;
 };
 
 struct dataTitle: public dataElement

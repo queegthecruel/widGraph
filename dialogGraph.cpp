@@ -23,11 +23,13 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
 
 void dialogGraph::m_slotClose()
 {
+    qDebug() << "Closing";
     close();
 }
 
 void dialogGraph::m_slotApply()
 {
+    qDebug() << "Apply";
     m_saveValues();
     ptr_graph->m_loadValues();
 }
@@ -276,6 +278,11 @@ footerDialogGraph::footerDialogGraph()
 tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
     tabGraphSettings(title)
 {
+    // Show
+        m_checkShowAxis = new checkbox();
+        m_tree->m_addChild("Show axis", m_checkShowAxis);
+        m_editSize = new checkEdit(validator::INT_POS_0);
+        m_tree->m_addChild("Manual dimensions", m_editSize);
     // Font
         m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
         m_editFontSizeText = new lineEdit(validator::INT_POS);
@@ -304,6 +311,8 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
 
 void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
+    m_checkShowAxis->m_setChecked(s_data->m_show);
+    m_editSize->m_setValues(s_data->m_manualSize, s_data->m_manualSizeValue);
     m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
     m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
@@ -317,6 +326,9 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
 
 void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
+    s_data->m_show = m_checkShowAxis->isChecked();
+    s_data->m_manualSize = m_editSize->m_getChecked();
+    s_data->m_manualSizeValue = m_editSize->m_value();
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
     s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAutoAxis->isChecked();
