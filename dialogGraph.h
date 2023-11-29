@@ -111,17 +111,18 @@ protected:
     checkbox *m_checkShowGrid;
 };
 
-class colorButton: public QPushButton
+class colorButton: public pushbutton
 {
     Q_OBJECT
 public:
     colorButton(const QColor &color);
     ~colorButton() = default;
     void m_setColor(const QColor &color);
+    inline QColor m_getColor()
+        {return m_color;}
 signals:
     void m_signalSelected(QColor);
-protected slots:
-    void m_slotClicked();
+    void m_signalSelectedAndConfirmed(QColor);
 protected:
     QColor m_color;
 };
@@ -134,12 +135,10 @@ public:
     void m_setColor(const QColor &color);
 protected slots:
     void m_slotLineEditChanged();
-    void m_slotColorSelected();
 signals:
-    void m_signalColorSelected(QColor color);
+    void m_signalColorChanged(QColor color);
 protected:
-    lineEdit *m_editR, *m_editG, *m_editB;
-    colorButton *m_button;
+    spinbox *m_editR, *m_editG, *m_editB, *m_editA;
     QColor m_color;
 };
 
@@ -151,17 +150,33 @@ public:
     const QColor &m_getColor()
         {return m_color;}
     void m_setColor(const QColor &color);
+    inline static const std::vector<QColor> baseColors =
+        {Qt::white, Qt::black, Qt::cyan, Qt::darkCyan,
+         Qt::red, Qt::darkRed, Qt::magenta, Qt::darkMagenta,
+         Qt::green, Qt::darkGreen, Qt::yellow, Qt::darkYellow,
+         Qt::blue, Qt::darkBlue, Qt::gray, Qt::darkGray};
     inline static const std::vector<QColor> prettyColors =
-        {Qt::black, Qt::blue, Qt::red, Qt::green, Qt::yellow,
-         Qt::white, Qt::gray, Qt::cyan, Qt::magenta};
+            {QColor(0, 114, 190), QColor(218, 83, 25),
+             QColor(238, 178, 32), QColor(126, 47, 142),
+             QColor(119, 173, 48), QColor(77, 191, 239),
+             QColor(163, 20, 47), QColor(17, 119, 51),
+};
+private:
+    QWidget *m_createWidgetWithColorSet(int nColumns, const std::vector<QColor> &vColors, const QString &title);
+    void m_createMainButton(HBoxLayout *lay);
+    void m_createMenu();
+
 protected slots:
     void m_slotShowMenu();
     void m_slotColorSelected(QColor color);
+    void m_slotColorSelectedAndConfirmed(QColor color);
     void m_slotColorConfirmed();
 protected:
     colorButton *m_button;
-    QMenu *m_menu;
+    QMenu *m_menu = nullptr;
     widCustomColor *m_customColor;
+    colorButton *m_butPreview;
+    pushbutton *m_butOK;
     QColor m_color;
 };
 

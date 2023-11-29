@@ -349,7 +349,6 @@ void tabGraphSettingsAxis::m_slotAutoAxisToggled()
 void tabGraphSettingsAxis::m_slotAutoStepToggled()
 {
     bool autoStep = m_checkAutoStep->isChecked();
- //   bool autoAxis = m_checkAutoAxis->isChecked();
     m_editStep->setEnabled(!autoStep);
 }
 
@@ -357,7 +356,7 @@ tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_p
     tabGraphSettings("Curves"),
     vGraphObjects(vObjects)
 {
-
+    m_tree->setAlternatingRowColors(true);
 }
 
 void tabGraphSettingsObjects::m_loadValues()
@@ -454,50 +453,97 @@ void widGraphObjectSettingMain::m_saveValues()
         data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
  }
 
+QWidget* colorPicker::m_createWidgetWithColorSet(int nColumns,
+    const std::vector<QColor> &vColors,const QString& title)
+{
+        QWidget *widget = new QWidget();
+        VBoxLayout *layVert = new VBoxLayout(widget);
+        layVert->addWidget(new label(" " + title, true));
+        QGridLayout *layGridBase = new QGridLayout();
+        layGridBase->setContentsMargins(0,0,0,0);
+        layGridBase->setSpacing(1);
+        int nRows = vColors.size()/nColumns;
+        for (int i = 0; i < nRows; ++i) {
+            for (int j = 0; j < nColumns; ++j) {
+                auto *ptr_button = new colorButton(vColors[nColumns*i+j]);
+                connect(ptr_button, &colorButton::m_signalSelected,
+                        this, &colorPicker::m_slotColorSelected);
+                connect(ptr_button, &colorButton::m_signalSelectedAndConfirmed,
+                        this, &colorPicker::m_slotColorSelectedAndConfirmed);
+                layGridBase->addWidget(ptr_button, i, j);
+            }
+        }
+        layVert->addLayout(layGridBase);
+        return widget;
+}
+
+void colorPicker::m_createMenu()
+{
+    m_menu = new QMenu(this);
+    VBoxLayout *menuLayout = new VBoxLayout(m_menu);
+    int nColumns = 4;
+    menuLayout->addWidget(m_createWidgetWithColorSet(
+        nColumns, baseColors, "Base colors"));
+    menuLayout->addWidget(m_createWidgetWithColorSet(
+        nColumns, prettyColors, "Pretty colors"));
+    menuLayout->addWidget(new label(" Custom color (RGBA)", true));
+    m_customColor = new widCustomColor();
+    connect(m_customColor, &widCustomColor::m_signalColorChanged,
+            this, &colorPicker::m_slotColorSelected);
+    menuLayout->addWidget(m_customColor);
+
+    menuLayout->addWidget(new label(" Preview", true));
+    m_butPreview = new colorButton(QColor());
+    m_butPreview->setFixedHeight(21);
+    m_butOK = new pushbutton("OK");
+    m_butOK->setFixedWidth(50);
+    connect(m_butOK, &pushbutton::clicked,
+            this, &colorPicker::m_slotColorConfirmed);
+    widHorizontal *widHor = new widHorizontal({m_butPreview, m_butOK});
+    menuLayout->addWidget(widHor);
+}
+
+void colorPicker::m_createMainButton(HBoxLayout *lay)
+{
+    m_button = new colorButton(Qt::blue);
+    connect(m_button, &QAbstractButton::pressed,
+            this, &colorPicker::m_slotShowMenu);
+    lay->addWidget(m_button);
+}
+
 colorPicker::colorPicker()
 {
     HBoxLayout *lay = new HBoxLayout(this);
-    m_button = new colorButton(Qt::blue);
-    lay->addWidget(m_button);
-
-    m_menu = new QMenu(this);
-    VBoxLayout *menuLayout = new VBoxLayout(m_menu);
-    QGridLayout *layGrid = new QGridLayout();
-    layGrid->setContentsMargins(0,0,0,0);
-    layGrid->setSpacing(1);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) {
-            auto *ptr_button = new colorButton(prettyColors[3*i+j]);
-            connect(ptr_button, &colorButton::m_signalSelected,
-                    this, &colorPicker::m_slotColorSelected);
-            layGrid->addWidget(ptr_button, i, j);
-        }
-    menuLayout->addLayout(layGrid);
-    m_customColor = new widCustomColor();
-    connect(m_customColor, &widCustomColor::m_signalColorSelected,
-            this, &colorPicker::m_slotColorSelected);
-    menuLayout->addWidget(m_customColor);
-    connect(m_button, &QAbstractButton::pressed, this,
-            &colorPicker::m_slotShowMenu);
+    m_createMainButton(lay);
 }
 
 void colorPicker::m_slotShowMenu()
 {
+    if (m_menu == nullptr)
+        m_createMenu();
     m_customColor->m_setColor(m_color);
     m_menu->move(mapToGlobal(m_button->pos() + QPoint(0, m_button->height())));
-    m_menu->setFixedSize(150,100);
+    m_menu->setFixedWidth(200);
     m_menu->show();
 }
 
 void colorPicker::m_slotColorSelected(QColor color)
 {
-    m_menu->hide();
-    m_color = color;
-    m_button->m_setColor(m_color);
+    m_customColor->m_setColor(color);
+    m_butPreview->m_setColor(color);
+}
+
+void colorPicker::m_slotColorSelectedAndConfirmed(QColor color)
+{
+    m_slotColorSelected(color);
+    m_slotColorConfirmed();
 }
 
 void colorPicker::m_slotColorConfirmed()
 {
+    m_color = m_butPreview->m_getColor();
+    m_button->m_setColor(m_color);
+    m_menu->hide();
 }
 
 void colorPicker::m_setColor(const QColor &color)
@@ -507,13 +553,15 @@ void colorPicker::m_setColor(const QColor &color)
 }
 
 colorButton::colorButton(const QColor &color):
+    pushbutton(),
     m_color(color)
-
 {
     setFlat(true);
     m_setColor(m_color);
     connect(this, &QAbstractButton::clicked,
-            this, &colorButton::m_slotClicked);
+            this, [this](){emit m_signalSelected(m_color);});
+    connect(this, &pushbutton::m_signalDoubleClicked,
+            this, [this](){emit m_signalSelectedAndConfirmed(m_color);});
 }
 
 void colorButton::m_setColor(const QColor &color)
@@ -521,60 +569,54 @@ void colorButton::m_setColor(const QColor &color)
     m_color = color;
     QString tempColor = QString::number(m_color.red()) + "," +
                         QString::number(m_color.green()) + "," +
-                        QString::number(m_color.blue());
-    setStyleSheet("background: rgb(" + tempColor + ");"
+                        QString::number(m_color.blue()) + "," +
+                        QString::number(m_color.alpha());
+    setStyleSheet("background: rgba(" + tempColor + ");"
                   "border: 1px solid gray;");
-}
-
-void colorButton::m_slotClicked()
-{
-    emit m_signalSelected(m_color);
 }
 
 widCustomColor::widCustomColor()
 {
-    m_editR = new lineEdit(validator::INT_POS_0);
-    m_editG = new lineEdit(validator::INT_POS_0);
-    m_editB = new lineEdit(validator::INT_POS_0);
-    connect(m_editR, &lineEdit::m_signalTextFinished,
+    m_editR = new spinbox(0,255);
+    m_editG = new spinbox(0,255);
+    m_editB = new spinbox(0,255);
+    m_editA = new spinbox(0,255);
+//    m_editG = new lineEdit(validator::INT_POS_0);
+//    m_editB = new lineEdit(validator::INT_POS_0);
+//    m_editA = new lineEdit(validator::INT_POS_0);
+    connect(m_editR, &spinbox::valueChanged,
             this, &widCustomColor::m_slotLineEditChanged);
-    connect(m_editG, &lineEdit::m_signalTextFinished,
+    connect(m_editG, &spinbox::valueChanged,
             this, &widCustomColor::m_slotLineEditChanged);
-    connect(m_editB, &lineEdit::m_signalTextFinished,
+    connect(m_editB, &spinbox::valueChanged,
             this, &widCustomColor::m_slotLineEditChanged);
-
-    m_button = new colorButton(Qt::black);
-    connect(m_button, &colorButton::m_signalSelected,
-            this, &widCustomColor::m_slotColorSelected);
+    connect(m_editA, &spinbox::valueChanged,
+            this, &widCustomColor::m_slotLineEditChanged);
 
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->addWidget(m_editR);
     layBackground->addWidget(m_editG);
     layBackground->addWidget(m_editB);
-    layBackground->addWidget(m_button);
+    layBackground->addWidget(m_editA);
 }
 
 void widCustomColor::m_setColor(const QColor &color)
 {
     m_color = color;
-    m_button->m_setColor(color);
-    m_editR->m_setNumber(m_color.red());
-    m_editG->m_setNumber(m_color.green());
-    m_editB->m_setNumber(m_color.blue());
+    m_editR->m_setValue(m_color.red());
+    m_editG->m_setValue(m_color.green());
+    m_editB->m_setValue(m_color.blue());
+    m_editA->m_setValue(m_color.alpha());
 }
 
 void widCustomColor::m_slotLineEditChanged()
 {
-    QColor color(m_editR->m_number(),
-                 m_editG->m_number(),
-                 m_editB->m_number());
+    QColor color(m_editR->value(),
+                 m_editG->value(),
+                 m_editB->value(),
+                 m_editA->value());
     m_color = color;
-    m_button->m_setColor(color);
-}
-
-void widCustomColor::m_slotColorSelected()
-{
-    emit m_signalColorSelected(m_color);
+    emit m_signalColorChanged(m_color);
 }
 
 widGraphObjectSettingCurve::widGraphObjectSettingCurve():
@@ -600,8 +642,8 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve():
 void widGraphObjectSettingCurve::m_setValues(QColor color, int width, int styleIndex, bool enable)
 {
     m_colorPickerCurve->m_setColor(color);
-    m_editCurveThick->setValue(width);
-    m_comboCurveStyle->setCurrentIndex(styleIndex);
+    m_editCurveThick->m_setValue(width);
+    m_comboCurveStyle->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -712,9 +754,9 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints():
 void widGraphObjectSettingPoints::m_setValues(QColor color, int width, int shapeSize, int styleIndex, bool enable)
 {
     m_colorPickerPoints->m_setColor(color);
-    m_editThickness->setValue(width);
-    m_editShapeSize->setValue(shapeSize);
-    m_comboShape->setCurrentIndex(styleIndex);
+    m_editThickness->m_setValue(width);
+    m_editShapeSize->m_setValue(shapeSize);
+    m_comboShape->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -807,7 +849,7 @@ widGraphObjectSettingArea::widGraphObjectSettingArea():
 void widGraphObjectSettingArea::m_setValues(QColor color, int styleIndex, bool enable)
 {
     m_colorPickerArea->m_setColor(color);
-    m_comboAreaStyle->setCurrentIndex(styleIndex);
+    m_comboAreaStyle->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -929,7 +971,7 @@ widGraphObjectSettingColumn::widGraphObjectSettingColumn():
 
 void widGraphObjectSettingColumn::m_setValues(int width, bool enable)
 {
-    m_editColumnThick->setValue(width);
+    m_editColumnThick->m_setValue(width);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
