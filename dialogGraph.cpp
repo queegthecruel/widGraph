@@ -73,10 +73,8 @@ tabGraphSettings::tabGraphSettings(const QString &title)
     m_layBackground = new VBoxLayout(this);
     m_layBackground->setContentsMargins(2,2,2,2);
     m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(new label(title, true));
+    m_layBackground->addWidget(new label(" " + title, true));
     m_layBackground->addWidget(m_tree);
-    setStyleSheet(".tabGraphSettings "
-                  "{background:black;}");
 }
 
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
@@ -399,6 +397,7 @@ widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObje
     lay->addWidget(m_widArea, 1);
     lay->addWidget(m_widLegend);
     lay->addStretch(10);
+    setStyleSheet("widGraphObjectSetting {background:green;}");
 }
 
 void widGraphObjectSettingMain::m_loadValues()
@@ -578,14 +577,9 @@ void widCustomColor::m_slotColorSelected()
     emit m_signalColorSelected(m_color);
 }
 
-widGraphObjectSettingCurve::widGraphObjectSettingCurve()
+widGraphObjectSettingCurve::widGraphObjectSettingCurve():
+    widGraphObjectSetting("Curve")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-//    m_labTitle = new label("Curve: ", true);
-    m_checkEnable = new checkbox("Curve: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
     m_colorPickerCurve = new colorPicker();
     m_editCurveThick = new spinbox();
     m_comboCurveStyle = new combobox(65);
@@ -595,13 +589,12 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
     auto vOptions = m_getIconsForCurve(iconWidth, iconHeight);
     m_comboCurveStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerCurve);
-    lay->addWidget(m_editCurveThick);
-    lay->addWidget(m_comboCurveStyle);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_colorPickerCurve);
+    m_layBackground->addWidget(m_editCurveThick);
+    m_layBackground->addWidget(m_comboCurveStyle);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingCurve::m_setValues(QColor color, int width, int styleIndex, bool enable)
@@ -622,12 +615,35 @@ std::tuple<QColor, int, int, bool> widGraphObjectSettingCurve::m_getValues()
     return {color, width, styleIndex, enable};
 }
 
-void widGraphObjectSettingCurve::m_slotEnabledToggled()
+void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerCurve->setEnabled(enabled);
     m_editCurveThick->setEnabled(enabled);
     m_comboCurveStyle->setEnabled(enabled);
+}
+
+widGraphObjectSetting::widGraphObjectSetting(const QString &name)
+{
+    setStyleSheet("widGraphObjectSetting {border-left: 2px solid black;}");
+    m_layBackground = new HBoxLayout(this);
+    m_layBackground->addSpacing(2);
+    QWidget *separator = new QWidget();
+    separator->setStyleSheet("background:black;");
+    separator->setFixedWidth(1);
+    m_layBackground->addWidget(separator);
+    m_layBackground->addSpacing(2);
+
+    m_checkEnable = new checkbox(name + ": ");
+    m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
+                                 "QCheckBox::unchecked {color:gray;}");
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
+}
+
+void widGraphObjectSetting::m_addEndOfWidget()
+{
+//    m_layBackground->addSpacing(2);
+    m_layBackground->addStretch();
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(int iconWidth, int iconHeight)
@@ -672,13 +688,9 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(i
     return {none, solid, dash, dot, dashDot, dashDotDot};
 }
 
-widGraphObjectSettingPoints::widGraphObjectSettingPoints()
+widGraphObjectSettingPoints::widGraphObjectSettingPoints():
+    widGraphObjectSetting("Points")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Points: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingPoints::m_slotEnabledToggled);
     m_colorPickerPoints = new colorPicker();
     m_editThickness = new spinbox();
     m_editShapeSize = new spinbox();
@@ -688,14 +700,13 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
     auto vOptions = m_getIconsForPoints(iconSize);
     m_comboShape->m_addItems(vOptions, QSize(iconSize,iconSize), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerPoints);
-    lay->addWidget(m_editThickness);
-    lay->addWidget(m_editShapeSize);
-    lay->addWidget(m_comboShape);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_colorPickerPoints);
+    m_layBackground->addWidget(m_editThickness);
+    m_layBackground->addWidget(m_editShapeSize);
+    m_layBackground->addWidget(m_comboShape);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingPoints::m_setValues(QColor color, int width, int shapeSize, int styleIndex, bool enable)
@@ -718,13 +729,20 @@ std::tuple<QColor, int, int, int, bool> widGraphObjectSettingPoints::m_getValues
     return {color, width, shapeSize, styleIndex, enable};
 }
 
-void widGraphObjectSettingPoints::m_slotEnabledToggled()
+void widGraphObjectSettingPoints::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerPoints->setEnabled(enabled);
     m_editThickness->setEnabled(enabled);
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
+}
+void widGraphObjectSetting::m_slotEnabledToggled()
+{
+    m_checkEnable->setEnabled(true);
+    bool enabled = m_checkEnable->isChecked();
+    m_setEnabled(enabled);
+  //  setDisabled(!enabled);
+
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(int iconSize)
@@ -768,13 +786,9 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
     return {none, point, cross, square, circle, triangle, revTriangle};
 }
 
-widGraphObjectSettingArea::widGraphObjectSettingArea()
+widGraphObjectSettingArea::widGraphObjectSettingArea():
+    widGraphObjectSetting("Area")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Area: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingArea::m_slotEnabledToggled);
     m_colorPickerArea = new colorPicker();
     m_comboAreaStyle = new combobox(65);
 
@@ -783,12 +797,11 @@ widGraphObjectSettingArea::widGraphObjectSettingArea()
     auto vOptions = m_getIconsForArea(iconWidth, iconHeight);
     m_comboAreaStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerArea);
-    lay->addWidget(m_comboAreaStyle);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_colorPickerArea);
+    m_layBackground->addWidget(m_comboAreaStyle);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingArea::m_setValues(QColor color, int styleIndex, bool enable)
@@ -807,9 +820,8 @@ std::tuple<QColor, int, bool> widGraphObjectSettingArea::m_getValues()
     return {color, styleIndex, enable};
 }
 
-void widGraphObjectSettingArea::m_slotEnabledToggled()
+void widGraphObjectSettingArea::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerArea->setEnabled(enabled);
     m_comboAreaStyle->setEnabled(enabled);
 }
@@ -904,20 +916,15 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForArea(in
 }
 
 
-widGraphObjectSettingColumn::widGraphObjectSettingColumn()
+widGraphObjectSettingColumn::widGraphObjectSettingColumn():
+    widGraphObjectSetting("Column")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Column: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingColumn::m_slotEnabledToggled);
     m_editColumnThick = new spinbox();
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_editColumnThick);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_editColumnThick);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingColumn::m_setValues(int width, bool enable)
@@ -934,26 +941,20 @@ std::tuple<int, bool> widGraphObjectSettingColumn::m_getValues()
     return {width, enable};
 }
 
-void widGraphObjectSettingColumn::m_slotEnabledToggled()
+void widGraphObjectSettingColumn::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_editColumnThick->setEnabled(enabled);
 }
 
-widGraphObjectSettingLegend::widGraphObjectSettingLegend()
+widGraphObjectSettingLegend::widGraphObjectSettingLegend():
+    widGraphObjectSetting("Legend")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Legend: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingLegend::m_slotEnabledToggled);
     m_editText = new checkEdit(validator::NONE);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_editText);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_editText);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingLegend::m_setValues(bool overwrite, const std::string &text, bool enable)
@@ -971,8 +972,7 @@ std::tuple<bool, std::string, bool> widGraphObjectSettingLegend::m_getValues()
     return {overwrite, text, enable};
 }
 
-void widGraphObjectSettingLegend::m_slotEnabledToggled()
+void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_editText->setEnabled(enabled);
 }

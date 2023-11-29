@@ -338,6 +338,8 @@ public:
     widGraph(const widGraph&) = delete;
     widGraph& operator=(const widGraph&) = delete;
     void keyPressEvent(QKeyEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)
@@ -366,6 +368,7 @@ private:
     std::shared_ptr<dataGraphObject> m_getObjectFromIndex(int curveIndex);
 signals:
     void m_signalClose();
+    void m_signalHide();
 protected:
     // Data
         std::shared_ptr<dataGraph> m_data;
@@ -383,7 +386,7 @@ protected:
 class graphLayout: public QGridLayout
 {
 public:
-    graphLayout(QWidget *parent);
+    graphLayout();
     ~graphLayout() = default;
 };
 

@@ -15,13 +15,14 @@ widGraph::widGraph()
         m_widY2 = new widGraphY2Axis(this);
         m_widLegend = new widGraphLegend(this);
     // Add elements to the layout
-        graphLayout *layBackground = new graphLayout(this);
+        graphLayout *layBackground = new graphLayout();
         layBackground->addWidget(m_widTitle, 0,0, 1,3);
         layBackground->addWidget(m_widX, 2,0, 1,3);
         layBackground->addWidget(m_widY1, 0,0, 3,1);
         layBackground->addWidget(m_widY2, 0,2, 3,1);
         layBackground->addWidget(m_widArea, 1,1, 1,1);
         layBackground->addWidget(m_widLegend, 3,0, 1,3);
+        setLayout(layBackground);
      // Stylesheet
         setStyleSheet(".widGraph {background: white;}"
                       ".QWidget {background: transparent;}");
@@ -50,6 +51,11 @@ void widGraph::keyPressEvent(QKeyEvent *event)
             }
         m_loadValues();
     }
+}
+
+void widGraph::hideEvent(QHideEvent */*event*/)
+{
+    emit m_signalHide();
 }
 
 void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
@@ -122,8 +128,8 @@ void widGraph::m_openDialog()
 {
     if (m_dialog == nullptr) {
         m_dialog = new dialogGraph(this, m_data);
-        connect(this, &widGraph::m_signalClose, this, [](){qDebug() << "signalClose";});
-        connect(this, &widGraph::m_signalClose, m_dialog, &dialogGraph::m_slotClose);
+  //      connect(this, &widGraph::m_signalHide, this, [](){qDebug() << "signalHide";});
+        connect(this, &widGraph::m_signalHide, m_dialog, &dialogGraph::m_slotClose);
         connect(m_dialog, &QDialog::finished, this, &widGraph::m_slotDialogClosed);
     }
     m_dialog->show();
@@ -1492,8 +1498,7 @@ void widGraphYAxes::m_drawMoveCursor(painterAntiAl &painter)
     painter.restore();
 }
 
-graphLayout::graphLayout(QWidget *parent):
-    QGridLayout(parent)
+graphLayout::graphLayout()
 {
     setContentsMargins(0,0,0,0);
     setSpacing(0);
