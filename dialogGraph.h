@@ -111,7 +111,6 @@ protected:
     checkbox *m_checkShowGrid;
 };
 
-
 class widGraphObjectSetting: public QWidget
 {
     Q_OBJECT
@@ -129,6 +128,18 @@ protected:
     HBoxLayout *m_layBackground;
     checkbox *m_checkEnable;
 };
+/*
+class widGraphObjectSettingGeneral: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingGeneral() {}
+//    void m_setValues(QColor color, int width, int styleIndex, bool enable);
+//    std::tuple<QColor, int, int, bool> m_getValues();
+    virtual void m_setEnabled(bool enabled) override {}
+protected:
+    pushbutton *m_butDelete, *m_butMoveUp, *m_butMoveDown;
+};*/
 
 class widGraphObjectSettingCurve: public widGraphObjectSetting
 {
@@ -152,11 +163,7 @@ public:
     void m_setValues(QColor color, int width, int shapeSize, int styleIndex, bool enable);
     std::tuple<QColor, int, int, int, bool> m_getValues();
     virtual void m_setEnabled(bool enabled) override;
-protected slots:
- //   void m_slotEnabledToggled();
-private:
 protected:
- //   checkbox *m_checkEnable;
     colorPicker *m_colorPickerPoints;
     spinbox *m_editThickness, *m_editShapeSize;
     combobox *m_comboShape;
@@ -170,11 +177,7 @@ public:
     void m_setValues(QColor color, int styleIndex, bool enable);
     std::tuple<QColor, int, bool> m_getValues();
     virtual void m_setEnabled(bool enabled) override;
-protected slots:
- //   void m_slotEnabledToggled();
-private:
 protected:
-  //  checkbox *m_checkEnable;
     colorPicker *m_colorPickerArea;
     combobox *m_comboAreaStyle;
 };
@@ -187,10 +190,7 @@ public:
     void m_setValues(int width, bool enable);
     std::tuple<int, bool> m_getValues();
     virtual void m_setEnabled(bool enabled) override;
-protected slots:
- //   void m_slotEnabledToggled();
 protected:
- //   checkbox *m_checkEnable;
     spinbox *m_editColumnThick;
 };
 
@@ -202,10 +202,7 @@ public:
     void m_setValues(bool overwrite, const std::string &text, bool enable);
     std::tuple<bool, std::string, bool> m_getValues();
     virtual void m_setEnabled(bool enabled) override;
-protected slots:
- //   void m_slotEnabledToggled();
 protected:
-//    checkbox *m_checkEnable;
     checkEdit *m_editText;
 };
 

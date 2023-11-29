@@ -357,15 +357,25 @@ tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_p
     vGraphObjects(vObjects)
 {
     m_tree->setAlternatingRowColors(true);
+//    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
+//    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
 }
 
 void tabGraphSettingsObjects::m_loadValues()
 {
     m_tree->clear();
-    vGraphWidgets.clear();
+  /*  vGraphWidgets.clear();
     int nCurves = vGraphObjects.size();
     for (int i = 0; i < nCurves; ++i) {
         auto data = vGraphObjects[i]->m_getData().lock();
+        auto *widget = new widGraphObjectSettingMain(data);
+        vGraphWidgets.push_back(widget);
+        m_tree->m_addChild(data->m_getName(), widget);
+        widget->m_loadValues();
+    }
+    */
+    for (auto &var: vGraphObjects) {
+        auto data = var->m_getData().lock();
         auto *widget = new widGraphObjectSettingMain(data);
         vGraphWidgets.push_back(widget);
         m_tree->m_addChild(data->m_getName(), widget);
@@ -378,6 +388,9 @@ void tabGraphSettingsObjects::m_saveValues()
     int nWidgets = vGraphWidgets.size();
     for (int i = 0; i < nWidgets; ++i) {
         vGraphWidgets[i]->m_saveValues();
+    }
+    for (auto &var: vGraphWidgets) {
+        var->m_saveValues();
     }
 }
 
@@ -504,12 +517,12 @@ widGraphObjectSetting::widGraphObjectSetting(const QString &name)
     setStyleSheet("widGraphObjectSetting {border-left: 2px solid black;}");
     m_layBackground = new HBoxLayout(this);
     m_layBackground->setSpacing(1);
-    m_layBackground->addSpacing(1);
+//    m_layBackground->addSpacing(1);
     QWidget *separator = new QWidget();
     separator->setStyleSheet("background:black;");
     separator->setFixedWidth(1);
     m_layBackground->addWidget(separator);
-    m_layBackground->addSpacing(2);
+    m_layBackground->addSpacing(1);
 
     m_checkEnable = new checkbox(name + ": ");
     m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
@@ -520,7 +533,7 @@ widGraphObjectSetting::widGraphObjectSetting(const QString &name)
 
 void widGraphObjectSetting::m_addEndOfWidget()
 {
-//    m_layBackground->addSpacing(2);
+    m_layBackground->addSpacing(2);
     m_layBackground->addStretch();
 }
 
