@@ -357,8 +357,8 @@ tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_p
     vGraphObjects(vObjects)
 {
     m_tree->setAlternatingRowColors(true);
-//    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
-//    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
+    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
 }
 
 void tabGraphSettingsObjects::m_loadValues()
@@ -381,14 +381,21 @@ void tabGraphSettingsObjects::m_loadValues()
         m_tree->m_addChild(data->m_getName(), widget);
         widget->m_loadValues();
     }
+    for( int i = 0; i < m_tree->topLevelItemCount(); ++i )
+    {
+        QTreeWidgetItem *item = m_tree->topLevelItem( i );
+        qDebug() << item->flags();
+        item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
+        // Do something with item ...
+    }
 }
 
 void tabGraphSettingsObjects::m_saveValues()
 {
-    int nWidgets = vGraphWidgets.size();
+ /*   int nWidgets = vGraphWidgets.size();
     for (int i = 0; i < nWidgets; ++i) {
         vGraphWidgets[i]->m_saveValues();
-    }
+    }*/
     for (auto &var: vGraphWidgets) {
         var->m_saveValues();
     }
