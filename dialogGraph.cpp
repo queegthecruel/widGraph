@@ -69,7 +69,7 @@ void dialogGraph::m_slotLoadFile()
 
 tabGraphSettings::tabGraphSettings(const QString &title)
 {
-    m_tree = new treeWidget();
+    m_tree = new aaa();
     m_layBackground = new VBoxLayout(this);
     m_layBackground->setContentsMargins(2,2,2,2);
     m_layBackground->setSpacing(1);
@@ -356,9 +356,8 @@ tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_p
     tabGraphSettings("Curves"),
     vGraphObjects(vObjects)
 {
-    m_tree->setAlternatingRowColors(true);
-    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
+    connect(m_tree, &aaa::m_signalMoved,
+            this, &tabGraphSettingsObjects::m_slotMoved);
 }
 
 void tabGraphSettingsObjects::m_loadValues()
@@ -381,13 +380,14 @@ void tabGraphSettingsObjects::m_loadValues()
         m_tree->m_addChild(data->m_getName(), widget);
         widget->m_loadValues();
     }
+    /*
     for( int i = 0; i < m_tree->topLevelItemCount(); ++i )
     {
         QTreeWidgetItem *item = m_tree->topLevelItem( i );
         qDebug() << item->flags();
         item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
         // Do something with item ...
-    }
+    }*/
 }
 
 void tabGraphSettingsObjects::m_saveValues()
@@ -398,6 +398,29 @@ void tabGraphSettingsObjects::m_saveValues()
     }*/
     for (auto &var: vGraphWidgets) {
         var->m_saveValues();
+    }
+}
+
+void tabGraphSettingsObjects::m_slotMoved(int from, int to)
+{
+    qDebug() << "Moved" << from << to;
+    auto *xxx = vGraphWidgets[to];
+    vGraphWidgets[to] = vGraphWidgets[from];
+    vGraphWidgets[from] = xxx;
+
+    for( int i = 0; i < m_tree->topLevelItemCount(); ++i )
+    {
+        QTreeWidgetItem *item = m_tree->topLevelItem(i);
+//        auto ptr_item = dynamic_cast<treeItem*>(item);
+        m_tree->setItemWidget(item, 1, nullptr);
+        //m_tree->
+    }
+//    m_tree->clear();
+
+    for (auto &var: vGraphWidgets) {
+        m_tree->m_addChild(var->m_getData().lock()->m_getName(), var);
+        var->m_loadValues();
+        qDebug() << "Added and loaded";
     }
 }
 
@@ -874,3 +897,24 @@ void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
 {
     m_editText->setEnabled(enabled);
 }
+
+aaa::aaa()
+{
+    setAlternatingRowColors(true);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    //   setDragDropMode(QAbstractItemView::InternalMove);
+}
+
+void aaa::mouseReleaseEvent(QMouseEvent *event)
+{
+    qDebug() << "Mouse release start";
+    auto *itemFrom = selectedItems()[0];
+    int indexFrom = indexOfTopLevelItem(itemFrom);
+
+    auto *itemTo = itemAt(event->position().toPoint());
+    int indexTo = indexOfTopLevelItem(itemTo);
+    qDebug() << indexFrom << indexTo;
+    emit m_signalMoved(indexFrom, indexTo);
+    qDebug() << "Mouse release end";
+}
+

@@ -21,6 +21,7 @@ struct dataDrawArea;
 struct dataLegend;
 struct graphObjects;
 
+class aaa;
 class tabGraphSettings: public QWidget
 {
 public:
@@ -30,7 +31,7 @@ public:
     virtual void m_saveValues() = 0;
 protected:
     VBoxLayout *m_layBackground;
-    treeWidget *m_tree;
+    aaa *m_tree;
 };
 
 class tabGraphSettingsTitle: public tabGraphSettings
@@ -215,6 +216,8 @@ public:
     ~widGraphObjectSettingMain() = default;
     void m_loadValues();
     void m_saveValues();
+    inline std::weak_ptr<dataGraphObject> m_getData()
+            {return ptr_data;}
 protected:
     std::weak_ptr<dataGraphObject> ptr_data;
     widGraphObjectSettingCurve *m_widCurve;
@@ -226,11 +229,14 @@ protected:
 
 class tabGraphSettingsObjects: public tabGraphSettings
 {
+    Q_OBJECT
 public:
     tabGraphSettingsObjects(const std::vector<std::shared_ptr<graphObjects>> &vObjects);
     ~tabGraphSettingsObjects() = default;
     virtual void m_loadValues() override;
     virtual void m_saveValues() override;
+protected slots:
+    void m_slotMoved(int from, int to);
 protected:
     std::vector<std::shared_ptr<graphObjects>> vGraphObjects;
     std::vector<widGraphObjectSettingMain*> vGraphWidgets;
@@ -320,5 +326,14 @@ protected:
     footerDialogGraph *m_footer;
 };
 
+class aaa: public treeWidget
+{
+    Q_OBJECT
+public:
+    aaa();
+    void mouseReleaseEvent(QMouseEvent *event) override;
+signals:
+    void m_signalMoved(int from, int to);
+};
 
 #endif // DIALOGGRAPH_H
