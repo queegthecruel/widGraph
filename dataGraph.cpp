@@ -95,7 +95,6 @@ void dataGraph::m_saveToFile(std::ofstream &outstream)
     m_drawArea->m_saveToFile(outstream);
 }
 
-
 bool readBool(std::ifstream &instream)
 {
     bool value;

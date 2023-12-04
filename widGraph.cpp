@@ -128,7 +128,6 @@ void widGraph::m_openDialog()
 {
     if (m_dialog == nullptr) {
         m_dialog = new dialogGraph(this, m_data);
-  //      connect(this, &widGraph::m_signalHide, this, [](){qDebug() << "signalHide";});
         connect(this, &widGraph::m_signalHide, m_dialog, &dialogGraph::m_slotClose);
         connect(m_dialog, &QDialog::finished, this, &widGraph::m_slotDialogClosed);
     }

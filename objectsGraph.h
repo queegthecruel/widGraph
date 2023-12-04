@@ -15,7 +15,10 @@ class dataGraphObject
 {
 public:
     dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend);
+    dataGraphObject(const dataGraphObject & oldData) = default;
     dataGraphObject(std::ifstream &instream);
+    ~dataGraphObject() = default;
+    dataGraphObject& operator=(const dataGraphObject & oldData) = default;
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
         {return m_name;}
@@ -96,7 +99,7 @@ protected:
         inline void m_setShowLegend(bool show)
             {m_showLegend = show;}
 public:
-    const bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
+    bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
@@ -133,7 +136,7 @@ public:
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
-        {m_data = data;};
+        {*m_data = *data;};
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}

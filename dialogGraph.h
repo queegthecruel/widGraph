@@ -22,16 +22,22 @@ struct dataLegend;
 struct graphObjects;
 
 class aaa;
-class tabGraphSettings: public QWidget
+class tabGraph: public QWidget
 {
 public:
-    tabGraphSettings(const QString &title);
-    ~tabGraphSettings() = default;
+    tabGraph(const QString &title);
+    ~tabGraph() = default;
     virtual void m_loadValues() = 0;
     virtual void m_saveValues() = 0;
 protected:
     VBoxLayout *m_layBackground;
-    aaa *m_tree;
+};
+
+class tabGraphSettings: public tabGraph
+{
+public:
+    tabGraphSettings(const QString &name);
+    treeWidget *m_tree;
 };
 
 class tabGraphSettingsTitle: public tabGraphSettings
@@ -227,20 +233,24 @@ protected:
     widGraphObjectSettingLegend *m_widLegend;
 };
 
-class tabGraphSettingsObjects: public tabGraphSettings
+class tabGraphSettingsObjects: public tabGraph
 {
     Q_OBJECT
 public:
-    tabGraphSettingsObjects(const std::vector<std::shared_ptr<graphObjects>> &vObjects);
+    tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data);
     ~tabGraphSettingsObjects() = default;
     virtual void m_loadValues() override;
     virtual void m_saveValues() override;
 protected slots:
     void m_slotMoved(int from, int to);
 protected:
-    std::vector<std::shared_ptr<graphObjects>> vGraphObjects;
+    aaa *m_tree;
+    std::weak_ptr<dataGraph> ptr_graphData;
+    std::vector<std::shared_ptr<dataGraphObject>> vDataCopy;
+    std::vector<int> m_vOrder;
     std::vector<widGraphObjectSettingMain*> vGraphWidgets;
-
+private:
+    void m_createCopyOfData();
 };
 
 class tabGraphSettingsLegend: public tabGraphSettings
@@ -264,7 +274,7 @@ public:
     void m_saveValues();
 protected:
     std::weak_ptr<dataGraph> ptr_data;
-    std::vector<tabGraphSettings*> m_tabs;
+    std::vector<tabGraph*> m_tabs;
 
     tabGraphSettingsTitle *m_title;
     tabGraphSettingsXAxis *m_xAxis;
@@ -331,7 +341,7 @@ class aaa: public treeWidget
     Q_OBJECT
 public:
     aaa();
-    void mouseReleaseEvent(QMouseEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 signals:
     void m_signalMoved(int from, int to);
 };
