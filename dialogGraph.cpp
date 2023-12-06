@@ -356,23 +356,18 @@ tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_da
     ptr_graphData(ptr_data)
 {
     m_createCopyOfData();
-
-    m_tree = new aaa();
+    m_tree = new treeWidgetGraphObjects();
     m_layBackground->addWidget(m_tree);
-    connect(m_tree, &aaa::m_signalMoved,
+    connect(m_tree, &treeWidgetGraphObjects::m_signalMoved,
             this, &tabGraphSettingsObjects::m_slotMoved);
-
- //   tabGraphSettingsObjects::m_loadValues();
 }
 
 void tabGraphSettingsObjects::m_createCopyOfData()
 {
     vDataCopy.clear();
     m_vOrder.clear();
-  //  int i = 0;
     auto vObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    for (int i = 0; i < ptr_graphData.lock()->m_vectorOfObjects.size(); ++i) {
-        qDebug() << i;
+    for (unsigned int i = 0; i < ptr_graphData.lock()->m_vectorOfObjects.size(); ++i) {
         m_vOrder.push_back(i);
         vDataCopy.push_back(std::make_shared<dataGraphObject>(*ptr_graphData.lock()->m_vectorOfObjects[i]->m_getData().lock()));
     }
@@ -891,14 +886,14 @@ void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
     m_editText->setEnabled(enabled);
 }
 
-aaa::aaa()
+treeWidgetGraphObjects::treeWidgetGraphObjects()
 {
     setAlternatingRowColors(true);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setDragDropMode(QAbstractItemView::InternalMove);
 }
 
-void aaa::dropEvent(QDropEvent *event)
+void treeWidgetGraphObjects::dropEvent(QDropEvent *event)
 {
     if (event->source() == this) {
         auto *itemFrom = selectedItems()[0];
@@ -916,4 +911,25 @@ tabGraphSettings::tabGraphSettings(const QString &name):
 {
     m_tree = new treeWidget();
     m_layBackground->addWidget(m_tree);
+}
+
+widGraphObjectSettingDelete::widGraphObjectSettingDelete(widGraphObjectSettingMain *ptr_widMain):
+    widGraphObjectSetting(""), ptr_widMain(ptr_widMain)
+{
+    m_butDelete = new pushbutton("Del");
+    m_butDelete->setIcon(QIcon());
+    m_butDelete->setCheckable(true);
+    m_layBackground->addWidget(m_editText);
+    m_addEndOfWidget();
+}
+
+void widGraphObjectSettingDelete::m_setValues(bool enable)
+{
+    m_butDelete->setChecked(enable);
+    ptr_widMainWidget->setEnabled(enable);
+}
+
+std::tuple<bool> widGraphObjectSettingDelete::m_getValues()
+{
+    return {m_butDelete->isChecked()};
 }

@@ -21,7 +21,7 @@ struct dataDrawArea;
 struct dataLegend;
 struct graphObjects;
 
-class aaa;
+class treeWidgetGraphObjects;
 class tabGraph: public QWidget
 {
 public:
@@ -147,6 +147,19 @@ public:
 protected:
     pushbutton *m_butDelete, *m_butMoveUp, *m_butMoveDown;
 };*/
+class widGraphObjectSettingMain;
+class widGraphObjectSettingDelete: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingDelete(widGraphObjectSettingMain* ptr_widMain);
+    void m_setValues(bool enable);
+    std::tuple<bool> m_getValues();
+//    virtual void m_setEnabled(bool enabled) override;
+protected:
+    widGraphObjectSettingMain *ptr_widMainWidget;
+    pushbutton *m_butDelete;
+};
 
 class widGraphObjectSettingCurve: public widGraphObjectSetting
 {
@@ -244,7 +257,7 @@ public:
 protected slots:
     void m_slotMoved(int from, int to);
 protected:
-    aaa *m_tree;
+    treeWidgetGraphObjects *m_tree;
     std::weak_ptr<dataGraph> ptr_graphData;
     std::vector<std::shared_ptr<dataGraphObject>> vDataCopy;
     std::vector<int> m_vOrder;
@@ -336,11 +349,11 @@ protected:
     footerDialogGraph *m_footer;
 };
 
-class aaa: public treeWidget
+class treeWidgetGraphObjects: public treeWidget
 {
     Q_OBJECT
 public:
-    aaa();
+    treeWidgetGraphObjects();
     void dropEvent(QDropEvent *event) override;
 signals:
     void m_signalMoved(int from, int to);
