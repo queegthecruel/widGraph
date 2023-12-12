@@ -325,8 +325,10 @@ public:
     virtual void m_setDimensions() override;
 private:
     int m_getNCurvesWithLegend();
+    int m_getNRows();
     void m_drawTopLine(painterAntiAl &painter);
     void m_drawTexts(painterAntiAl &painter);
+    QVector<int> m_getTextLeftPositions();
 };
 
 class WIDGRAPH_EXPORT widGraph: public QWidget

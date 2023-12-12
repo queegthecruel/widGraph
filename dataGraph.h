@@ -119,6 +119,8 @@ struct dataLegend: public dataElement
     int m_width = -1;
     int m_height = -1;
     int m_fontText = 15;
+    int m_nColumns = 1;
+    bool m_arrangeToAxes = false;
 };
 
 struct dataDrawArea: public dataElement

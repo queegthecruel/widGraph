@@ -177,20 +177,37 @@ tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
     tabGraphSettings("Legend"),
     ptr_data(data)
 {
+    m_checkShowLegend = new checkbox("Show legend");
+    m_tree->m_addChild("Dimensions", m_checkShowLegend, nullptr, true);
+    m_editSize = new checkEdit(validator::INT_POS_0);
+    m_tree->m_addChild("Manual dimensions", m_editSize);
     m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_tree->m_addChild("Text size", m_editFontSizeText);
+    m_editNColumns = new lineEdit(validator::INT_POS);
+    m_tree->m_addChild("Number of columns", m_editNColumns);
+    m_checkArrangeToAxes = new checkbox("Align to respective axis");
+    m_tree->m_addChild("Arrangement", m_checkArrangeToAxes);
 }
 
 void tabGraphSettingsLegend::m_loadValues()
 {
     auto s_data = ptr_data.lock();
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
+    m_checkShowLegend->m_setChecked(s_data->m_show);
+    m_editSize->m_setValues(s_data->m_manualSize, s_data->m_manualSizeValue);
+    m_editNColumns->m_setNumber(s_data->m_nColumns);
+    m_checkArrangeToAxes->m_setChecked(s_data->m_arrangeToAxes);
 }
 
 void tabGraphSettingsLegend::m_saveValues()
 {
     auto s_data = ptr_data.lock();
     s_data->m_fontText = m_editFontSizeText->m_number();
+    s_data->m_show = m_checkShowLegend->isChecked();
+    s_data->m_manualSize = m_editSize->m_getChecked();
+    s_data->m_manualSizeValue = m_editSize->m_value();
+    s_data->m_nColumns = m_editNColumns->m_number();
+    s_data->m_arrangeToAxes = m_checkArrangeToAxes->isChecked();
 }
 
 graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
@@ -236,7 +253,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     splitMain->addWidget(m_objects);
 
     m_layBackground->addWidget(splitMain);
-    splitMain->setSizes({200,600,400});
+    splitMain->setSizes({300,600,400});
 }
 
 void graphSettingsWidget::m_loadValues()

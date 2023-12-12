@@ -288,7 +288,11 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataLegend> ptr_data;
+    checkbox *m_checkShowLegend;
+    checkEdit *m_editSize;
     lineEdit *m_editFontSizeText;
+    lineEdit *m_editNColumns;
+    checkbox *m_checkArrangeToAxes;
 };
 
 class graphSettingsWidget: public QWidget

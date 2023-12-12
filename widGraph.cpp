@@ -1189,12 +1189,15 @@ void widGraphLegend::m_drawTopLine(painterAntiAl &painter)
 
 void widGraphLegend::m_drawTexts(painterAntiAl &painter)
 {
-    auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
-    int i = 0;
-    double rowHeight = 1.2*ptr_legendData->m_fontText;
+
+    QVector<int> startingPositions = m_getTextLeftPositions();
+    qDebug() << startingPositions;
+    int iCurve = 0;
+    double rowHeight = 1.2*ptr_data->m_fontText;
     QFont font;
-    font.setPixelSize(ptr_legendData->m_fontText);
+    font.setPixelSize(ptr_data->m_fontText);
     painter.setFont(font);
     double startLeft = 10;
     for (const auto &var: listCurves) {
@@ -1207,27 +1210,51 @@ void widGraphLegend::m_drawTexts(painterAntiAl &painter)
                 legendText = text;
             else
                 legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
-            QRect rect(startLeft, i*rowHeight, width() - startLeft, rowHeight);
+            QRect rect(startLeft, iCurve*rowHeight, width() - startLeft, rowHeight);
             painter.drawText(rect, QString::fromStdString(legendText), QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-            ++i;
+            ++iCurve;
         }
     }
 }
 
+QVector<int> widGraphLegend::m_getTextLeftPositions()
+{
+    QVector<int> vStartPositions;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    int nColumns = ptr_data->m_nColumns;
+    int leftOffset = 10;
+    int availableWidth = width() - leftOffset;
+    int spacing = availableWidth / nColumns;
+    int pos = leftOffset;
+    for (int i = 0; i < nColumns; ++i) {
+        vStartPositions << pos;
+        pos = pos + spacing;
+    }
+    return vStartPositions;
+}
+
 void widGraphLegend::paintEvent(QPaintEvent */*event*/)
 {
-    painterAntiAl painter(this);
-    m_drawTopLine(painter);
-    m_drawTexts(painter);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_show) {
+        painterAntiAl painter(this);
+        m_drawTopLine(painter);
+        m_drawTexts(painter);
+    }
 }
 
 void widGraphLegend::m_setDimensions()
 {
-    int numberCurves = m_getNCurvesWithLegend();
-    auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
-    double rowHeight = 1.2*ptr_legendData->m_fontText;
-    double height = numberCurves * rowHeight;
-    setFixedHeight(height);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_manualSize) {
+        ptr_data->m_height = ptr_data->m_manualSizeValue;
+    }
+    else {
+        int nRows = m_getNRows();
+        double rowHeight = 1.2*ptr_data->m_fontText;
+        ptr_data->m_height = nRows * rowHeight;
+    }
+    setFixedHeight(ptr_data->m_height);
 }
 
 int widGraphLegend::m_getNCurvesWithLegend()
@@ -1240,6 +1267,17 @@ int widGraphLegend::m_getNCurvesWithLegend()
             ++nCurvesWithLegend;
     }
     return nCurvesWithLegend;
+}
+
+int widGraphLegend::m_getNRows()
+{
+    int nCurves = m_getNCurvesWithLegend();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    int nColumns = ptr_data->m_nColumns;
+    int nFullRows = nCurves / nColumns;
+    int extraRow = static_cast<int> ((nCurves % nColumns) != 0);
+    int nRows = nFullRows + extraRow;
+    return nRows;
 }
 
 
