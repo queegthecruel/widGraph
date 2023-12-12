@@ -55,6 +55,9 @@ public:
     // Legend
         void m_setStyleOfLegend(bool overwrite, const std::string &text, bool show = true);
         std::tuple<bool, const std::string &, bool> m_getStyleOfLegend();
+    // Operation
+        void m_setOperation(bool toBeDeleted);
+        std::tuple<bool> m_getOperation();
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -98,6 +101,9 @@ protected:
             {m_legendOverwrite = overwrite;}
         inline void m_setShowLegend(bool show)
             {m_showLegend = show;}
+    // Operation
+        inline void m_setToBeDeleted(bool toBeDeleted)
+            {m_toBeDeleted = toBeDeleted;}
 public:
     bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
 protected:
@@ -124,6 +130,8 @@ protected:
         bool m_showLegend = true;
         bool m_legendOverwrite = false;
         std::string m_legendText;
+    // Operation
+        bool m_toBeDeleted = false;
 };
 
 class graphObjects

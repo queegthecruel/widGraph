@@ -60,7 +60,17 @@ void widGraph::hideEvent(QHideEvent */*event*/)
 
 void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
 {
-    m_data->m_vectorOfObjects.push_back(ptr_object);
+    m_data->m_addObject(ptr_object);
+}
+
+void widGraph::m_removeAllObjects()
+{
+    m_data->m_removeAllObjects();
+}
+
+void widGraph::m_removeObject(int curveIndex)
+{
+    m_data->m_removeObject(curveIndex);
 }
 
 void widGraph::m_loadValues()
@@ -132,6 +142,7 @@ void widGraph::m_openDialog()
         connect(m_dialog, &QDialog::finished, this, &widGraph::m_slotDialogClosed);
     }
     m_dialog->show();
+    m_dialog->activateWindow();
 }
 
 void widGraph::m_takeScreenshot()

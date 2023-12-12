@@ -351,6 +351,8 @@ public:
     widGraphY2Axis* m_getY2Axis()
         {return m_widY2;}
     void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_removeAllObjects();
+    void m_removeObject(int curveIndex);
     void m_loadValues();
     void m_setCurveStyle(int curveIndex, QColor color, int curveWidth = 3, int curveStyleIndex = 1, bool showCurve = true);
     void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);

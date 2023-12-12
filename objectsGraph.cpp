@@ -409,6 +409,11 @@ void dataGraphObject::m_setStyleOfLegend(bool overwrite, const std::string &text
     m_setShowLegend(show);
 }
 
+void dataGraphObject::m_setOperation(bool toBeDeleted)
+{
+    m_setToBeDeleted(toBeDeleted);
+}
+
 std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
 {
     return {m_getPointsColor(), m_pointsWidth, m_pointsShapeSize, m_pointsStyleIndex, m_showPoints};
@@ -432,6 +437,11 @@ std::tuple<int, bool> dataGraphObject::m_getStyleOfColumns()
 std::tuple<bool, const std::string &, bool> dataGraphObject::m_getStyleOfLegend()
 {
     return {m_legendOverwrite, m_legendText, m_showLegend};
+}
+
+std::tuple<bool> dataGraphObject::m_getOperation()
+{
+    return {m_toBeDeleted};
 }
 
 Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)

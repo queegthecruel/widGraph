@@ -46,3 +46,5 @@ DEPENDPATH += $$PWD/../widPretty
 RESOURCES += \
     images.qrc
 
+DISTFILES +=
+

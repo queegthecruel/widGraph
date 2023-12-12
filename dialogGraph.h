@@ -129,36 +129,44 @@ protected:
     static QVector<std::tuple<QString, QIcon>> m_getIconsForPoints(int iconSize = 17);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForArea(int iconWidth = 40, int iconHeight = 15);
     virtual void m_setEnabled(bool enabled) = 0;
+    QWidget *m_separator();
 protected slots:
     void m_slotEnabledToggled();
 protected:
     HBoxLayout *m_layBackground;
     checkbox *m_checkEnable;
 };
-/*
-class widGraphObjectSettingGeneral: public widGraphObjectSetting
+
+class widGraphObjectSettingButton: public QPushButton
 {
-    Q_OBJECT
 public:
-    widGraphObjectSettingGeneral() {}
-//    void m_setValues(QColor color, int width, int styleIndex, bool enable);
-//    std::tuple<QColor, int, int, bool> m_getValues();
-    virtual void m_setEnabled(bool enabled) override {}
-protected:
-    pushbutton *m_butDelete, *m_butMoveUp, *m_butMoveDown;
-};*/
+    widGraphObjectSettingButton(QIcon icon, const QString &tooltip);
+};
+
 class widGraphObjectSettingMain;
-class widGraphObjectSettingDelete: public widGraphObjectSetting
+class widGraphObjectSettingOperation: public QWidget
 {
     Q_OBJECT
 public:
-    widGraphObjectSettingDelete(widGraphObjectSettingMain* ptr_widMain);
+    widGraphObjectSettingOperation(int pos, widGraphObjectSettingMain* ptr_widMain);
     void m_setValues(bool enable);
     std::tuple<bool> m_getValues();
-//    virtual void m_setEnabled(bool enabled) override;
+//    virtual void m_setEnabled(bool enabled) override {};
+    void m_loadValues();
+    void m_saveValues();
+private slots:
+    void m_slotDeleteClicked();
+    void m_slotMoveUp();
+    void m_slotMoveDown();
+signals:
+    void m_signalMoveUp(int);
+    void m_signalMoveDown(int);
 protected:
-    widGraphObjectSettingMain *ptr_widMainWidget;
-    pushbutton *m_butDelete;
+    int m_positionInVector;
+    widGraphObjectSettingMain *ptr_widObjectStyle;
+    HBoxLayout *m_layBackground;
+    widGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown;
+    widGraphObjectSettingButton *m_butDelete;
 };
 
 class widGraphObjectSettingCurve: public widGraphObjectSetting
@@ -254,16 +262,21 @@ public:
     ~tabGraphSettingsObjects() = default;
     virtual void m_loadValues() override;
     virtual void m_saveValues() override;
-protected slots:
+private:
+    void m_createCopyOfGraphData();
+    void m_saveDataInWidgets();
+    void m_reorderObjectsInGraph();
+    void m_deleteDeletedItemsInGraph();
+private slots:
     void m_slotMoved(int from, int to);
+    void m_slotMoveUp(int from);
+    void m_slotMoveDown(int from);
 protected:
     treeWidgetGraphObjects *m_tree;
     std::weak_ptr<dataGraph> ptr_graphData;
-    std::vector<std::shared_ptr<dataGraphObject>> vDataCopy;
+    std::vector<std::shared_ptr<dataGraphObject>> m_vDataCopy;
     std::vector<int> m_vOrder;
-    std::vector<widGraphObjectSettingMain*> vGraphWidgets;
-private:
-    void m_createCopyOfData();
+    std::vector<std::tuple<widGraphObjectSettingOperation*, widGraphObjectSettingMain*>> m_vWidgets;
 };
 
 class tabGraphSettingsLegend: public tabGraphSettings
@@ -333,9 +346,9 @@ public:
     dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data);
     ~dialogGraph() = default;
     inline void m_loadValues()
-        {m_content->m_loadValues();}
+        {m_widContent->m_loadValues();}
     inline void m_saveValues()
-        {m_content->m_saveValues();}
+        {m_widContent->m_saveValues();}
 public slots:
     void m_slotClose();
     void m_slotApply();
@@ -345,16 +358,17 @@ protected:
     widGraph *ptr_graph;
     std::weak_ptr<dataGraph> ptr_data;
     VBoxLayout *m_layBackground;
-    graphSettingsWidget *m_content;
-    footerDialogGraph *m_footer;
+    graphSettingsWidget *m_widContent;
+    footerDialogGraph *m_widFooter;
 };
 
-class treeWidgetGraphObjects: public treeWidget
+class treeWidgetGraphObjects: public QTreeWidget
 {
     Q_OBJECT
 public:
     treeWidgetGraphObjects();
     void dropEvent(QDropEvent *event) override;
+    QTreeWidgetItem *m_addChild(const std::string &text, QWidget *ptr_widget, QWidget *ptr_widget2, const std::string &tooltip = "");
 signals:
     void m_signalMoved(int from, int to);
 };
