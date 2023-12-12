@@ -15,7 +15,10 @@ class dataGraphObject
 {
 public:
     dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend);
+    dataGraphObject(const dataGraphObject & oldData) = default;
     dataGraphObject(std::ifstream &instream);
+    ~dataGraphObject() = default;
+    dataGraphObject& operator=(const dataGraphObject & oldData) = default;
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
         {return m_name;}
@@ -52,6 +55,9 @@ public:
     // Legend
         void m_setStyleOfLegend(bool overwrite, const std::string &text, bool show = true);
         std::tuple<bool, const std::string &, bool> m_getStyleOfLegend();
+    // Operation
+        void m_setOperation(bool toBeDeleted);
+        std::tuple<bool> m_getOperation();
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -95,8 +101,11 @@ protected:
             {m_legendOverwrite = overwrite;}
         inline void m_setShowLegend(bool show)
             {m_showLegend = show;}
+    // Operation
+        inline void m_setToBeDeleted(bool toBeDeleted)
+            {m_toBeDeleted = toBeDeleted;}
 public:
-    const bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
+    bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
 protected:
     int m_prefferedYAxis = 0;
     std::string m_name;
@@ -121,6 +130,8 @@ protected:
         bool m_showLegend = true;
         bool m_legendOverwrite = false;
         std::string m_legendText;
+    // Operation
+        bool m_toBeDeleted = false;
 };
 
 class graphObjects
@@ -133,7 +144,7 @@ public:
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
-        {m_data = data;};
+        {*m_data = *data;};
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}

@@ -5,17 +5,17 @@
 dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     ptr_graph(graph), ptr_data(data)
 {
-    m_content = new graphSettingsWidget(ptr_data);
+    m_widContent = new graphSettingsWidget(ptr_data);
 
-    m_footer = new footerDialogGraph();
-    connect(m_footer, &footerDialogGraph::m_emitApply, this, &dialogGraph::m_slotApply);
-    connect(m_footer, &footerDialogGraph::m_emitClose, this, &dialogGraph::m_slotClose);
-    connect(m_footer, &footerDialogGraph::m_emitSaveFile, this, &dialogGraph::m_slotSaveFile);
-    connect(m_footer, &footerDialogGraph::m_emitLoadFile, this, &dialogGraph::m_slotLoadFile);
+    m_widFooter = new footerDialogGraph();
+    connect(m_widFooter, &footerDialogGraph::m_emitApply, this, &dialogGraph::m_slotApply);
+    connect(m_widFooter, &footerDialogGraph::m_emitClose, this, &dialogGraph::m_slotClose);
+    connect(m_widFooter, &footerDialogGraph::m_emitSaveFile, this, &dialogGraph::m_slotSaveFile);
+    connect(m_widFooter, &footerDialogGraph::m_emitLoadFile, this, &dialogGraph::m_slotLoadFile);
 
     m_layBackground = new VBoxLayout(this);
-    m_layBackground->addWidget(m_content);
-    m_layBackground->addWidget(m_footer);
+    m_layBackground->addWidget(m_widContent);
+    m_layBackground->addWidget(m_widFooter);
 
     m_loadValues();
     resize(1024,600);
@@ -23,11 +23,13 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
 
 void dialogGraph::m_slotClose()
 {
+    qDebug() << "Closing";
     close();
 }
 
 void dialogGraph::m_slotApply()
 {
+    qDebug() << "Apply";
     m_saveValues();
     ptr_graph->m_loadValues();
 }
@@ -65,16 +67,12 @@ void dialogGraph::m_slotLoadFile()
     loadFileContent.close();
 }
 
-tabGraphSettings::tabGraphSettings(const QString &title)
+tabGraph::tabGraph(const QString &title)
 {
-    m_tree = new treeWidget();
     m_layBackground = new VBoxLayout(this);
     m_layBackground->setContentsMargins(2,2,2,2);
     m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(new label(title, true));
-    m_layBackground->addWidget(m_tree);
-    setStyleSheet(".tabGraphSettings "
-                  "{background:black;}");
+    m_layBackground->addWidget(new label(" " + title, true));
 }
 
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
@@ -213,7 +211,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_yAxis2 = new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2);
     m_legend = new tabGraphSettingsLegend(ptr_data.lock()->m_legend);
     m_drawArea = new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea);
-    m_objects = new tabGraphSettingsObjects(ptr_data.lock()->m_vectorOfObjects);
+    m_objects = new tabGraphSettingsObjects(ptr_data.lock());
 
     m_tabs.push_back(m_title);
     m_tabs.push_back(m_xAxis);
@@ -276,14 +274,20 @@ footerDialogGraph::footerDialogGraph()
 tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
     tabGraphSettings(title)
 {
-    // Font
+    // Dimensions
+        m_checkShowAxis = new checkbox("Show axis");
+        auto *titleDimensions = m_tree->m_addChild("Dimensions", m_checkShowAxis, nullptr, false);
+        m_editSize = new checkEdit(validator::INT_POS_0);
+        m_tree->m_addChild("Manual dimensions", m_editSize, titleDimensions);
         m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
         m_editFontSizeText = new lineEdit(validator::INT_POS);
-        m_tree->m_addChild("Numbers size", m_editFontSizeNumbers);
-        m_tree->m_addChild("Text size", m_editFontSizeText);
-
+        m_tree->m_addChild("Numbers size", m_editFontSizeNumbers, titleDimensions);
+        m_tree->m_addChild("Text size", m_editFontSizeText, titleDimensions);
+    // Text
+        m_editText = new lineEdit(validator::NONE);
+        m_tree->m_addChild("Text", m_editText);
     // Axis min max
-        m_checkAutoAxis = new checkbox();
+        m_checkAutoAxis = new checkbox("Auto axis");
         connect(m_checkAutoAxis, &QAbstractButton::toggled,
                 this, &tabGraphSettingsAxis::m_slotAutoAxisToggled);
         m_checkAutoStep = new checkbox();
@@ -292,18 +296,17 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
         m_editMin = new lineEdit(validator::DOUBLE);
         m_editMax = new lineEdit(validator::DOUBLE);
         m_editStep = new lineEdit(validator::DOUBLE);
-        auto *titleMinMax = m_tree->m_addChild("Auto axis", m_checkAutoAxis, nullptr, true);
+        auto *titleMinMax = m_tree->m_addChild("Range", m_checkAutoAxis, nullptr, true);
         m_tree->m_addChild("Min", m_editMin, titleMinMax);
         m_tree->m_addChild("Max", m_editMax, titleMinMax);
         m_tree->m_addChild("Auto step", m_checkAutoStep, titleMinMax);
         m_tree->m_addChild("Step", m_editStep, titleMinMax);
-    // Text
-        m_editText = new lineEdit(validator::NONE);
-        m_tree->m_addChild("Text", m_editText);
 }
 
 void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
+    m_checkShowAxis->m_setChecked(s_data->m_show);
+    m_editSize->m_setValues(s_data->m_manualSize, s_data->m_manualSizeValue);
     m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
     m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
@@ -317,6 +320,9 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
 
 void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
 {
+    s_data->m_show = m_checkShowAxis->isChecked();
+    s_data->m_manualSize = m_editSize->m_getChecked();
+    s_data->m_manualSizeValue = m_editSize->m_value();
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
     s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAutoAxis->isChecked();
@@ -339,37 +345,127 @@ void tabGraphSettingsAxis::m_slotAutoAxisToggled()
 void tabGraphSettingsAxis::m_slotAutoStepToggled()
 {
     bool autoStep = m_checkAutoStep->isChecked();
- //   bool autoAxis = m_checkAutoAxis->isChecked();
     m_editStep->setEnabled(!autoStep);
 }
 
-tabGraphSettingsObjects::tabGraphSettingsObjects(const std::vector<std::shared_ptr<graphObjects> > &vObjects):
-    tabGraphSettings("Curves"),
-    vGraphObjects(vObjects)
-{
 
+tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data):
+    tabGraph("Curves"),
+    ptr_graphData(ptr_data)
+{
+    m_createCopyOfGraphData();
+    m_tree = new treeWidgetGraphObjects();
+    m_layBackground->addWidget(m_tree);
+    connect(m_tree, &treeWidgetGraphObjects::m_signalMoved,
+            this, &tabGraphSettingsObjects::m_slotMoved);
+}
+
+void tabGraphSettingsObjects::m_createCopyOfGraphData()
+{
+    m_vDataCopy.clear();
+    m_vOrder.clear();
+    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
+    for (unsigned int i = 0; i < ptr_vGraphObjects.size(); ++i) {
+        m_vOrder.push_back(i);
+        auto ptr_graphData = ptr_vGraphObjects[i]->m_getData();
+        auto newData = std::make_shared<dataGraphObject>(*ptr_graphData.lock());
+        m_vDataCopy.push_back(newData);
+    }
 }
 
 void tabGraphSettingsObjects::m_loadValues()
 {
+    m_vWidgets.clear();
     m_tree->clear();
-    vGraphWidgets.clear();
-    int nCurves = vGraphObjects.size();
-    for (int i = 0; i < nCurves; ++i) {
-        auto data = vGraphObjects[i]->m_getData().lock();
-        auto *widget = new widGraphObjectSettingMain(data);
-        vGraphWidgets.push_back(widget);
-        m_tree->m_addChild(data->m_getName(), widget);
-        widget->m_loadValues();
+
+    int pos = 0;
+    for (auto &var: m_vDataCopy) {
+        auto *widgetStyle = new widGraphObjectSettingMain(var);
+        auto *widgetOperation = new widGraphObjectSettingOperation(pos, widgetStyle);
+        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveUp,
+                this, &tabGraphSettingsObjects::m_slotMoveUp);
+        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveDown,
+                this, &tabGraphSettingsObjects::m_slotMoveDown);
+        m_vWidgets.push_back({widgetOperation, widgetStyle});
+        m_tree->m_addChild(var->m_getName(), widgetOperation, widgetStyle);
+        widgetStyle->m_loadValues();
+        widgetOperation->m_loadValues();
+        ++pos;
+    }
+}
+
+void tabGraphSettingsObjects::m_saveDataInWidgets()
+{
+    for (auto &var: m_vWidgets) {
+        auto [ptr_widOperation, ptr_widStyle] = var;
+        ptr_widOperation->m_saveValues();
+        ptr_widStyle->m_saveValues();
+    }
+}
+
+void tabGraphSettingsObjects::m_reorderObjectsInGraph()
+{
+    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
+    std::vector<std::shared_ptr<graphObjects>> vDialogObjects;
+    // Reorder
+    vDialogObjects.resize(m_vOrder.size());
+    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
+        vDialogObjects[i] = ptr_vGraphObjects[m_vOrder[i]];
+    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
+        ptr_vGraphObjects[i] = vDialogObjects[i];
+    // Assign data
+    for (unsigned int i = 0; i < m_vDataCopy.size(); ++i)
+        ptr_vGraphObjects[i]->m_setData(m_vDataCopy[i]);
+}
+
+void tabGraphSettingsObjects::m_deleteDeletedItemsInGraph()
+{
+    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
+    for (int i = ptr_vGraphObjects.size() - 1; i >= 0; --i)
+    {
+        auto [toBeDeleted] = ptr_vGraphObjects[i]->m_getData().lock()->m_getOperation();
+        if (toBeDeleted)
+            ptr_vGraphObjects.erase(ptr_vGraphObjects.begin() + i);
     }
 }
 
 void tabGraphSettingsObjects::m_saveValues()
 {
-    int nWidgets = vGraphWidgets.size();
-    for (int i = 0; i < nWidgets; ++i) {
-        vGraphWidgets[i]->m_saveValues();
-    }
+    // Save data in the widgets
+        m_saveDataInWidgets();
+    // Reorder the objects - if moved by user
+        m_reorderObjectsInGraph();
+    // Delete - if deleted by user
+        m_deleteDeletedItemsInGraph();
+    // Create copy of data from graphs for use in widgets
+        m_createCopyOfGraphData();
+    // Load values
+        m_loadValues();
+}
+
+void tabGraphSettingsObjects::m_slotMoved(int from, int to)
+{
+    int maxIndex = (int) m_vDataCopy.size() - 1;
+    from = std::max(from, 0);
+    from = std::min(from, maxIndex);
+    to = std::max(to, 0);
+    to = std::min(to, maxIndex);
+    m_saveDataInWidgets();
+    std::swap(*m_vDataCopy[to], *m_vDataCopy[from]);
+    std::swap(m_vOrder[to], m_vOrder[from]);
+    m_loadValues();
+}
+
+void tabGraphSettingsObjects::m_slotMoveUp(int from)
+{
+    int to = from - 1;
+    m_slotMoved(from, to);
+}
+
+void tabGraphSettingsObjects::m_slotMoveDown(int from)
+{
+    int to = from + 1;
+    m_slotMoved(from, to);
 }
 
 widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
@@ -387,6 +483,7 @@ widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObje
     lay->addWidget(m_widArea, 1);
     lay->addWidget(m_widLegend);
     lay->addStretch(10);
+ //   setStyleSheet("widGraphObjectSetting {background:green;}");
 }
 
 void widGraphObjectSettingMain::m_loadValues()
@@ -443,137 +540,10 @@ void widGraphObjectSettingMain::m_saveValues()
         data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
  }
 
-colorPicker::colorPicker()
+
+widGraphObjectSettingCurve::widGraphObjectSettingCurve():
+    widGraphObjectSetting("Curve")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    m_button = new colorButton(Qt::blue);
-    lay->addWidget(m_button);
-
-    m_menu = new QMenu(this);
-    VBoxLayout *menuLayout = new VBoxLayout(m_menu);
-    QGridLayout *layGrid = new QGridLayout();
-    layGrid->setContentsMargins(0,0,0,0);
-    layGrid->setSpacing(1);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) {
-            auto *ptr_button = new colorButton(prettyColors[3*i+j]);
-            connect(ptr_button, &colorButton::m_signalSelected,
-                    this, &colorPicker::m_slotColorSelected);
-            layGrid->addWidget(ptr_button, i, j);
-        }
-    menuLayout->addLayout(layGrid);
-    m_customColor = new widCustomColor();
-    connect(m_customColor, &widCustomColor::m_signalColorSelected,
-            this, &colorPicker::m_slotColorSelected);
-    menuLayout->addWidget(m_customColor);
-    connect(m_button, &QAbstractButton::pressed, this,
-            &colorPicker::m_slotShowMenu);
-}
-
-void colorPicker::m_slotShowMenu()
-{
-    m_customColor->m_setColor(m_color);
-    m_menu->move(mapToGlobal(m_button->pos() + QPoint(0, m_button->height())));
-    m_menu->setFixedSize(150,100);
-    m_menu->show();
-}
-
-void colorPicker::m_slotColorSelected(QColor color)
-{
-    m_menu->hide();
-    m_color = color;
-    m_button->m_setColor(m_color);
-}
-
-void colorPicker::m_slotColorConfirmed()
-{
-}
-
-void colorPicker::m_setColor(const QColor &color)
-{
-    m_color = color;
-    m_button->m_setColor(color);
-}
-
-colorButton::colorButton(const QColor &color):
-    m_color(color)
-
-{
-    setFlat(true);
-    m_setColor(m_color);
-    connect(this, &QAbstractButton::clicked,
-            this, &colorButton::m_slotClicked);
-}
-
-void colorButton::m_setColor(const QColor &color)
-{
-    m_color = color;
-    QString tempColor = QString::number(m_color.red()) + "," +
-                        QString::number(m_color.green()) + "," +
-                        QString::number(m_color.blue());
-    setStyleSheet("background: rgb(" + tempColor + ");"
-                  "border: 1px solid gray;");
-}
-
-void colorButton::m_slotClicked()
-{
-    emit m_signalSelected(m_color);
-}
-
-widCustomColor::widCustomColor()
-{
-    m_editR = new lineEdit(validator::INT_POS_0);
-    m_editG = new lineEdit(validator::INT_POS_0);
-    m_editB = new lineEdit(validator::INT_POS_0);
-    connect(m_editR, &lineEdit::m_signalTextFinished,
-            this, &widCustomColor::m_slotLineEditChanged);
-    connect(m_editG, &lineEdit::m_signalTextFinished,
-            this, &widCustomColor::m_slotLineEditChanged);
-    connect(m_editB, &lineEdit::m_signalTextFinished,
-            this, &widCustomColor::m_slotLineEditChanged);
-
-    m_button = new colorButton(Qt::black);
-    connect(m_button, &colorButton::m_signalSelected,
-            this, &widCustomColor::m_slotColorSelected);
-
-    HBoxLayout *layBackground = new HBoxLayout(this);
-    layBackground->addWidget(m_editR);
-    layBackground->addWidget(m_editG);
-    layBackground->addWidget(m_editB);
-    layBackground->addWidget(m_button);
-}
-
-void widCustomColor::m_setColor(const QColor &color)
-{
-    m_color = color;
-    m_button->m_setColor(color);
-    m_editR->m_setNumber(m_color.red());
-    m_editG->m_setNumber(m_color.green());
-    m_editB->m_setNumber(m_color.blue());
-}
-
-void widCustomColor::m_slotLineEditChanged()
-{
-    QColor color(m_editR->m_number(),
-                 m_editG->m_number(),
-                 m_editB->m_number());
-    m_color = color;
-    m_button->m_setColor(color);
-}
-
-void widCustomColor::m_slotColorSelected()
-{
-    emit m_signalColorSelected(m_color);
-}
-
-widGraphObjectSettingCurve::widGraphObjectSettingCurve()
-{
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-//    m_labTitle = new label("Curve: ", true);
-    m_checkEnable = new checkbox("Curve: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
     m_colorPickerCurve = new colorPicker();
     m_editCurveThick = new spinbox();
     m_comboCurveStyle = new combobox(65);
@@ -583,20 +553,19 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve()
     auto vOptions = m_getIconsForCurve(iconWidth, iconHeight);
     m_comboCurveStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerCurve);
-    lay->addWidget(m_editCurveThick);
-    lay->addWidget(m_comboCurveStyle);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+    m_layBackground->addWidget(m_colorPickerCurve);
+    m_layBackground->addWidget(m_editCurveThick);
+    m_layBackground->addWidget(m_comboCurveStyle);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingCurve::m_setValues(QColor color, int width, int styleIndex, bool enable)
 {
     m_colorPickerCurve->m_setColor(color);
-    m_editCurveThick->setValue(width);
-    m_comboCurveStyle->setCurrentIndex(styleIndex);
+    m_editCurveThick->m_setValue(width);
+    m_comboCurveStyle->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -610,12 +579,35 @@ std::tuple<QColor, int, int, bool> widGraphObjectSettingCurve::m_getValues()
     return {color, width, styleIndex, enable};
 }
 
-void widGraphObjectSettingCurve::m_slotEnabledToggled()
+void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerCurve->setEnabled(enabled);
     m_editCurveThick->setEnabled(enabled);
     m_comboCurveStyle->setEnabled(enabled);
+}
+
+widGraphObjectSetting::widGraphObjectSetting(const QString &name)
+{
+ //   setStyleSheet("widGraphObjectSetting {border-left: 2px solid black;}");
+    m_layBackground = new HBoxLayout(this);
+    m_layBackground->setSpacing(1);
+    m_layBackground->addWidget(m_separator());
+    m_layBackground->addSpacing(1);
+
+    m_checkEnable = new checkbox(name + ": ");
+    m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
+                                 "QCheckBox::unchecked {color:gray;}"
+                                 "QCheckBox::disabled {color:gray;}");
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
+    m_layBackground->addWidget(m_checkEnable);
+    m_layBackground->addSpacing(1);
+}
+
+void widGraphObjectSetting::m_addEndOfWidget()
+{
+    m_layBackground->addSpacing(2);
+    m_layBackground->addStretch();
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(int iconWidth, int iconHeight)
@@ -660,13 +652,9 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(i
     return {none, solid, dash, dot, dashDot, dashDotDot};
 }
 
-widGraphObjectSettingPoints::widGraphObjectSettingPoints()
+widGraphObjectSettingPoints::widGraphObjectSettingPoints():
+    widGraphObjectSetting("Points")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Points: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingPoints::m_slotEnabledToggled);
     m_colorPickerPoints = new colorPicker();
     m_editThickness = new spinbox();
     m_editShapeSize = new spinbox();
@@ -676,22 +664,19 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints()
     auto vOptions = m_getIconsForPoints(iconSize);
     m_comboShape->m_addItems(vOptions, QSize(iconSize,iconSize), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerPoints);
-    lay->addWidget(m_editThickness);
-    lay->addWidget(m_editShapeSize);
-    lay->addWidget(m_comboShape);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_colorPickerPoints);
+    m_layBackground->addWidget(m_editThickness);
+    m_layBackground->addWidget(m_editShapeSize);
+    m_layBackground->addWidget(m_comboShape);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingPoints::m_setValues(QColor color, int width, int shapeSize, int styleIndex, bool enable)
 {
     m_colorPickerPoints->m_setColor(color);
-    m_editThickness->setValue(width);
-    m_editShapeSize->setValue(shapeSize);
-    m_comboShape->setCurrentIndex(styleIndex);
+    m_editThickness->m_setValue(width);
+    m_editShapeSize->m_setValue(shapeSize);
+    m_comboShape->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -706,13 +691,18 @@ std::tuple<QColor, int, int, int, bool> widGraphObjectSettingPoints::m_getValues
     return {color, width, shapeSize, styleIndex, enable};
 }
 
-void widGraphObjectSettingPoints::m_slotEnabledToggled()
+void widGraphObjectSettingPoints::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerPoints->setEnabled(enabled);
     m_editThickness->setEnabled(enabled);
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
+}
+void widGraphObjectSetting::m_slotEnabledToggled()
+{
+    m_checkEnable->setEnabled(true);
+    bool enabled = m_checkEnable->isChecked();
+    m_setEnabled(enabled);
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(int iconSize)
@@ -756,13 +746,9 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
     return {none, point, cross, square, circle, triangle, revTriangle};
 }
 
-widGraphObjectSettingArea::widGraphObjectSettingArea()
+widGraphObjectSettingArea::widGraphObjectSettingArea():
+    widGraphObjectSetting("Area")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Area: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingArea::m_slotEnabledToggled);
     m_colorPickerArea = new colorPicker();
     m_comboAreaStyle = new combobox(65);
 
@@ -771,18 +757,15 @@ widGraphObjectSettingArea::widGraphObjectSettingArea()
     auto vOptions = m_getIconsForArea(iconWidth, iconHeight);
     m_comboAreaStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_colorPickerArea);
-    lay->addWidget(m_comboAreaStyle);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_colorPickerArea);
+    m_layBackground->addWidget(m_comboAreaStyle);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingArea::m_setValues(QColor color, int styleIndex, bool enable)
 {
     m_colorPickerArea->m_setColor(color);
-    m_comboAreaStyle->setCurrentIndex(styleIndex);
+    m_comboAreaStyle->m_setCurrentIndex(styleIndex);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -795,9 +778,8 @@ std::tuple<QColor, int, bool> widGraphObjectSettingArea::m_getValues()
     return {color, styleIndex, enable};
 }
 
-void widGraphObjectSettingArea::m_slotEnabledToggled()
+void widGraphObjectSettingArea::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_colorPickerArea->setEnabled(enabled);
     m_comboAreaStyle->setEnabled(enabled);
 }
@@ -888,29 +870,29 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForArea(in
     auto crossDiagonal = std::tuple<QString, QIcon>("Cross diagonal",iconCrossDiagonal);
 
     return {none, solid, dense1, dense2, dense3, dense4, dense5, dense6, dense7,
-            horizontal, vertical, cross, bdiagonal, fDiagonal, crossDiagonal};
+                horizontal, vertical, cross, bdiagonal, fDiagonal, crossDiagonal};
 }
 
-
-widGraphObjectSettingColumn::widGraphObjectSettingColumn()
+QWidget *widGraphObjectSetting::m_separator()
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Column: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingColumn::m_slotEnabledToggled);
+    QWidget *separator = new QWidget();
+    separator->setStyleSheet("background:black;");
+    separator->setFixedWidth(1);
+    return separator;
+}
+
+widGraphObjectSettingColumn::widGraphObjectSettingColumn():
+    widGraphObjectSetting("Column")
+{
     m_editColumnThick = new spinbox();
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_editColumnThick);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_editColumnThick);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingColumn::m_setValues(int width, bool enable)
 {
-    m_editColumnThick->setValue(width);
+    m_editColumnThick->m_setValue(width);
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -922,26 +904,18 @@ std::tuple<int, bool> widGraphObjectSettingColumn::m_getValues()
     return {width, enable};
 }
 
-void widGraphObjectSettingColumn::m_slotEnabledToggled()
+void widGraphObjectSettingColumn::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_editColumnThick->setEnabled(enabled);
 }
 
-widGraphObjectSettingLegend::widGraphObjectSettingLegend()
+widGraphObjectSettingLegend::widGraphObjectSettingLegend():
+    widGraphObjectSetting("Legend")
 {
-    HBoxLayout *lay = new HBoxLayout(this);
-    lay->addSpacing(2);
-    m_checkEnable = new checkbox("Legend: ");
-    connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingLegend::m_slotEnabledToggled);
     m_editText = new checkEdit(validator::NONE);
 
-    lay->addWidget(m_checkEnable);
-    lay->addSpacing(1);
-    lay->addWidget(m_editText);
-    lay->addSpacing(3);
-    lay->addStretch();
+    m_layBackground->addWidget(m_editText);
+    m_addEndOfWidget();
 }
 
 void widGraphObjectSettingLegend::m_setValues(bool overwrite, const std::string &text, bool enable)
@@ -959,8 +933,142 @@ std::tuple<bool, std::string, bool> widGraphObjectSettingLegend::m_getValues()
     return {overwrite, text, enable};
 }
 
-void widGraphObjectSettingLegend::m_slotEnabledToggled()
+void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
 {
-    bool enabled = m_checkEnable->isChecked();
     m_editText->setEnabled(enabled);
+}
+
+treeWidgetGraphObjects::treeWidgetGraphObjects()
+{
+    setColumnCount(3);
+    setHeaderLabels({"Object name","Operations","Style"});
+    QFont font;
+    font.setBold(true);
+    font.setPixelSize(12);
+    header()->setFont(font);
+    header()->setStyleSheet("border:none; border-bottom:1px solid black;");
+    setColumnWidth(0, 150);
+    setColumnWidth(1, 75);
+    setIndentation(8);
+    setStyleSheet("QTreeWidget::item "
+               "{padding-top: 1px 0;}");
+    setFocusPolicy(Qt::NoFocus);
+    setAlternatingRowColors(true);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    setDragDropMode(QAbstractItemView::InternalMove);
+}
+
+void treeWidgetGraphObjects::dropEvent(QDropEvent *event)
+{
+    if (event->source() == this) {
+        auto *itemFrom = selectedItems()[0];
+        int indexFrom = indexOfTopLevelItem(itemFrom);
+        auto *itemTo = itemAt(event->position().toPoint());
+        int indexTo = indexOfTopLevelItem(itemTo);
+        qDebug() << indexFrom << indexTo;
+        emit m_signalMoved(indexFrom, indexTo);
+    }
+    event->accept();
+}
+
+QTreeWidgetItem *treeWidgetGraphObjects::m_addChild(const std::string &text,
+  QWidget *ptr_widget, QWidget *ptr_widget2, const std::string &tooltip)
+{
+    // Create item
+        QTreeWidgetItem *item = new QTreeWidgetItem(this);
+    // First
+        QFont font;
+        font.setBold(false);
+        font.setPixelSize(12);
+        item->setFont(0, font);
+        item->setText(0, QString::fromStdString(text));
+        std::string tooltipText = tooltip;
+        if (tooltipText == "")
+            tooltipText = text;
+        item->setToolTip(0, QString::fromStdString(tooltipText));
+    // Second
+        setItemWidget(item, 1, ptr_widget);
+    // Third
+        setItemWidget(item, 2, ptr_widget2);
+    return item;
+}
+
+tabGraphSettings::tabGraphSettings(const QString &name):
+    tabGraph(name)
+{
+    m_tree = new treeWidget();
+    m_layBackground->addWidget(m_tree);
+}
+
+widGraphObjectSettingOperation::widGraphObjectSettingOperation(
+    int pos, widGraphObjectSettingMain *ptr_widMain):
+     m_positionInVector(pos), ptr_widObjectStyle(ptr_widMain)
+{
+    m_layBackground = new HBoxLayout(this);
+    m_butDelete = new widGraphObjectSettingButton(QIcon(":/images/redCross.png"), "Delete this object");
+    m_butDelete->setCheckable(true);
+    connect(m_butDelete, &QAbstractButton::pressed,
+            this, &widGraphObjectSettingOperation::m_slotDeleteClicked);
+    m_butMoveUp = new widGraphObjectSettingButton(QIcon(":/images/moveUp.png"), "Move object up");
+    connect(m_butMoveUp, &QAbstractButton::pressed,
+            this, &widGraphObjectSettingOperation::m_slotMoveUp);
+    m_butMoveDown = new widGraphObjectSettingButton(QIcon(":/images/moveDown.png"), "Move object down");
+    connect(m_butMoveDown, &QAbstractButton::pressed,
+            this, &widGraphObjectSettingOperation::m_slotMoveDown);
+    m_layBackground->addWidget(m_butMoveUp);
+    m_layBackground->addWidget(m_butMoveDown);
+    m_layBackground->addWidget(m_butDelete);
+    m_layBackground->addStretch();
+}
+
+void widGraphObjectSettingOperation::m_setValues(bool enable)
+{
+    m_butDelete->setChecked(enable);
+    ptr_widObjectStyle->setEnabled(!enable);
+}
+
+std::tuple<bool> widGraphObjectSettingOperation::m_getValues()
+{
+    return {m_butDelete->isChecked()};
+}
+
+void widGraphObjectSettingOperation::m_loadValues()
+{
+    auto ptr_data = ptr_widObjectStyle->m_getData().lock();
+    auto [toBeDeleted] = ptr_data->m_getOperation();
+    m_setValues(toBeDeleted);
+}
+
+void widGraphObjectSettingOperation::m_saveValues()
+{
+    auto ptr_data = ptr_widObjectStyle->m_getData().lock();
+    auto [toBeDeleted] = m_getValues();
+    ptr_data->m_setOperation(toBeDeleted);
+}
+
+void widGraphObjectSettingOperation::m_slotDeleteClicked()
+{
+    m_saveValues();
+    if (ptr_widObjectStyle)
+        ptr_widObjectStyle->setEnabled(m_butDelete->isChecked());
+    else
+        qDebug() << "No widget";
+}
+
+void widGraphObjectSettingOperation::m_slotMoveUp()
+{
+    emit m_signalMoveUp(m_positionInVector);
+}
+
+void widGraphObjectSettingOperation::m_slotMoveDown()
+{
+    emit m_signalMoveDown(m_positionInVector);
+}
+
+widGraphObjectSettingButton::widGraphObjectSettingButton(QIcon icon, const QString &tooltip)
+{
+    setIcon(icon);
+    setFixedSize(QSize(20,20));
+    setIconSize(QSize(15,15));
+    setToolTip(tooltip);
 }

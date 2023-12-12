@@ -7,5 +7,8 @@
         <file>images/screenshot.png</file>
         <file>images/autoAxes.png</file>
         <file>images/zoomOut.png</file>
+        <file>images/redCross.png</file>
+        <file>images/moveDown.png</file>
+        <file>images/moveUp.png</file>
     </qresource>
 </RCC>

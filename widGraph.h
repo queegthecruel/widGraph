@@ -140,9 +140,9 @@ public:
     virtual void enterEvent(QEnterEvent *event) override;
     virtual void leaveEvent(QEvent *event) override;
     virtual void m_setDimensions() override;
-protected:
     void m_showButtons();
     void m_hideButtons();
+protected:
     void m_setButtonsDimensions();
     void m_loadButtonsValues();
     void m_drawLine(painterAntiAl &painter);
@@ -334,9 +334,12 @@ class WIDGRAPH_EXPORT widGraph: public QWidget
     Q_OBJECT
 public:
     widGraph();
+    ~widGraph();
     widGraph(const widGraph&) = delete;
     widGraph& operator=(const widGraph&) = delete;
     void keyPressEvent(QKeyEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+
     std::weak_ptr<dataGraph> m_getData()
         {return m_data;}
     inline void m_setData(std::shared_ptr<dataGraph> newData)
@@ -348,6 +351,8 @@ public:
     widGraphY2Axis* m_getY2Axis()
         {return m_widY2;}
     void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_removeAllObjects();
+    void m_removeObject(int curveIndex);
     void m_loadValues();
     void m_setCurveStyle(int curveIndex, QColor color, int curveWidth = 3, int curveStyleIndex = 1, bool showCurve = true);
     void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);
@@ -358,10 +363,14 @@ public:
     void m_openDialog();
     void m_takeScreenshot();
     void m_zoomOut();
-public slots:
+    static QString removeTrailingZeros(double number);
+protected slots:
     void m_slotDialogClosed(int status);
 private:
     std::shared_ptr<dataGraphObject> m_getObjectFromIndex(int curveIndex);
+signals:
+    void m_signalClose();
+    void m_signalHide();
 protected:
     // Data
         std::shared_ptr<dataGraph> m_data;
@@ -373,13 +382,13 @@ protected:
         widGraphY2Axis *m_widY2;
         widGraphLegend *m_widLegend;
     // Dialog
-        std::unique_ptr<dialogGraph> m_dialog;
+        dialogGraph* m_dialog = nullptr;
 };
 
 class graphLayout: public QGridLayout
 {
 public:
-    graphLayout(QWidget *parent);
+    graphLayout();
     ~graphLayout() = default;
 };
 

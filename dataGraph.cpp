@@ -95,6 +95,25 @@ void dataGraph::m_saveToFile(std::ofstream &outstream)
     m_drawArea->m_saveToFile(outstream);
 }
 
+void dataGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
+{
+    m_vectorOfObjects.push_back(ptr_object);
+}
+
+void dataGraph::m_removeAllObjects()
+{
+    for (int i = m_vectorOfObjects.size() - 1; i >= 0; --i)
+        m_vectorOfObjects.erase(m_vectorOfObjects.begin() + i);
+}
+
+void dataGraph::m_removeObject(int curveIndex)
+{
+    if (curveIndex == -1)
+        curveIndex = m_vectorOfObjects.size() - 1;
+    for (int i = m_vectorOfObjects.size() - 1; i >= 0; --i)
+        if(i == curveIndex)
+            m_vectorOfObjects.erase(m_vectorOfObjects.begin() + i);
+}
 
 bool readBool(std::ifstream &instream)
 {

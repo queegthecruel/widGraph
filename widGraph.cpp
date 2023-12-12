@@ -15,16 +15,25 @@ widGraph::widGraph()
         m_widY2 = new widGraphY2Axis(this);
         m_widLegend = new widGraphLegend(this);
     // Add elements to the layout
-        graphLayout *layBackground = new graphLayout(this);
+        graphLayout *layBackground = new graphLayout();
         layBackground->addWidget(m_widTitle, 0,0, 1,3);
         layBackground->addWidget(m_widX, 2,0, 1,3);
         layBackground->addWidget(m_widY1, 0,0, 3,1);
         layBackground->addWidget(m_widY2, 0,2, 3,1);
         layBackground->addWidget(m_widArea, 1,1, 1,1);
         layBackground->addWidget(m_widLegend, 3,0, 1,3);
+        setLayout(layBackground);
      // Stylesheet
-        setStyleSheet("background: transparent;");
+        setStyleSheet(".widGraph {background: white;}"
+                      ".QWidget {background: transparent;}");
         setFocusPolicy(Qt::StrongFocus);
+  //      setWindowFlags(Qt::SubWindow);
+        setAttribute(Qt::WA_DeleteOnClose);
+}
+
+widGraph::~widGraph()
+{
+    emit m_signalClose();
 }
 
 void widGraph::keyPressEvent(QKeyEvent *event)
@@ -44,9 +53,24 @@ void widGraph::keyPressEvent(QKeyEvent *event)
     }
 }
 
+void widGraph::hideEvent(QHideEvent */*event*/)
+{
+    emit m_signalHide();
+}
+
 void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
 {
-    m_data->m_vectorOfObjects.push_back(ptr_object);
+    m_data->m_addObject(ptr_object);
+}
+
+void widGraph::m_removeAllObjects()
+{
+    m_data->m_removeAllObjects();
+}
+
+void widGraph::m_removeObject(int curveIndex)
+{
+    m_data->m_removeObject(curveIndex);
 }
 
 void widGraph::m_loadValues()
@@ -113,22 +137,24 @@ void widGraph::m_setCurveName(int curveIndex, const std::string &name)
 void widGraph::m_openDialog()
 {
     if (m_dialog == nullptr) {
-        m_dialog = std::make_unique<dialogGraph>(this, m_data);
-        connect(m_dialog.get(), &QDialog::finished, this, &widGraph::m_slotDialogClosed);
-        m_dialog->show();
+        m_dialog = new dialogGraph(this, m_data);
+        connect(this, &widGraph::m_signalHide, m_dialog, &dialogGraph::m_slotClose);
+        connect(m_dialog, &QDialog::finished, this, &widGraph::m_slotDialogClosed);
     }
+    m_dialog->show();
+    m_dialog->activateWindow();
 }
 
 void widGraph::m_takeScreenshot()
 {
-    setStyleSheet(".QWidget {background: white;}");
+    m_widTitle->m_hideButtons();
     int ratio = 5;
     QSize imageSize = size()*ratio;
     QImage image = QImage(imageSize, QImage::Format_RGB32);
     image.setDevicePixelRatio(ratio);
     render(&image);
     QApplication::clipboard()->setImage(image);
-    setStyleSheet(".QWidget {background: transparent;}");
+    m_widTitle->m_showButtons();
 }
 
 void widGraph::m_zoomOut()
@@ -142,9 +168,17 @@ void widGraph::m_zoomOut()
     double d_y1 = zoomFactor*(maxY1 - minY1);
     double d_y2 = zoomFactor*(maxY2 - minY2);
 
-
     m_widArea->m_setAxisMinMax(minX - d_x, maxX + d_x, minY1 - d_y1, maxY1 + d_y1, minY2 - d_y2, maxY2 + d_y2);
     m_loadValues();
+}
+
+QString widGraph::removeTrailingZeros(double number)
+{
+    double a = number;
+    QString textNumber;
+    textNumber = QString::number(a, 'f', 2);
+
+    return textNumber;
 }
 
 void widGraph::m_slotDialogClosed(int /*status*/)
@@ -506,9 +540,12 @@ std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
 
 void widGraphXAxis::m_setDimensions()
 {
-    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
-    ptr_dataX->m_height = m_getEndFromTop();
-    setFixedHeight(ptr_dataX->m_height);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_X;
+    if (ptr_data->m_manualSize)
+        ptr_data->m_height = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_height = m_getEndFromTop();
+    setFixedHeight(ptr_data->m_height);
 }
 
 std::weak_ptr<dataAxis> widGraphXAxis::m_getData()
@@ -695,8 +732,8 @@ void widGraphXAxes::m_supDrawNumber(painterAntiAl &painter, double location, dou
     double posX = m_getPositionFromValue(location);
     QRect rect(QPoint(posX - length, m_getNumbersStart()),
                QPoint(posX + length, m_getNumbersEnd()));
-    painter.drawText(rect, QString::number(location, 'f', 2),
-                     QTextOption(Qt::AlignCenter));
+    QString number = widGraph::removeTrailingZeros(location);
+    painter.drawText(rect, number, QTextOption(Qt::AlignCenter));
 }
 
 void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
@@ -728,9 +765,12 @@ std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
 
 void widGraphY1Axis::m_setDimensions()
 {
-    auto ptr_dataY = m_getData().lock();
-    ptr_dataY->m_width = m_getTicksStart();
-    setFixedWidth(ptr_dataY->m_width);
+    auto ptr_data = m_getData().lock();
+    if (ptr_data->m_manualSize)
+        ptr_data->m_width = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_width = m_getTicksStart();
+    setFixedWidth(ptr_data->m_width);
 }
 
 std::weak_ptr<dataAxis> widGraphY1Axis::m_getData()
@@ -751,8 +791,8 @@ void widGraphYAxes::m_supDrawNumber(painterAntiAl &painter, double location, dou
     QPoint leftTop(std::min(m_getNumbersStart(), m_getNumbersEnd()), posY - length/2);
     QPoint rightBottom(std::max(m_getNumbersStart(), m_getNumbersEnd()), posY + length/2);
     QRect rect(leftTop, rightBottom);
-    painter.drawText(rect, QString::number(location, 'f', 2),
-                     QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+    QString number = widGraph::removeTrailingZeros(location);
+    painter.drawText(rect, number, QTextOption(Qt::AlignRight | Qt::AlignVCenter));
 }
 
 void widGraphYAxes::m_supDrawTick(painterAntiAl &painter, double location)
@@ -913,23 +953,25 @@ void widGraphAxis::m_moveByMouse()
 
 void widGraphAxis::paintEvent(QPaintEvent *)
 {
-    // Painter
-    painterAntiAl painter(this);
-    // Pen
-        QPen pen(Qt::black, 2);
-        painter.setPen(pen);
-    // Draw line
-        m_drawLine(painter);
-    // Draw ticks
-        m_drawTicks(painter);
-    // Draw numbers
-        m_drawNumbers(painter);
-    // Draw text
-        m_drawText(painter);
-    // Draw zoom cursor
-        m_drawZoomCursor(painter);
-    // Draw move cursor
-        m_drawMoveCursor(painter);
+    if (m_getData().lock()->m_show) {
+        // Painter
+        painterAntiAl painter(this);
+        // Pen
+            QPen pen(Qt::black, 2);
+            painter.setPen(pen);
+        // Draw line
+            m_drawLine(painter);
+        // Draw ticks
+            m_drawTicks(painter);
+        // Draw numbers
+            m_drawNumbers(painter);
+        // Draw text
+            m_drawText(painter);
+        // Draw zoom cursor
+            m_drawZoomCursor(painter);
+        // Draw move cursor
+            m_drawMoveCursor(painter);
+    }
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -1063,9 +1105,12 @@ double widGraphYAxes::m_getValueFromDrawAreaPosition(double position)
 
 void widGraphY2Axis::m_setDimensions()
 {
-    auto ptr_dataY = m_getData().lock();
-    ptr_dataY->m_width = m_getTextEnds() + m_spaceBorder;
-    setFixedWidth(ptr_dataY->m_width);
+    auto ptr_data = m_getData().lock();
+    if (ptr_data->m_manualSize)
+        ptr_data->m_width = ptr_data->m_manualSizeValue;
+    else
+        ptr_data->m_width = m_getTextEnds() + m_spaceBorder;
+    setFixedWidth(ptr_data->m_width);
 }
 
 std::weak_ptr<dataAxis> widGraphY2Axis::m_getData()
@@ -1463,8 +1508,7 @@ void widGraphYAxes::m_drawMoveCursor(painterAntiAl &painter)
     painter.restore();
 }
 
-graphLayout::graphLayout(QWidget *parent):
-    QGridLayout(parent)
+graphLayout::graphLayout()
 {
     setContentsMargins(0,0,0,0);
     setSpacing(0);

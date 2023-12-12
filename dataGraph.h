@@ -24,6 +24,10 @@ struct dataElement
     void m_saveToFile(std::ofstream &/*outstream*/)
     {
     }
+
+    bool m_show = true;
+    bool m_manualSize = false;
+    int m_manualSizeValue = 20;
 };
 
 struct dataTitle: public dataElement
@@ -155,6 +159,9 @@ struct dataGraph
     dataGraph& operator=(const dataGraph& oldData) = delete;
     ~dataGraph() = default;
     void m_saveToFile(std::ofstream &outstream);
+    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_removeAllObjects();
+    void m_removeObject(int curveIndex);
 
     std::shared_ptr<dataTitle> m_title;
     std::shared_ptr<dataAxisX> m_X;
