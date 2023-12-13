@@ -183,10 +183,11 @@ tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
     m_tree->m_addChild("Manual dimensions", m_editSize);
     m_editFontSizeText = new lineEdit(validator::INT_POS);
     m_tree->m_addChild("Text size", m_editFontSizeText);
-    m_editNColumns = new lineEdit(validator::INT_POS);
-    m_tree->m_addChild("Number of columns", m_editNColumns);
+
     m_checkArrangeToAxes = new checkbox("Align to respective axis");
-    m_tree->m_addChild("Arrangement", m_checkArrangeToAxes);
+    auto *titleArrange = m_tree->m_addChild("Arrangement", m_checkArrangeToAxes);
+    m_editNColumns = new lineEdit(validator::INT_POS);
+    m_tree->m_addChild("Number of columns", m_editNColumns, titleArrange);
 }
 
 void tabGraphSettingsLegend::m_loadValues()

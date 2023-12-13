@@ -115,6 +115,7 @@ struct dataLegend: public dataElement
     {
         dataElement::m_saveToFile(outstream);
     }
+    int m_getNFinalColumns();
 
     int m_width = -1;
     int m_height = -1;

@@ -63,6 +63,14 @@ dataLegend::dataLegend()
     m_height = 50;
 }
 
+int dataLegend::m_getNFinalColumns()
+{
+    if (m_arrangeToAxes)
+        return 2;
+    else
+        return m_nColumns;
+}
+
 dataGraph::dataGraph()
 {
     m_title = std::make_shared<dataTitle>();

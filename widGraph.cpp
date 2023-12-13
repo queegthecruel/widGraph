@@ -1190,38 +1190,76 @@ void widGraphLegend::m_drawTopLine(painterAntiAl &painter)
 void widGraphLegend::m_drawTexts(painterAntiAl &painter)
 {
     auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
-    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+    double spaceLeft = 10;
+    double spaceRight = 50;
 
-    QVector<int> startingPositions = m_getTextLeftPositions();
-    qDebug() << startingPositions;
-    int iCurve = 0;
-    double rowHeight = 1.2*ptr_data->m_fontText;
+    int rowHeight = 1.2*ptr_data->m_fontText;
     QFont font;
     font.setPixelSize(ptr_data->m_fontText);
     painter.setFont(font);
-    double startLeft = 10;
+
+    int nColumns = ptr_data->m_getNFinalColumns();
+    QVector<int> startingPositions = m_getTextLeftPositions(nColumns);
+    int columnWidth = (width() - spaceLeft - spaceRight)/nColumns;
+    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+
+    Qt::AlignmentFlag option;
+    int iRow = -1;
+    int iColumn;
+
+    int iCurve = 0;
+    int iCurveLeft = 0;
+    int iCurveRight = 0;
     for (const auto &var: listCurves) {
         auto ptr_curveData = var->m_getData().lock();
         auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
         if (showLegend) {
-            std::string legendText;
-            std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
-            if (overwrite)
-                legendText = text;
-            else
-                legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
-            QRect rect(startLeft, iCurve*rowHeight, width() - startLeft, rowHeight);
-            painter.drawText(rect, QString::fromStdString(legendText), QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-            ++iCurve;
+            if (ptr_data->m_arrangeToAxes) {
+                int axis = ptr_curveData->m_getPrefferedYAxis();
+                if (axis == 0) {
+                    iColumn = 0;
+                    iRow = iCurveLeft++;
+                    option = Qt::AlignLeft;
+                }
+                else {
+                    iColumn = 1;
+                    iRow = iCurveRight++;
+                    option = Qt::AlignRight;
+                }
+            }
+            else {
+                iColumn = iCurve % nColumns;
+                if (iColumn == 0) ++iRow;
+                option = Qt::AlignmentFlag(Qt::AlignLeft);
+                ++iCurve;
+            }
+
+            int startLeft = startingPositions[iColumn];
+            int startTop = iRow*rowHeight;
+            QRect rect = QRect(startLeft, startTop, columnWidth, rowHeight);
+            m_supDrawText(painter, ptr_curveData, rect, option);
         }
     }
 }
 
-QVector<int> widGraphLegend::m_getTextLeftPositions()
+void widGraphLegend::m_supDrawText(painterAntiAl &painter,
+    std::shared_ptr<dataGraphObject> ptr_curveData, QRect rect,
+    Qt::AlignmentFlag option)
+{
+    std::string legendText;
+    std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
+    auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
+    if (overwrite)
+        legendText = text;
+    else
+        legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
+    painter.drawText(rect, QString::fromStdString(legendText), option | Qt:: AlignVCenter);
+
+}
+
+QVector<int> widGraphLegend::m_getTextLeftPositions(int nColumns)
 {
     QVector<int> vStartPositions;
-    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
-    int nColumns = ptr_data->m_nColumns;
     int leftOffset = 10;
     int availableWidth = width() - leftOffset;
     int spacing = availableWidth / nColumns;
@@ -1254,32 +1292,46 @@ void widGraphLegend::m_setDimensions()
         double rowHeight = 1.2*ptr_data->m_fontText;
         ptr_data->m_height = nRows * rowHeight;
     }
+    qDebug() << ptr_data->m_height;
     setFixedHeight(ptr_data->m_height);
 }
 
-int widGraphLegend::m_getNCurvesWithLegend()
+int widGraphLegend::m_getNCurvesWithLegend(int yAxis)
 {
     int nCurvesWithLegend = 0;
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     for (auto &var:listCurves) {
-        auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
-        if (show)
-            ++nCurvesWithLegend;
+        auto ptr_varData = var->m_getData().lock();
+        int prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
+        if (yAxis == -1 || yAxis == prefferedYAxis) {
+            auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
+            if (show)
+                ++nCurvesWithLegend;
+        }
     }
     return nCurvesWithLegend;
 }
 
 int widGraphLegend::m_getNRows()
 {
-    int nCurves = m_getNCurvesWithLegend();
+    int nRows = 0;
     auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
-    int nColumns = ptr_data->m_nColumns;
-    int nFullRows = nCurves / nColumns;
-    int extraRow = static_cast<int> ((nCurves % nColumns) != 0);
-    int nRows = nFullRows + extraRow;
+    if (ptr_data->m_arrangeToAxes) {
+        int nCurvesLeft = m_getNCurvesWithLegend(0);
+        int nCurvesRight = m_getNCurvesWithLegend(1);
+        nRows = std::max(nCurvesLeft, nCurvesRight);
+        qDebug() << nCurvesLeft << nCurvesRight << nRows;
+    }
+    else {
+        int nCurves = m_getNCurvesWithLegend();
+        auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+        int nColumns = ptr_data->m_nColumns;
+        int nFullRows = nCurves / nColumns;
+        int extraRow = static_cast<int> ((nCurves % nColumns) != 0);
+        nRows = nFullRows + extraRow;
+    }
     return nRows;
 }
-
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
