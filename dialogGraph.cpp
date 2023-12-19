@@ -616,7 +616,6 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
 
 widGraphObjectSetting::widGraphObjectSetting(const QString &name)
 {
- //   setStyleSheet("widGraphObjectSetting {border-left: 2px solid black;}");
     m_layBackground = new HBoxLayout(this);
     m_layBackground->setSpacing(1);
     m_layBackground->addWidget(m_separator());
