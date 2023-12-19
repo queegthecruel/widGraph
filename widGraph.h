@@ -324,9 +324,13 @@ public:
     void paintEvent(QPaintEvent *event) override;
     virtual void m_setDimensions() override;
 private:
-    int m_getNCurvesWithLegend();
+    int m_getNCurvesWithLegend(int yAxis = -1);
+    int m_getNRows();
     void m_drawTopLine(painterAntiAl &painter);
     void m_drawTexts(painterAntiAl &painter);
+    void m_supDrawText(painterAntiAl &painter,
+        std::shared_ptr<dataGraphObject> ptr_curveData, QRect rect, Qt::AlignmentFlag option);
+    QVector<int> m_getTextLeftPositions(int nColumns);
 };
 
 class WIDGRAPH_EXPORT widGraph: public QWidget

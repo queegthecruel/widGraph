@@ -1028,7 +1028,7 @@ void widGraphAxis::m_setAxis()
         // Save them
             ptr_axisData->m_setMinMaxStep(niceMin, niceMax, niceStep);
     }
-    else if (ptr_axisData->m_autoStep) {
+    else if (!ptr_axisData->m_manualStep) {
         // Min and max values
             auto [min, max, step] = ptr_axisData->m_getMinMaxStep();
         // Calculate nice numbers
@@ -1042,7 +1042,7 @@ void widGraphAxis::m_setAxisMinMax(double start, double end)
 {
     auto ptr_data = m_getData().lock();
     ptr_data->m_autoAxis = false;
-    ptr_data->m_autoStep = false;
+    ptr_data->m_manualStep = true;
     double min = std::min(start, end);
     double max = std::max(start, end);
     auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
@@ -1184,64 +1184,155 @@ widGraphLegend::widGraphLegend(widGraph *graph):
 
 void widGraphLegend::m_drawTopLine(painterAntiAl &painter)
 {
-    painter.drawLine(0,0, width(),0);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_showTopLine)
+        painter.drawLine(0,0, width(),0);
 }
 
 void widGraphLegend::m_drawTexts(painterAntiAl &painter)
 {
-    auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
-    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
-    int i = 0;
-    double rowHeight = 1.2*ptr_legendData->m_fontText;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    double spaceLeft = 10;
+    double spaceRight = 50;
+
+    int rowHeight = 1.2*ptr_data->m_fontText;
     QFont font;
-    font.setPixelSize(ptr_legendData->m_fontText);
+    font.setPixelSize(ptr_data->m_fontText);
     painter.setFont(font);
-    double startLeft = 10;
+
+    int nColumns = ptr_data->m_getNFinalColumns();
+    QVector<int> startingPositions = m_getTextLeftPositions(nColumns);
+    int columnWidth = (width() - spaceLeft - spaceRight)/nColumns;
+    const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
+
+    Qt::AlignmentFlag option;
+    int iRow = -1;
+    int iColumn;
+
+    int iCurve = 0;
+    int iCurveLeft = 0;
+    int iCurveRight = 0;
     for (const auto &var: listCurves) {
         auto ptr_curveData = var->m_getData().lock();
         auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
         if (showLegend) {
-            std::string legendText;
-            std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
-            if (overwrite)
-                legendText = text;
-            else
-                legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
-            QRect rect(startLeft, i*rowHeight, width() - startLeft, rowHeight);
-            painter.drawText(rect, QString::fromStdString(legendText), QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-            ++i;
+            if (ptr_data->m_arrangeToAxes) {
+                int axis = ptr_curveData->m_getPrefferedYAxis();
+                if (axis == 0) {
+                    iColumn = 0;
+                    iRow = iCurveLeft++;
+                    option = Qt::AlignLeft;
+                }
+                else {
+                    iColumn = 1;
+                    iRow = iCurveRight++;
+                    option = Qt::AlignRight;
+                }
+            }
+            else {
+                iColumn = iCurve % nColumns;
+                if (iColumn == 0) ++iRow;
+                option = Qt::AlignmentFlag(Qt::AlignLeft);
+                ++iCurve;
+            }
+
+            int startLeft = startingPositions[iColumn];
+            int startTop = iRow*rowHeight;
+            QRect rect = QRect(startLeft, startTop, columnWidth, rowHeight);
+            m_supDrawText(painter, ptr_curveData, rect, option);
         }
     }
 }
 
+void widGraphLegend::m_supDrawText(painterAntiAl &painter,
+    std::shared_ptr<dataGraphObject> ptr_curveData, QRect rect,
+    Qt::AlignmentFlag option)
+{
+    std::string legendText;
+    std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
+    auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
+    if (overwrite)
+        legendText = text;
+    else
+        legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
+    painter.drawText(rect, QString::fromStdString(legendText), option | Qt:: AlignVCenter);
+
+}
+
+QVector<int> widGraphLegend::m_getTextLeftPositions(int nColumns)
+{
+    QVector<int> vStartPositions;
+    int leftOffset = 10;
+    int availableWidth = width() - leftOffset;
+    int spacing = availableWidth / nColumns;
+    int pos = leftOffset;
+    for (int i = 0; i < nColumns; ++i) {
+        vStartPositions << pos;
+        pos = pos + spacing;
+    }
+    return vStartPositions;
+}
+
 void widGraphLegend::paintEvent(QPaintEvent */*event*/)
 {
-    painterAntiAl painter(this);
-    m_drawTopLine(painter);
-    m_drawTexts(painter);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_show) {
+        painterAntiAl painter(this);
+        m_drawTopLine(painter);
+        m_drawTexts(painter);
+    }
 }
 
 void widGraphLegend::m_setDimensions()
 {
-    int numberCurves = m_getNCurvesWithLegend();
-    auto ptr_legendData = ptr_graph->m_getData().lock()->m_legend;
-    double rowHeight = 1.2*ptr_legendData->m_fontText;
-    double height = numberCurves * rowHeight;
-    setFixedHeight(height);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_manualSize) {
+        ptr_data->m_height = ptr_data->m_manualSizeValue;
+    }
+    else {
+        int nRows = m_getNRows();
+        double rowHeight = 1.2*ptr_data->m_fontText;
+        ptr_data->m_height = nRows * rowHeight;
+    }
+    setFixedHeight(ptr_data->m_height);
 }
 
-int widGraphLegend::m_getNCurvesWithLegend()
+int widGraphLegend::m_getNCurvesWithLegend(int yAxis)
 {
     int nCurvesWithLegend = 0;
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     for (auto &var:listCurves) {
-        auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
-        if (show)
-            ++nCurvesWithLegend;
+        auto ptr_varData = var->m_getData().lock();
+        int prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
+        if (yAxis == -1 || yAxis == prefferedYAxis) {
+            auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
+            if (show)
+                ++nCurvesWithLegend;
+        }
     }
     return nCurvesWithLegend;
 }
 
+int widGraphLegend::m_getNRows()
+{
+    int nRows = 0;
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_arrangeToAxes) {
+        int nCurvesLeft = m_getNCurvesWithLegend(0);
+        int nCurvesRight = m_getNCurvesWithLegend(1);
+        nRows = std::max(nCurvesLeft, nCurvesRight);
+        qDebug() << nCurvesLeft << nCurvesRight << nRows;
+    }
+    else {
+        int nCurves = m_getNCurvesWithLegend();
+        auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+        int nColumns = ptr_data->m_nColumns;
+        int nFullRows = nCurves / nColumns;
+        int extraRow = static_cast<int> ((nCurves % nColumns) != 0);
+        nRows = nFullRows + extraRow;
+    }
+    return nRows;
+}
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
@@ -1380,7 +1471,8 @@ void widGraphTitleText::m_setDimensions()
 }
 
 widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/autoAxes.png"), QImage(":/images/autoAxes.png"), "Set automatic axes")
+    widGraphButton(graph, QImage(":/images/autoAxes.png"),
+                   QImage(":/images/autoAxes.png"), "Set automatic axes")
 {
 
 }
@@ -1393,15 +1485,16 @@ void widGraphButtonAutoAxes::m_onClick()
     auto ptr_dataY1 = ptr_data->m_Y1;
     auto ptr_dataY2 = ptr_data->m_Y2;
     ptr_dataX->m_autoAxis = true;
-    ptr_dataX->m_autoStep = true;
+    ptr_dataX->m_manualStep = false;
     ptr_dataY1->m_autoAxis = true;
-    ptr_dataY1->m_autoStep = true;
+    ptr_dataY1->m_manualStep = false;
     ptr_dataY2->m_autoAxis = true;
-    ptr_dataY2->m_autoStep = true;
+    ptr_dataY2->m_manualStep = false;
 }
 
 widGraphButtonZoomIn::widGraphButtonZoomIn(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOff.png"), QImage(":/images/zoomOn.png"), "Enable/disable zoom")
+    widGraphButton(graph, QImage(":/images/zoomOff.png"),
+                   QImage(":/images/zoomOn.png"), "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1420,7 +1513,8 @@ void widGraphButtonZoomIn::m_onClick()
 }
 
 widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOut.png"), QImage(":/images/zoomOut.png"), "Zoom out")
+    widGraphButton(graph, QImage(":/images/zoomOut.png"),
+                   QImage(":/images/zoomOut.png"), "Zoom out")
 {
 }
 
@@ -1432,7 +1526,8 @@ void widGraphButtonZoomOut::m_onClick()
 }
 
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/moveOff.png"), QImage(":/images/moveOn.png"), "Enable/disable Move")
+    widGraphButton(graph, QImage(":/images/moveOff.png"),
+                   QImage(":/images/moveOn.png"), "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1451,7 +1546,8 @@ void widGraphButtonMove::m_onClick()
 }
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"), "Take a screenshot")
+    widGraphButton(graph, QImage(":/images/screenshot.png"),
+                   QImage(":/images/screenshot.png"), "Take a screenshot")
 {
 }
 

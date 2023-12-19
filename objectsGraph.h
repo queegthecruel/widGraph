@@ -11,6 +11,7 @@ class widGraph;
 class widGraphAxis;
 
 enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE, TRIANGLE_REV};
+enum class yAxisPosition {LEFT, RIGHT};
 class dataGraphObject
 {
 public:
