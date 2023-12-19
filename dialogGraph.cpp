@@ -22,7 +22,7 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     m_layBackground->addWidget(m_widFooter);
 
     m_loadValues();
-    resize(1024,600);
+    resize(1024,700);
 }
 
 void dialogGraph::m_slotClose()
@@ -74,7 +74,7 @@ tabGraph::tabGraph(const QString &title)
     m_layBackground = new VBoxLayout(this);
     m_layBackground->setContentsMargins(2,2,2,2);
     m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(new label(" " + title, true));
+    m_layBackground->addWidget(new label(" " + title, 14, true));
 }
 
 tabGraphSettingsXAxis::tabGraphSettingsXAxis(std::weak_ptr<dataAxisX> data):
@@ -510,7 +510,7 @@ widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObje
     m_widArea = new widGraphObjectSettingArea();
     lay->addWidget(m_widArea, 1);
     m_widLegend = new widGraphObjectSettingLegend();
-    lay->addWidget(m_widLegend, 1);
+    lay->addWidget(m_widLegend);
     lay->addStretch(10);
 }
 
@@ -977,8 +977,10 @@ treeWidgetGraphObjects::treeWidgetGraphObjects()
     setColumnWidth(0, 150);
     setColumnWidth(1, 75);
     setIndentation(8);
-    setStyleSheet("QTreeWidget::item "
-               "{padding-top: 1px 0;}");
+    setStyleSheet("QTreeWidget::item {"
+                      "padding-top: 1px 0;"
+                      "height: 25px;"
+                  "}");
     setFocusPolicy(Qt::NoFocus);
     setAlternatingRowColors(true);
     setSelectionMode(QAbstractItemView::SingleSelection);
@@ -1031,14 +1033,14 @@ widGraphObjectSettingOperation::widGraphObjectSettingOperation(
      m_positionInVector(pos), ptr_widObjectStyle(ptr_widMain)
 {
     m_layBackground = new HBoxLayout(this);
-    m_butDelete = new widGraphObjectSettingButton(QIcon(":/images/redCross.png"), "Delete this object");
+    m_butDelete = new butGraphObjectSettingButton(QIcon(":/images/redCross.png"), "Delete this object");
     m_butDelete->setCheckable(true);
     connect(m_butDelete, &QAbstractButton::pressed,
             this, &widGraphObjectSettingOperation::m_slotDeleteClicked);
-    m_butMoveUp = new widGraphObjectSettingButton(QIcon(":/images/moveUp.png"), "Move object up");
+    m_butMoveUp = new butGraphObjectSettingButton(QIcon(":/images/moveUp.png"), "Move object up");
     connect(m_butMoveUp, &QAbstractButton::pressed,
             this, &widGraphObjectSettingOperation::m_slotMoveUp);
-    m_butMoveDown = new widGraphObjectSettingButton(QIcon(":/images/moveDown.png"), "Move object down");
+    m_butMoveDown = new butGraphObjectSettingButton(QIcon(":/images/moveDown.png"), "Move object down");
     connect(m_butMoveDown, &QAbstractButton::pressed,
             this, &widGraphObjectSettingOperation::m_slotMoveDown);
     m_layBackground->addWidget(m_butMoveUp);
@@ -1091,10 +1093,10 @@ void widGraphObjectSettingOperation::m_slotMoveDown()
     emit m_signalMoveDown(m_positionInVector);
 }
 
-widGraphObjectSettingButton::widGraphObjectSettingButton(QIcon icon, const QString &tooltip)
+butGraphObjectSettingButton::butGraphObjectSettingButton(QIcon icon, const QString &tooltip)
 {
     setIcon(icon);
-    setFixedSize(QSize(20,20));
-    setIconSize(QSize(15,15));
+    setFixedSize(QSize(25,25));
+    setIconSize(QSize(20,20));
     setToolTip(tooltip);
 }

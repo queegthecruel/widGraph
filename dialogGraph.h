@@ -138,10 +138,10 @@ protected:
     checkbox *m_checkEnable;
 };
 
-class widGraphObjectSettingButton: public QPushButton
+class butGraphObjectSettingButton: public QPushButton
 {
 public:
-    widGraphObjectSettingButton(QIcon icon, const QString &tooltip);
+    butGraphObjectSettingButton(QIcon icon, const QString &tooltip);
 };
 
 class widGraphObjectSettingMain;
@@ -152,7 +152,6 @@ public:
     widGraphObjectSettingOperation(int pos, widGraphObjectSettingMain* ptr_widMain);
     void m_setValues(bool enable);
     std::tuple<bool> m_getValues();
-//    virtual void m_setEnabled(bool enabled) override {};
     void m_loadValues();
     void m_saveValues();
 private slots:
@@ -166,8 +165,7 @@ protected:
     int m_positionInVector;
     widGraphObjectSettingMain *ptr_widObjectStyle;
     HBoxLayout *m_layBackground;
-    widGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown;
-    widGraphObjectSettingButton *m_butDelete;
+    butGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown, *m_butDelete;
 };
 
 class widGraphObjectSettingCurve: public widGraphObjectSetting
