@@ -68,8 +68,9 @@ protected:
     checkbox *m_checkShowAxis;
     checkEdit *m_editSize;
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
-    checkbox *m_checkAutoAxis, *m_checkAutoStep;
-    lineEdit *m_editMin, *m_editMax, *m_editStep;
+    checkbox *m_checkAutoAxis;
+    checkEdit *m_checkManualStep;
+    lineEdit *m_editMin, *m_editMax;
     lineEdit *m_editText;
 };
 
@@ -281,18 +282,21 @@ protected:
 
 class tabGraphSettingsLegend: public tabGraphSettings
 {
+    Q_OBJECT
 public:
     tabGraphSettingsLegend(std::weak_ptr<dataLegend> data);
     ~tabGraphSettingsLegend() = default;
     virtual void m_loadValues() override;
     virtual void m_saveValues() override;
+private slots:
+    void m_slotAlignedAxesToggled();
 protected:
     std::weak_ptr<dataLegend> ptr_data;
-    checkbox *m_checkShowLegend;
+    checkbox *m_checkShowLegend, *m_checkShowTopLine;
     checkEdit *m_editSize;
     lineEdit *m_editFontSizeText;
-    lineEdit *m_editNColumns;
-    checkbox *m_checkArrangeToAxes;
+    spinbox *m_editNColumns;
+    checkbox *m_checkAlignToAxes;
 };
 
 class graphSettingsWidget: public QWidget

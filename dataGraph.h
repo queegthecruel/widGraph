@@ -61,7 +61,7 @@ struct dataAxis: public dataElement
         {return {m_min, m_max, m_step};}
     void m_setStep(double step);
 
-    bool m_autoAxis = true, m_autoStep  = true;
+    bool m_autoAxis = true, m_manualStep  = true;
     double m_min = 0, m_max = 10, m_step = 1;
     int m_width = -1;
     int m_height = -1;
@@ -117,10 +117,10 @@ struct dataLegend: public dataElement
     }
     int m_getNFinalColumns();
 
-    int m_width = -1;
-    int m_height = -1;
+    int m_width = -1, m_height = -1;
     int m_fontText = 15;
     int m_nColumns = 1;
+    bool m_showTopLine = true;
     bool m_arrangeToAxes = false;
 };
 

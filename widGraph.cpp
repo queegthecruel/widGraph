@@ -1028,7 +1028,7 @@ void widGraphAxis::m_setAxis()
         // Save them
             ptr_axisData->m_setMinMaxStep(niceMin, niceMax, niceStep);
     }
-    else if (ptr_axisData->m_autoStep) {
+    else if (!ptr_axisData->m_manualStep) {
         // Min and max values
             auto [min, max, step] = ptr_axisData->m_getMinMaxStep();
         // Calculate nice numbers
@@ -1042,7 +1042,7 @@ void widGraphAxis::m_setAxisMinMax(double start, double end)
 {
     auto ptr_data = m_getData().lock();
     ptr_data->m_autoAxis = false;
-    ptr_data->m_autoStep = false;
+    ptr_data->m_manualStep = true;
     double min = std::min(start, end);
     double max = std::max(start, end);
     auto [niceMin, niceMax, niceStep] = m_calculateNiceMaxMin(min, max);
@@ -1184,7 +1184,9 @@ widGraphLegend::widGraphLegend(widGraph *graph):
 
 void widGraphLegend::m_drawTopLine(painterAntiAl &painter)
 {
-    painter.drawLine(0,0, width(),0);
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (ptr_data->m_showTopLine)
+        painter.drawLine(0,0, width(),0);
 }
 
 void widGraphLegend::m_drawTexts(painterAntiAl &painter)
@@ -1292,7 +1294,6 @@ void widGraphLegend::m_setDimensions()
         double rowHeight = 1.2*ptr_data->m_fontText;
         ptr_data->m_height = nRows * rowHeight;
     }
-    qDebug() << ptr_data->m_height;
     setFixedHeight(ptr_data->m_height);
 }
 
@@ -1470,7 +1471,8 @@ void widGraphTitleText::m_setDimensions()
 }
 
 widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/autoAxes.png"), QImage(":/images/autoAxes.png"), "Set automatic axes")
+    widGraphButton(graph, QImage(":/images/autoAxes.png"),
+                   QImage(":/images/autoAxes.png"), "Set automatic axes")
 {
 
 }
@@ -1483,15 +1485,16 @@ void widGraphButtonAutoAxes::m_onClick()
     auto ptr_dataY1 = ptr_data->m_Y1;
     auto ptr_dataY2 = ptr_data->m_Y2;
     ptr_dataX->m_autoAxis = true;
-    ptr_dataX->m_autoStep = true;
+    ptr_dataX->m_manualStep = false;
     ptr_dataY1->m_autoAxis = true;
-    ptr_dataY1->m_autoStep = true;
+    ptr_dataY1->m_manualStep = false;
     ptr_dataY2->m_autoAxis = true;
-    ptr_dataY2->m_autoStep = true;
+    ptr_dataY2->m_manualStep = false;
 }
 
 widGraphButtonZoomIn::widGraphButtonZoomIn(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOff.png"), QImage(":/images/zoomOn.png"), "Enable/disable zoom")
+    widGraphButton(graph, QImage(":/images/zoomOff.png"),
+                   QImage(":/images/zoomOn.png"), "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1510,7 +1513,8 @@ void widGraphButtonZoomIn::m_onClick()
 }
 
 widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOut.png"), QImage(":/images/zoomOut.png"), "Zoom out")
+    widGraphButton(graph, QImage(":/images/zoomOut.png"),
+                   QImage(":/images/zoomOut.png"), "Zoom out")
 {
 }
 
@@ -1522,7 +1526,8 @@ void widGraphButtonZoomOut::m_onClick()
 }
 
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/moveOff.png"), QImage(":/images/moveOn.png"), "Enable/disable Move")
+    widGraphButton(graph, QImage(":/images/moveOff.png"),
+                   QImage(":/images/moveOn.png"), "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1541,7 +1546,8 @@ void widGraphButtonMove::m_onClick()
 }
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/screenshot.png"), QImage(":/images/screenshot.png"), "Take a screenshot")
+    widGraphButton(graph, QImage(":/images/screenshot.png"),
+                   QImage(":/images/screenshot.png"), "Take a screenshot")
 {
 }
 

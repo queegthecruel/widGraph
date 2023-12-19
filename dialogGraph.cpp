@@ -8,10 +8,14 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     m_widContent = new graphSettingsWidget(ptr_data);
 
     m_widFooter = new footerDialogGraph();
-    connect(m_widFooter, &footerDialogGraph::m_emitApply, this, &dialogGraph::m_slotApply);
-    connect(m_widFooter, &footerDialogGraph::m_emitClose, this, &dialogGraph::m_slotClose);
-    connect(m_widFooter, &footerDialogGraph::m_emitSaveFile, this, &dialogGraph::m_slotSaveFile);
-    connect(m_widFooter, &footerDialogGraph::m_emitLoadFile, this, &dialogGraph::m_slotLoadFile);
+    connect(m_widFooter, &footerDialogGraph::m_emitApply,
+            this, &dialogGraph::m_slotApply);
+    connect(m_widFooter, &footerDialogGraph::m_emitClose,
+            this, &dialogGraph::m_slotClose);
+    connect(m_widFooter, &footerDialogGraph::m_emitSaveFile,
+            this, &dialogGraph::m_slotSaveFile);
+    connect(m_widFooter, &footerDialogGraph::m_emitLoadFile,
+            this, &dialogGraph::m_slotLoadFile);
 
     m_layBackground = new VBoxLayout(this);
     m_layBackground->addWidget(m_widContent);
@@ -23,13 +27,11 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
 
 void dialogGraph::m_slotClose()
 {
-    qDebug() << "Closing";
     close();
 }
 
 void dialogGraph::m_slotApply()
 {
-    qDebug() << "Apply";
     m_saveValues();
     ptr_graph->m_loadValues();
 }
@@ -178,15 +180,19 @@ tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
     ptr_data(data)
 {
     m_checkShowLegend = new checkbox("Show legend");
-    m_tree->m_addChild("Dimensions", m_checkShowLegend, nullptr, true);
+    auto *titleDimensions = m_tree->m_addChild("Dimensions", m_checkShowLegend, nullptr, false);
     m_editSize = new checkEdit(validator::INT_POS_0);
-    m_tree->m_addChild("Manual dimensions", m_editSize);
+    m_tree->m_addChild("Manual dimensions", m_editSize, titleDimensions);
+    m_checkShowTopLine = new checkbox();
+    m_tree->m_addChild("Show top line", m_checkShowTopLine, titleDimensions);
     m_editFontSizeText = new lineEdit(validator::INT_POS);
-    m_tree->m_addChild("Text size", m_editFontSizeText);
+    m_tree->m_addChild("Text size", m_editFontSizeText, titleDimensions);
 
-    m_checkArrangeToAxes = new checkbox("Align to respective axis");
-    auto *titleArrange = m_tree->m_addChild("Arrangement", m_checkArrangeToAxes);
-    m_editNColumns = new lineEdit(validator::INT_POS);
+    m_checkAlignToAxes = new checkbox("Align to respective axis");
+    connect(m_checkAlignToAxes, &QAbstractButton::toggled,
+            this, &tabGraphSettingsLegend::m_slotAlignedAxesToggled);
+    auto *titleArrange = m_tree->m_addChild("Arrangement", m_checkAlignToAxes, nullptr, true);
+    m_editNColumns = new spinbox(0,10);
     m_tree->m_addChild("Number of columns", m_editNColumns, titleArrange);
 }
 
@@ -195,9 +201,11 @@ void tabGraphSettingsLegend::m_loadValues()
     auto s_data = ptr_data.lock();
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
     m_checkShowLegend->m_setChecked(s_data->m_show);
+    m_checkShowTopLine->m_setChecked(s_data->m_showTopLine);
     m_editSize->m_setValues(s_data->m_manualSize, s_data->m_manualSizeValue);
-    m_editNColumns->m_setNumber(s_data->m_nColumns);
-    m_checkArrangeToAxes->m_setChecked(s_data->m_arrangeToAxes);
+    m_editNColumns->m_setValue(s_data->m_nColumns);
+    m_checkAlignToAxes->m_setChecked(s_data->m_arrangeToAxes);
+    m_slotAlignedAxesToggled();
 }
 
 void tabGraphSettingsLegend::m_saveValues()
@@ -205,10 +213,17 @@ void tabGraphSettingsLegend::m_saveValues()
     auto s_data = ptr_data.lock();
     s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_show = m_checkShowLegend->isChecked();
+    s_data->m_showTopLine = m_checkShowTopLine->isChecked();
     s_data->m_manualSize = m_editSize->m_getChecked();
     s_data->m_manualSizeValue = m_editSize->m_value();
-    s_data->m_nColumns = m_editNColumns->m_number();
-    s_data->m_arrangeToAxes = m_checkArrangeToAxes->isChecked();
+    s_data->m_nColumns = m_editNColumns->value();
+    s_data->m_arrangeToAxes = m_checkAlignToAxes->isChecked();
+}
+
+void tabGraphSettingsLegend::m_slotAlignedAxesToggled()
+{
+    bool aligned = m_checkAlignToAxes->isChecked();
+    m_editNColumns->setEnabled(!aligned);
 }
 
 graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
@@ -308,17 +323,15 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
         m_checkAutoAxis = new checkbox("Auto axis");
         connect(m_checkAutoAxis, &QAbstractButton::toggled,
                 this, &tabGraphSettingsAxis::m_slotAutoAxisToggled);
-        m_checkAutoStep = new checkbox();
-        connect(m_checkAutoStep, &QAbstractButton::toggled,
+        m_checkManualStep = new checkEdit(validator::DOUBLE);
+        connect(m_checkManualStep, &checkEdit::m_signalToggled,
                 this, &tabGraphSettingsAxis::m_slotAutoStepToggled);
         m_editMin = new lineEdit(validator::DOUBLE);
         m_editMax = new lineEdit(validator::DOUBLE);
-        m_editStep = new lineEdit(validator::DOUBLE);
         auto *titleMinMax = m_tree->m_addChild("Range", m_checkAutoAxis, nullptr, true);
         m_tree->m_addChild("Min", m_editMin, titleMinMax);
         m_tree->m_addChild("Max", m_editMax, titleMinMax);
-        m_tree->m_addChild("Auto step", m_checkAutoStep, titleMinMax);
-        m_tree->m_addChild("Step", m_editStep, titleMinMax);
+        m_tree->m_addChild("Manual step", m_checkManualStep, titleMinMax);
 }
 
 void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
@@ -328,10 +341,9 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
     m_editFontSizeNumbers->m_setNumber(s_data->m_fontNumbers);
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
     m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
-    m_checkAutoStep->m_setChecked(s_data->m_autoStep);
+    m_checkManualStep->m_setValues(s_data->m_manualStep, s_data->m_step);
     m_editMin->m_setNumber(s_data->m_min);
     m_editMax->m_setNumber(s_data->m_max);
-    m_editStep->m_setNumber(s_data->m_step);
     m_editText->m_setText(s_data->m_text);
     m_slotAutoAxisToggled();
 }
@@ -344,10 +356,10 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
     s_data->m_fontNumbers = m_editFontSizeNumbers->m_number();
     s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAutoAxis->isChecked();
-    s_data->m_autoStep = m_checkAutoStep->isChecked();
+    s_data->m_manualStep = m_checkManualStep->m_getChecked();
     s_data->m_min = m_editMin->m_number();
     s_data->m_max = m_editMax->m_number();
-    s_data->m_step = m_editStep->m_number();
+    s_data->m_step = m_checkManualStep->m_value();
     s_data->m_text = m_editText->m_text();
 }
 
@@ -356,14 +368,13 @@ void tabGraphSettingsAxis::m_slotAutoAxisToggled()
     bool autoAxis = m_checkAutoAxis->isChecked();
     m_editMin->setEnabled(!autoAxis);
     m_editMax->setEnabled(!autoAxis);
-    m_checkAutoStep->setEnabled(!autoAxis);
-    m_editStep->setEnabled(!autoAxis);
+    m_checkManualStep->setEnabled(!autoAxis);
+    m_slotAutoStepToggled();
 }
 
 void tabGraphSettingsAxis::m_slotAutoStepToggled()
 {
-    bool autoStep = m_checkAutoStep->isChecked();
-    m_editStep->setEnabled(!autoStep);
+
 }
 
 
@@ -489,19 +500,18 @@ void tabGraphSettingsObjects::m_slotMoveDown(int from)
 widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
     ptr_data(data)
 {
-    m_widColumn = new widGraphObjectSettingColumn();
-    m_widCurve = new widGraphObjectSettingCurve();
-    m_widPoints = new widGraphObjectSettingPoints();
-    m_widArea = new widGraphObjectSettingArea();
-    m_widLegend = new widGraphObjectSettingLegend();
     HBoxLayout *lay = new HBoxLayout(this);
+    m_widColumn = new widGraphObjectSettingColumn();
     lay->addWidget(m_widColumn, 1);
+    m_widCurve = new widGraphObjectSettingCurve();
     lay->addWidget(m_widCurve, 1);
+    m_widPoints = new widGraphObjectSettingPoints();
     lay->addWidget(m_widPoints, 1);
+    m_widArea = new widGraphObjectSettingArea();
     lay->addWidget(m_widArea, 1);
-    lay->addWidget(m_widLegend);
+    m_widLegend = new widGraphObjectSettingLegend();
+    lay->addWidget(m_widLegend, 1);
     lay->addStretch(10);
- //   setStyleSheet("widGraphObjectSetting {background:green;}");
 }
 
 void widGraphObjectSettingMain::m_loadValues()
@@ -931,7 +941,6 @@ widGraphObjectSettingLegend::widGraphObjectSettingLegend():
     widGraphObjectSetting("Legend")
 {
     m_editText = new checkEdit(validator::NONE);
-
     m_layBackground->addWidget(m_editText);
     m_addEndOfWidget();
 }
@@ -983,7 +992,6 @@ void treeWidgetGraphObjects::dropEvent(QDropEvent *event)
         int indexFrom = indexOfTopLevelItem(itemFrom);
         auto *itemTo = itemAt(event->position().toPoint());
         int indexTo = indexOfTopLevelItem(itemTo);
-        qDebug() << indexFrom << indexTo;
         emit m_signalMoved(indexFrom, indexTo);
     }
     event->accept();
