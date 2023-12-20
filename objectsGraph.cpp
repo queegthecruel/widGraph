@@ -2,10 +2,13 @@
 #include "dataGraph.h"
 #include "widGraph.h"
 
-graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
+graphCurve::graphCurve(std::string name,
+                       std::shared_ptr<std::vector<double> > ptr_dataX,
+                       std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
     m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
+    m_data->m_setName(name);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -18,13 +21,14 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::sha
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Curve 1";
 }
 
-graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
+graphCurve::graphCurve(std::string name,
+                       std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
     m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
+    m_data->m_setName(name);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -37,7 +41,6 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Curve 2";
 }
 
 void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
@@ -227,10 +230,11 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(wi
     return {ptr_x, ptr_y};
 }
 
-graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
+graphYValue::graphYValue(std::string name, std::shared_ptr<double> ptr_dataY):
     w_dataY(ptr_dataY)
 {
     m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
+    m_data->m_setName(name);
 
     s_dataY = w_dataY.lock();
 
@@ -268,10 +272,11 @@ QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxi
 }
 
 
-graphXValue::graphXValue(std::shared_ptr<double> ptr_dataX):
+graphXValue::graphXValue(std::string name, std::shared_ptr<double> ptr_dataX):
     w_dataX(ptr_dataX)
 {
     m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
+    m_data->m_setName(name);
 
     s_dataX = w_dataX.lock();
 
@@ -555,10 +560,11 @@ pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
     }
 }
 
-graphColumn::graphColumn(std::shared_ptr<std::vector<double> > ptr_dataY):
+graphColumn::graphColumn(std::string name, std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
 {
     m_data = std::make_shared<dataGraphObject>(true, false, true, true, true);
+    m_data->m_setName(name);
     m_data->m_setStyleOfColumn(30, true);
 
     s_dataY = w_dataY.lock();

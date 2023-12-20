@@ -2,6 +2,7 @@
 #include "dialogGraph.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QMimeData>
 
 widGraph::widGraph()
 {
@@ -899,7 +900,9 @@ double widGraphY1Axis::m_getTextEnds()
 
 widGraphAxis::widGraphAxis(widGraph *graph):
     widGraphElement(graph)
-{}
+{
+    setAcceptDrops(true);
+}
 
 void widGraphAxis::mousePressEvent(QMouseEvent *event)
 {
@@ -972,6 +975,31 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         // Draw move cursor
             m_drawMoveCursor(painter);
     }
+}
+
+void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
+{
+    qDebug() << "Enter";
+    if (event->mimeData()->hasFormat("widGraph/curve")) {
+        m_markForDrop(true);
+        event->setDropAction(Qt::LinkAction);
+        event->accept();
+    } else {
+        m_markForDrop(false);
+        event->ignore();
+    }
+}
+
+void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
+{
+    qDebug() << "Leave";
+    m_unmarkForDrop();
+}
+
+void widGraphAxis::dropEvent(QDropEvent *event)
+{
+    qDebug() << "Drop";
+    m_unmarkForDrop();
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -1067,6 +1095,19 @@ std::vector<double> widGraphAxis::m_getTicksPosition(double min, double max, dou
         numberX = numberX + step;
     }
     return vTicks;
+}
+
+void widGraphAxis::m_markForDrop(bool status)
+{
+    if (status)
+        setStyleSheet("background: rgba(0,0,255, 20%);");
+    else
+        setStyleSheet("background: rgba(255,0,0, 20%);");
+}
+
+void widGraphAxis::m_unmarkForDrop()
+{
+    setStyleSheet("background: transparent;");
 }
 
 bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2)

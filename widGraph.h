@@ -10,6 +10,7 @@
 #include <QMouseEvent>
 #include <QTimer>
 
+
 // Graph widgets
 class widGraph;
 class painterAntiAl;
@@ -35,7 +36,7 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    virtual void m_setDimensions() override {};
+    virtual void m_setDimensions() override {}
     void m_setAxisMinMax(double startX, double endX,
         double startY1, double endY1, double startY2, double endY2);
     bool m_cancelOperation();
@@ -170,6 +171,9 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent */*event*/) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragLeaveEvent(QDragLeaveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
@@ -177,6 +181,8 @@ public:
     void m_setAxisMinMax(double start, double end);
     bool m_cancelOperation();
     static std::vector<double> m_getTicksPosition(double min, double max, double step);
+    void m_markForDrop(bool status);
+    void m_unmarkForDrop();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual double m_getValueFromPosition(double position) = 0;

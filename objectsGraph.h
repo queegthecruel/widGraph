@@ -145,7 +145,7 @@ public:
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
-        {*m_data = *data;};
+        {*m_data = *data;}
     int m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
@@ -162,8 +162,10 @@ protected:
 class WIDGRAPH_EXPORT graphCurve: public graphObjects
 {
 public:
-    graphCurve(std::shared_ptr<std::vector<double>> ptr_dataY);
-    graphCurve(std::shared_ptr<std::vector<double>> ptr_dataX,
+    graphCurve(std::string name,
+               std::shared_ptr<std::vector<double>> ptr_dataY);
+    graphCurve(std::string name,
+               std::shared_ptr<std::vector<double>> ptr_dataX,
                std::shared_ptr<std::vector<double>> ptr_dataY);
     ~graphCurve() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
@@ -183,7 +185,7 @@ protected:
 class WIDGRAPH_EXPORT graphYValue: public graphObjects
 {
 public:
-    graphYValue(std::shared_ptr<double> ptr_dataY);
+    graphYValue(std::string name, std::shared_ptr<double> ptr_dataY);
     ~graphYValue() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinY() override
@@ -201,7 +203,7 @@ protected:
 class WIDGRAPH_EXPORT graphXValue: public graphObjects
 {
 public:
-    graphXValue(std::shared_ptr<double> ptr_dataX);
+    graphXValue(std::string name, std::shared_ptr<double> ptr_dataX);
     ~graphXValue() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override
@@ -219,7 +221,7 @@ protected:
 class WIDGRAPH_EXPORT graphColumn: public graphObjects
 {
 public:
-    graphColumn(std::shared_ptr<std::vector<double>> ptr_dataY);
+    graphColumn(std::string name, std::shared_ptr<std::vector<double>> ptr_dataY);
     ~graphColumn() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
 private:
