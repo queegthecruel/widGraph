@@ -998,6 +998,31 @@ void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
 
 void widGraphAxis::dropEvent(QDropEvent *event)
 {
+
+    if (event->mimeData()->hasFormat("widGraph/curve")) {
+        QByteArray itemData = event->mimeData()->data("widGraph/curve");
+        QDataStream dataStream(&itemData, QIODevice::ReadOnly);
+
+        QPixmap pixmap;
+        QPoint offset;
+        dataStream >> pixmap >> offset;
+
+        QLabel *newIcon = new QLabel(this);
+        newIcon->setPixmap(pixmap);
+        newIcon->move(event->position().toPoint() - offset);
+        newIcon->show();
+        newIcon->setAttribute(Qt::WA_DeleteOnClose);
+
+        if (event->source() == this) {
+            event->setDropAction(Qt::MoveAction);
+            event->accept();
+        } else {
+            event->acceptProposedAction();
+        }
+    } else {
+        event->ignore();
+    }
+
     qDebug() << "Drop";
     m_unmarkForDrop();
 }
