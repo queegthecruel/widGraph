@@ -18,11 +18,24 @@ void writeBool(std::ofstream &outstream, const bool& value);
 // Graph data
 struct dataElement
 {
-    dataElement() {}
-    dataElement(std::ifstream &/*instream*/) {}
-    ~dataElement() = default;
-    void m_saveToFile(std::ofstream &/*outstream*/)
+    dataElement();
+    dataElement(std::ifstream &/*instream*/);
+    void m_saveToFile(std::ofstream &/*outstream*/);
+    void m_setVisible(bool status, int manualSize = -1)
     {
+        if (status) {
+            m_show = true;
+            m_manualSize = false;
+            if (manualSize != -1) {
+                m_manualSize = true;
+                m_manualSizeValue = manualSize;
+            }
+        }
+        else {
+            m_show = true;
+            m_manualSize = true;
+            m_manualSizeValue = 0;
+        }
     }
 
     bool m_show = true;
@@ -148,9 +161,12 @@ struct dataControl: public dataElement
         dataElement::m_saveToFile(outstream);
     }
     bool m_zoom = false, m_move = false;
+    bool m_allowDialog = true;
+    bool m_allowDrop = false;
+
     void m_setMove(bool status);
     void m_setZoom(bool status);
-    void m_setNothing();
+    void m_setNoZoomNoMove();
 };
 
 class graphObjects;

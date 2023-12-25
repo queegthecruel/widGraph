@@ -243,7 +243,7 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
     std::vector<double> vTicks = widGraphAxis::m_getTicksPosition(niceMin, max, step);
     for (const auto &var: vTicks) {
         double posX = ptr_x->m_getDrawAreaPositionFromValue(var);
-        painter.drawLine(posX,0,posX,width());
+        painter.drawLine(posX,0,posX,height());
     }
 }
 
@@ -458,17 +458,22 @@ void widGraphTitle::leaveEvent(QEvent *event)
 
 void widGraphTitle::m_setDimensions()
 {
-    auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
-    ptr_dataTitle->m_height = m_spaceAbove +
-            m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
-    setFixedHeight(ptr_dataTitle->m_height);
+    // Height of the title
+        auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+        if (ptr_dataTitle->m_manualSize)
+            ptr_dataTitle->m_height = ptr_dataTitle->m_manualSizeValue;
+        else {
+            ptr_dataTitle->m_height = m_spaceAbove +
+                    m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
+        }
+        setFixedHeight(ptr_dataTitle->m_height);
 
-    auto ptr_data = ptr_graph->m_getData().lock();
-
-    m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
-    m_text->m_setDimensions();
-    m_setButtonsDimensions();
-    m_loadButtonsValues();
+    // Dimensions of thext and buttons
+        auto ptr_data = ptr_graph->m_getData().lock();
+        m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
+        m_text->m_setDimensions();
+        m_setButtonsDimensions();
+        m_loadButtonsValues();
 }
 
 void widGraphTitle::m_drawLine(painterAntiAl &painter)
@@ -1012,13 +1017,16 @@ void widGraphAxis::paintEvent(QPaintEvent *)
 
 void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
 {
-    if (event->mimeData()->hasFormat("widGraph/curve")) {
-        m_markForDrop(true);
-        event->setDropAction(Qt::LinkAction);
-        event->accept();
-    } else {
-        m_markForDrop(false);
-        event->ignore();
+    auto ptr_dataControl = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_dataControl->m_allowDrop) {
+        if (event->mimeData()->hasFormat("widGraph/curve")) {
+            m_markForDrop(true);
+            event->setDropAction(Qt::LinkAction);
+            event->accept();
+        } else {
+            m_markForDrop(false);
+            event->ignore();
+        }
     }
 }
 
@@ -1449,7 +1457,9 @@ int widGraphLegend::m_getNRows()
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    ptr_graph->m_openDialog();
+    auto ptr_dataControl = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_dataControl->m_allowDialog)
+        ptr_graph->m_openDialog();
     event->accept();
 }
 
@@ -1593,7 +1603,7 @@ widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
 void widGraphButtonAutoAxes::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     auto ptr_dataX = ptr_data->m_X;
     auto ptr_dataY1 = ptr_data->m_Y1;
     auto ptr_dataY2 = ptr_data->m_Y2;
@@ -1634,7 +1644,7 @@ widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
 void widGraphButtonZoomOut::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     ptr_graph->m_zoomOut();
 }
 
@@ -1667,7 +1677,7 @@ widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
 void widGraphButtonScreenshot::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     ptr_graph->m_takeScreenshot();
 }
 

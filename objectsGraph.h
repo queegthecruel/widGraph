@@ -145,6 +145,8 @@ public:
     virtual double m_getMaxX() {return 0;}
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
+    virtual double m_getAvgY() {return 0;}
+    virtual double m_getNValues() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
         {*m_data = *data;}
     enum yAxisPosition m_getPrefferedYAxis();
@@ -175,6 +177,8 @@ public:
     virtual double m_getMaxX() override;
     virtual double m_getMinY() override;
     virtual double m_getMaxY() override;
+    virtual double m_getAvgY() override;
+    virtual double m_getNValues() override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
     QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);

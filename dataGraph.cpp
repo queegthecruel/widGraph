@@ -1,5 +1,16 @@
 #include "dataGraph.h"
 
+
+dataElement::dataElement() {}
+
+dataElement::dataElement(std::ifstream &) {}
+
+void dataElement::m_saveToFile(std::ofstream &)
+{
+}
+
+
+
 dataTitle::dataTitle()
 {
 
@@ -173,18 +184,19 @@ void writeString(std::ofstream &outstream, const std::string &value)
 
 void dataControl::m_setMove(bool status)
 {
-    m_setNothing();
+    m_setNoZoomNoMove();
     m_move = status;
 }
 
 void dataControl::m_setZoom(bool status)
 {
-    m_setNothing();
+    m_setNoZoomNoMove();
     m_zoom = status;
 }
 
-void dataControl::m_setNothing()
+void dataControl::m_setNoZoomNoMove()
 {
     m_move = false;
     m_zoom = false;
 }
+

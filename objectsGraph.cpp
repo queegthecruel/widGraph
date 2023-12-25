@@ -139,25 +139,39 @@ QPainterPath graphCurve::m_getAreaPainterPath(widGraphAxis *ptr_x, widGraphAxis 
     return pathArea;
 }
 double graphCurve::m_getMinX() {
-    auto it = min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
     return *it;
 }
 
 double graphCurve::m_getMaxX() {
-    auto it = max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
     return *it;
 }
 
 double graphCurve::m_getMinY() {
     s_dataY = w_dataY.lock();
-    auto it = min_element(std::begin(*s_dataY), std::end(*s_dataY));
+    auto it = std::min_element(std::begin(*s_dataY), std::end(*s_dataY));
     return *it;
 }
 
 double graphCurve::m_getMaxY() {
     s_dataY = w_dataY.lock();
-    auto it = max_element(std::begin(*s_dataY), std::end(*s_dataY));
+    auto it = std::max_element(std::begin(*s_dataY), std::end(*s_dataY));
     return *it;
+}
+
+double graphCurve::m_getAvgY()
+{
+    s_dataY = w_dataY.lock();
+    double sum = std::accumulate(std::begin(*s_dataY), std::end(*s_dataY), 0.0);
+    double m =  sum / s_dataY->size();
+    return m;
+}
+
+double graphCurve::m_getNValues()
+{
+    s_dataY = w_dataY.lock();
+    return s_dataY->size();
 }
 
 graphObjects::graphObjects()
