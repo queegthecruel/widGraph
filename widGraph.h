@@ -365,10 +365,8 @@ public:
         {return m_widY1;}
     widGraphY2Axis* m_getY2Axis()
         {return m_widY2;}
-//    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
     void m_addObject(std::shared_ptr<graphCurve> ptr_object);
-    void m_addObject(std::shared_ptr<graphYValue> ptr_object);
-    void m_addObject(std::shared_ptr<graphXValue> ptr_object);
+    void m_addObject(std::shared_ptr<graphValue> ptr_object);
     void m_addObject(std::shared_ptr<graphColumn> ptr_object);
     void m_removeAllObjects();
     void m_removeObject(int curveIndex);

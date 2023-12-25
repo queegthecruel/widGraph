@@ -12,10 +12,11 @@ class widGraphAxis;
 
 enum class pointsShapes {NONE, POINT, CROSS, SQUARE, CIRCLE, TRIANGLE, TRIANGLE_REV};
 enum class yAxisPosition {LEFT, RIGHT};
+enum class orientation {HORIZONTAL, VERTICAL};
 class dataGraphObject
 {
 public:
-    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend);
+    dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend, bool hasOrientation);
     dataGraphObject(const dataGraphObject & oldData) = default;
     dataGraphObject(std::ifstream &instream);
     ~dataGraphObject() = default;
@@ -26,7 +27,7 @@ public:
     void m_setName(const std::string name);
     inline enum yAxisPosition m_getPrefferedYAxis()
         {return m_prefferedYAxis;}
-    inline void m_setPrefferedAxis(enum yAxisPosition axis)
+    inline void m_setYAxis(enum yAxisPosition axis)
         {m_prefferedYAxis = axis;}
     inline bool m_getHasCurve()
         {return m_hasCurve;}
@@ -38,6 +39,8 @@ public:
         {return m_hasColumns;}
     inline bool m_getHasLegend()
         {return m_hasLegend;}
+    inline bool m_getHasOrientation()
+        {return m_hasOrientation;}
     // Curve
         void m_setStyleOfCurve(QColor color, int width, int styleIndex, bool show = true);
         std::tuple<QColor, int, int, bool> m_getStyleOfCurve();
@@ -59,6 +62,9 @@ public:
     // Operation
         void m_setOperation(bool toBeDeleted);
         std::tuple<bool> m_getOperation();
+    // Horizontal/vertical const curve
+        void m_setConstCurveOrientation(enum orientation orient);
+        std::tuple<enum orientation> m_getConstCurveOrientation();
 protected:
     // Curve
         inline QColor m_getCurveColor()
@@ -105,8 +111,11 @@ protected:
     // Operation
         inline void m_setToBeDeleted(bool toBeDeleted)
             {m_toBeDeleted = toBeDeleted;}
+    // Horizontal/vertical const curve
+        inline void m_setOrientation(enum orientation orient)
+            {m_orientation = orient;}
 public:
-    bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
+    bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend, m_hasOrientation;
 protected:
     yAxisPosition m_prefferedYAxis = yAxisPosition::LEFT;
     std::string m_name;
@@ -133,6 +142,8 @@ protected:
         std::string m_legendText;
     // Operation
         bool m_toBeDeleted = false;
+    // Horizontal/vertical const curve
+        enum orientation m_orientation = orientation::HORIZONTAL;
 };
 
 class graphObjects
@@ -146,7 +157,7 @@ public:
     virtual double m_getMinY() {return 0;}
     virtual double m_getMaxY() {return 0;}
     virtual double m_getAvgY() {return 0;}
-    virtual double m_getNValues() {return 0;}
+    virtual int m_getNValues() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
         {*m_data = *data;}
     enum yAxisPosition m_getPrefferedYAxis();
@@ -171,14 +182,13 @@ public:
                std::shared_ptr<std::vector<double>> ptr_dataX,
                std::shared_ptr<std::vector<double>> ptr_dataY);
     graphCurve(const graphCurve& oldGraphObject);
-    ~graphCurve() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override;
     virtual double m_getMaxX() override;
     virtual double m_getMinY() override;
     virtual double m_getMaxY() override;
     virtual double m_getAvgY() override;
-    virtual double m_getNValues() override;
+    virtual int m_getNValues() override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
     QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);
@@ -188,43 +198,25 @@ protected:
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 
-class WIDGRAPH_EXPORT graphYValue: public graphObjects
+class WIDGRAPH_EXPORT graphValue: public graphObjects
 {
 public:
-    graphYValue(std::string name, std::shared_ptr<double> ptr_dataY);
-    graphYValue(const graphYValue& oldGraphObject);
-    ~graphYValue() = default;
+    graphValue(std::string name, std::shared_ptr<double> ptr_dataY, enum orientation orient = orientation::HORIZONTAL);
+    graphValue(const graphValue& oldGraphObject);
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
-    virtual double m_getMinY() override
-        {return *s_dataY;}
-    virtual double m_getMaxY() override
-        {return *s_dataY;}
+    virtual double m_getMinX() override;
+    virtual double m_getMaxX() override;
+    virtual double m_getMinY() override;
+    virtual double m_getMaxY() override;
+    virtual double m_getAvgY() override;
+    virtual int m_getNValues() override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
-    std::weak_ptr<double> w_dataY;
-    std::shared_ptr<double> s_dataY;
+    std::weak_ptr<double> w_data;
+    std::shared_ptr<double> s_data;
+//    enum orientation m_orientation;
 };
-
-
-class WIDGRAPH_EXPORT graphXValue: public graphObjects
-{
-public:
-    graphXValue(std::string name, std::shared_ptr<double> ptr_dataX);
-    graphXValue(const graphXValue& oldGraphObject);
-    ~graphXValue() = default;
-    virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
-    virtual double m_getMinX() override
-        {return *s_dataX;}
-    virtual double m_getMaxX() override
-        {return *s_dataX;}
-private:
-    QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
-protected:
-    std::weak_ptr<double> w_dataX;
-    std::shared_ptr<double> s_dataX;
-};
-
 
 class WIDGRAPH_EXPORT graphColumn: public graphObjects
 {

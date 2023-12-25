@@ -71,15 +71,9 @@ void widGraph::m_addObject(std::shared_ptr<graphCurve> ptr_object)
     m_data->m_addObject(ptr_curve);
 }
 
-void widGraph::m_addObject(std::shared_ptr<graphYValue> ptr_object)
+void widGraph::m_addObject(std::shared_ptr<graphValue> ptr_object)
 {
-    auto ptr_curve = std::make_shared<graphYValue>(*ptr_object);
-    m_data->m_addObject(ptr_curve);
-}
-
-void widGraph::m_addObject(std::shared_ptr<graphXValue> ptr_object)
-{
-    auto ptr_curve = std::make_shared<graphXValue>(*ptr_object);
+    auto ptr_curve = std::make_shared<graphValue>(*ptr_object);
     m_data->m_addObject(ptr_curve);
 }
 
@@ -151,7 +145,7 @@ void widGraph::m_setColumnsStyle(int curveIndex, int columnWidth, bool showColum
 void widGraph::m_setCurveAxis(int curveIndex, enum yAxisPosition axis)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
-    ptr_objectData->m_setPrefferedAxis(axis);
+    ptr_objectData->m_setYAxis(axis);
 }
 
 void widGraph:: m_setCurveName(int curveIndex, const std::string &name)

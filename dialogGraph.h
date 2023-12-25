@@ -2,6 +2,7 @@
 #define DIALOGGRAPH_H
 
 #include "widPretty.h"
+
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QSplitter>
@@ -19,7 +20,7 @@ struct dataAxisY1;
 struct dataAxisY2;
 struct dataDrawArea;
 struct dataLegend;
-struct graphObjects;
+enum class orientation;
 
 class treeWidgetGraphObjects;
 class tabGraph: public QWidget
@@ -123,7 +124,7 @@ class widGraphObjectSetting: public QWidget
 {
     Q_OBJECT
 public:
-    widGraphObjectSetting(const QString &name);
+    widGraphObjectSetting();
 protected:
     void m_addEndOfWidget();
     static QVector<std::tuple<QString, QIcon>> m_getIconsForCurve(int iconWidth = 40, int iconHeight = 15);
@@ -131,10 +132,18 @@ protected:
     static QVector<std::tuple<QString, QIcon>> m_getIconsForArea(int iconWidth = 40, int iconHeight = 15);
     virtual void m_setEnabled(bool enabled) = 0;
     QWidget *m_separator();
+protected:
+    HBoxLayout *m_layBackground;
+};
+
+class widGraphObjectSettingWithName: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingWithName(const QString &name);
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    HBoxLayout *m_layBackground;
     checkbox *m_checkEnable;
 };
 
@@ -168,7 +177,7 @@ protected:
     butGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown, *m_butDelete;
 };
 
-class widGraphObjectSettingCurve: public widGraphObjectSetting
+class widGraphObjectSettingCurve: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -182,7 +191,7 @@ protected:
     combobox *m_comboCurveStyle;
 };
 
-class widGraphObjectSettingPoints: public widGraphObjectSetting
+class widGraphObjectSettingPoints: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -196,7 +205,7 @@ protected:
     combobox *m_comboShape;
 };
 
-class widGraphObjectSettingArea: public widGraphObjectSetting
+class widGraphObjectSettingArea: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -209,7 +218,7 @@ protected:
     combobox *m_comboAreaStyle;
 };
 
-class widGraphObjectSettingColumn: public widGraphObjectSetting
+class widGraphObjectSettingColumn: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -221,7 +230,19 @@ protected:
     spinbox *m_editColumnThick;
 };
 
-class widGraphObjectSettingLegend: public widGraphObjectSetting
+class widGraphObjectSettingOrientation: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingOrientation();
+    void m_setValues(enum orientation orient);
+    std::tuple<enum orientation> m_getValues();
+    virtual void m_setEnabled(bool enabled) override;
+protected:
+    radiobutton *m_radioHorizontal, *m_radioVertical;
+};
+
+class widGraphObjectSettingLegend: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -250,6 +271,7 @@ protected:
     widGraphObjectSettingPoints *m_widPoints;
     widGraphObjectSettingArea *m_widArea;
     widGraphObjectSettingColumn *m_widColumn;
+    widGraphObjectSettingOrientation *m_widOrientation;
     widGraphObjectSettingLegend *m_widLegend;
 };
 

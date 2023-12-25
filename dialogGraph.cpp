@@ -501,6 +501,8 @@ widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObje
     ptr_data(data)
 {
     HBoxLayout *lay = new HBoxLayout(this);
+    m_widOrientation = new widGraphObjectSettingOrientation();
+    lay->addWidget(m_widOrientation, 1);
     m_widColumn = new widGraphObjectSettingColumn();
     lay->addWidget(m_widColumn, 1);
     m_widCurve = new widGraphObjectSettingCurve();
@@ -540,6 +542,11 @@ void widGraphObjectSettingMain::m_loadValues()
         m_widColumn->m_setValues(columnWidth, columnEnabled);
         if (!data->m_getHasColumn())
             m_widColumn->setVisible(false);
+    // Column
+        auto [constCurveOrient] = data->m_getConstCurveOrientation();
+        m_widOrientation->m_setValues(constCurveOrient);
+        if (!data->m_getHasOrientation())
+            m_widOrientation->setVisible(false);
     // Legend
         auto [legendOverwrite, legendText, legendEnabled]
                 = data->m_getStyleOfLegend();
@@ -561,16 +568,19 @@ void widGraphObjectSettingMain::m_saveValues()
         auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
         data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
     // Column
+        auto [constCurveOrient] = m_widOrientation->m_getValues();
+        data->m_setConstCurveOrientation(constCurveOrient);
+    // Column
         auto [columnWidth, columnEnabled] = m_widColumn->m_getValues();
         data->m_setStyleOfColumn(columnWidth, columnEnabled);
-    // Column
+    // Legend
         auto [legendOverwrite, legendText, legendEnabled] = m_widLegend->m_getValues();
         data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
  }
 
 
 widGraphObjectSettingCurve::widGraphObjectSettingCurve():
-    widGraphObjectSetting("Curve")
+    widGraphObjectSettingWithName("Curve")
 {
     m_colorPickerCurve = new colorPicker();
     m_editCurveThick = new spinbox();
@@ -614,13 +624,8 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
     m_comboCurveStyle->setEnabled(enabled);
 }
 
-widGraphObjectSetting::widGraphObjectSetting(const QString &name)
+widGraphObjectSettingWithName::widGraphObjectSettingWithName(const QString &name)
 {
-    m_layBackground = new HBoxLayout(this);
-    m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(m_separator());
-    m_layBackground->addSpacing(1);
-
     m_checkEnable = new checkbox(name + ": ");
     m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
                                  "QCheckBox::unchecked {color:gray;}"
@@ -635,6 +640,14 @@ void widGraphObjectSetting::m_addEndOfWidget()
 {
     m_layBackground->addSpacing(2);
     m_layBackground->addStretch();
+}
+
+widGraphObjectSetting::widGraphObjectSetting()
+{
+    m_layBackground = new HBoxLayout(this);
+    m_layBackground->setSpacing(1);
+    m_layBackground->addWidget(m_separator());
+    m_layBackground->addSpacing(1);
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(int iconWidth, int iconHeight)
@@ -680,7 +693,7 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(i
 }
 
 widGraphObjectSettingPoints::widGraphObjectSettingPoints():
-    widGraphObjectSetting("Points")
+    widGraphObjectSettingWithName("Points")
 {
     m_colorPickerPoints = new colorPicker();
     m_editThickness = new spinbox();
@@ -725,7 +738,7 @@ void widGraphObjectSettingPoints::m_setEnabled(bool enabled)
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
 }
-void widGraphObjectSetting::m_slotEnabledToggled()
+void widGraphObjectSettingWithName::m_slotEnabledToggled()
 {
     m_checkEnable->setEnabled(true);
     bool enabled = m_checkEnable->isChecked();
@@ -774,7 +787,7 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
 }
 
 widGraphObjectSettingArea::widGraphObjectSettingArea():
-    widGraphObjectSetting("Area")
+    widGraphObjectSettingWithName("Area")
 {
     m_colorPickerArea = new colorPicker();
     m_comboAreaStyle = new combobox(65);
@@ -909,7 +922,7 @@ QWidget *widGraphObjectSetting::m_separator()
 }
 
 widGraphObjectSettingColumn::widGraphObjectSettingColumn():
-    widGraphObjectSetting("Column")
+    widGraphObjectSettingWithName("Column")
 {
     m_editColumnThick = new spinbox();
 
@@ -937,7 +950,7 @@ void widGraphObjectSettingColumn::m_setEnabled(bool enabled)
 }
 
 widGraphObjectSettingLegend::widGraphObjectSettingLegend():
-    widGraphObjectSetting("Legend")
+    widGraphObjectSettingWithName("Legend")
 {
     m_editText = new checkEdit(validator::NONE);
     m_layBackground->addWidget(m_editText);
@@ -1098,4 +1111,38 @@ butGraphObjectSettingButton::butGraphObjectSettingButton(QIcon icon, const QStri
     setFixedSize(QSize(25,25));
     setIconSize(QSize(20,20));
     setToolTip(tooltip);
+}
+
+widGraphObjectSettingOrientation::widGraphObjectSettingOrientation()
+{
+    m_radioHorizontal = new radiobutton("Horiz.");
+    m_radioVertical = new radiobutton("Vert.");
+    m_layBackground->addWidget(m_radioHorizontal);
+    m_layBackground->addWidget(m_radioVertical);
+    m_addEndOfWidget();
+}
+
+void widGraphObjectSettingOrientation::m_setValues(orientation orient)
+{
+    m_radioHorizontal->m_setChecked(orient == orientation::HORIZONTAL);
+    m_radioVertical->m_setChecked(orient == orientation::VERTICAL);
+}
+
+std::tuple<orientation> widGraphObjectSettingOrientation::m_getValues()
+{
+    enum orientation orient;
+    if (m_radioHorizontal->isChecked())
+        orient = orientation::HORIZONTAL;
+    else if (m_radioVertical->isChecked())
+        orient = orientation::VERTICAL;
+    else
+        orient = orientation::VERTICAL;
+    return {orient};
+
+}
+
+void widGraphObjectSettingOrientation::m_setEnabled(bool enabled)
+{
+    m_radioHorizontal->setEnabled(enabled);
+    m_radioVertical->setEnabled(enabled);
 }
