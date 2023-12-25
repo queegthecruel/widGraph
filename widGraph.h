@@ -196,7 +196,7 @@ private:
     virtual void m_drawMoveCursor(painterAntiAl &painter) = 0;
     void m_zoomByMouse();
     void m_moveByMouse();
-    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_curve)
         {return false;};
 protected:
     virtual double m_getTicksStart() = 0;
@@ -278,6 +278,7 @@ private:
     virtual void m_drawText(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
     virtual void m_drawMoveCursor(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_object) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -297,7 +298,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
-    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_object) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -318,7 +319,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
-    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_curve) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -376,6 +377,7 @@ public:
     void m_setAreaStyle(int curveIndex, QColor color, int areaStyleIndex = 1, bool showArea = true);
     void m_setColumnsStyle(int curveIndex, int columnWidth = 30, bool showColumn = true);
     void m_setCurveAxis(int curveIndex, yAxisPosition axis);
+    void m_setConstCurveOrientation(int curveIndex, enum orientation orient);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();
     void m_takeScreenshot();
@@ -415,16 +417,16 @@ public:
     painterAntiAl(QPaintDevice *device);
 };
 
-class WIDGRAPH_EXPORT MimeDataWithCurve: public QMimeData
+class WIDGRAPH_EXPORT MimeDataWithGraphObject: public QMimeData
 {
 public:
-    MimeDataWithCurve(std::weak_ptr<graphCurve> ptr_curve):
-        QMimeData(), ptr_curve(ptr_curve)
+    MimeDataWithGraphObject(std::weak_ptr<graphObject> ptr_curve):
+        QMimeData(), ptr_object(ptr_curve)
     {}
-    std::weak_ptr<graphCurve> m_getCurve() const
-        {return ptr_curve;}
+    std::weak_ptr<graphObject> m_getGraphObject() const
+        {return ptr_object;}
 private:
-    std::weak_ptr<graphCurve> ptr_curve;
+    std::weak_ptr<graphObject> ptr_object;
 };
 
 

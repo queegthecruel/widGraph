@@ -146,11 +146,12 @@ protected:
         enum orientation m_orientation = orientation::HORIZONTAL;
 };
 
-class graphObjects
+class graphObject
 {
 public:
-    graphObjects();
-    graphObjects(const graphObjects& oldGraphObject);
+    graphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns,
+        bool hasLegend, bool hasOrientation);
+    graphObject(const graphObject& oldGraphObject);
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) = 0;
     virtual double m_getMinX() {return 0;}
     virtual double m_getMaxX() {return 0;}
@@ -165,7 +166,7 @@ public:
         {return m_data;}
     static QPainterPath m_createPoint(QPointF point = QPoint(0,0),
         double shapeSize = 10, pointsShapes style = pointsShapes::CROSS);
-    static std::shared_ptr<graphObjects> m_createGraphObject(int type);
+    static std::shared_ptr<graphObject> m_createGraphObject(int type);
 protected:
     std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
 protected:
@@ -173,7 +174,7 @@ protected:
     std::shared_ptr<dataGraphObject> m_data;
 };
 
-class WIDGRAPH_EXPORT graphCurve: public graphObjects
+class WIDGRAPH_EXPORT graphCurve: public graphObject
 {
 public:
     graphCurve(std::string name,
@@ -198,7 +199,7 @@ protected:
     std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 
-class WIDGRAPH_EXPORT graphValue: public graphObjects
+class WIDGRAPH_EXPORT graphValue: public graphObject
 {
 public:
     graphValue(std::string name, std::shared_ptr<double> ptr_dataY, enum orientation orient = orientation::HORIZONTAL);
@@ -215,16 +216,21 @@ private:
 protected:
     std::weak_ptr<double> w_data;
     std::shared_ptr<double> s_data;
-//    enum orientation m_orientation;
 };
 
-class WIDGRAPH_EXPORT graphColumn: public graphObjects
+class WIDGRAPH_EXPORT graphColumn: public graphObject
 {
 public:
     graphColumn(std::string name, std::shared_ptr<std::vector<double>> ptr_dataY);
     graphColumn(const graphColumn& oldGraphObject);
     ~graphColumn() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
+    virtual double m_getMinX() override;
+    virtual double m_getMaxX() override;
+    virtual double m_getMinY() override;
+    virtual double m_getMaxY() override;
+    virtual double m_getAvgY() override;
+    virtual int m_getNValues() override;
 private:
     QPainterPath m_getColumnPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
     QPainterPath m_getColumnBorderPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);

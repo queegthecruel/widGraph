@@ -114,7 +114,7 @@ void dataGraph::m_saveToFile(std::ofstream &outstream)
     m_drawArea->m_saveToFile(outstream);
 }
 
-void dataGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
+void dataGraph::m_addObject(std::shared_ptr<graphObject> ptr_object)
 {
     m_vectorOfObjects.push_back(ptr_object);
 }

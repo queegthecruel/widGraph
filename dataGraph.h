@@ -169,7 +169,7 @@ struct dataControl: public dataElement
     void m_setNoZoomNoMove();
 };
 
-class graphObjects;
+class graphObject;
 struct dataGraph
 {
     dataGraph();
@@ -178,7 +178,7 @@ struct dataGraph
     dataGraph& operator=(const dataGraph& oldData) = delete;
     ~dataGraph() = default;
     void m_saveToFile(std::ofstream &outstream);
-    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_addObject(std::shared_ptr<graphObject> ptr_object);
     void m_removeAllObjects();
     void m_removeObject(int curveIndex);
 
@@ -190,7 +190,7 @@ struct dataGraph
     std::shared_ptr<dataDrawArea> m_drawArea;
     std::shared_ptr<dataControl> m_control;
 
-    std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
+    std::vector<std::shared_ptr<graphObject>> m_vectorOfObjects;
 };
 
 

@@ -148,6 +148,12 @@ void widGraph::m_setCurveAxis(int curveIndex, enum yAxisPosition axis)
     ptr_objectData->m_setYAxis(axis);
 }
 
+void widGraph::m_setConstCurveOrientation(int curveIndex, orientation orient)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setConstCurveOrientation(orient);
+}
+
 void widGraph:: m_setCurveName(int curveIndex, const std::string &name)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
@@ -713,6 +719,16 @@ void widGraphXAxis::m_drawMoveCursor(painterAntiAl &painter)
     painter.restore();
 }
 
+bool widGraphXAxis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
+{
+    if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::VERTICAL);
+    } else
+        return false;
+    return true;
+}
+
 
 double widGraphXAxis::m_getTicksStart()
 {
@@ -839,9 +855,17 @@ void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
     painter.restore();
 }
 
-bool widGraphY1Axis::m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+bool widGraphY1Axis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
 {
-    ptr_graph->m_addObject(ptr_curve.lock());
+    if(auto ptr_curve = std::dynamic_pointer_cast<graphCurve>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_curve);
+    } else if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::HORIZONTAL);
+    } else if (auto ptr_column = std::dynamic_pointer_cast<graphColumn>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_column);
+    } else
+        return false;
     ptr_graph->m_setCurveAxis(-1, yAxisPosition::LEFT);
     return true;
 }
@@ -1032,11 +1056,11 @@ void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
 void widGraphAxis::dropEvent(QDropEvent *event)
 {
     if (event->mimeData()->hasFormat("widGraph/curve")) {
-        const auto *mimeData = dynamic_cast<const MimeDataWithCurve*>(event->mimeData());
+        const auto *mimeData = dynamic_cast<const MimeDataWithGraphObject*>(event->mimeData());
         QByteArray itemData = event->mimeData()->data("widGraph/curve");
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
 
-        auto ptr_curve = mimeData->m_getCurve();
+        auto ptr_curve = mimeData->m_getGraphObject();
         bool added = m_dropCurve(ptr_curve);
 
         event->setDropAction(Qt::LinkAction);
@@ -1229,9 +1253,17 @@ void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
     painter.restore();
 }
 
-bool widGraphY2Axis::m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+bool widGraphY2Axis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
 {
-    ptr_graph->m_addObject(ptr_curve.lock());
+    if(auto ptr_curve = std::dynamic_pointer_cast<graphCurve>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_curve);
+    } else if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::HORIZONTAL);
+    } else if (auto ptr_column = std::dynamic_pointer_cast<graphColumn>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_column);
+    } else
+        return false;
     ptr_graph->m_setCurveAxis(-1, yAxisPosition::RIGHT);
     return true;
 }

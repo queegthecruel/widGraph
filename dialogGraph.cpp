@@ -61,7 +61,7 @@ void dialogGraph::m_slotLoadFile()
     int nGraphObjects = readInt(loadFileContent);
     for (int i = 0; i < nGraphObjects; ++i) {
         int type = readInt(loadFileContent);
-        auto ptr_object = graphObjects::m_createGraphObject(type);
+        auto ptr_object = graphObject::m_createGraphObject(type);
         auto ptr_objectData = std::make_shared<dataGraphObject>(loadFileContent);
         ptr_object->m_setData(ptr_objectData);
       //  ptr_graph->m_addObject(ptr_object);
@@ -435,7 +435,7 @@ void tabGraphSettingsObjects::m_saveDataInWidgets()
 void tabGraphSettingsObjects::m_reorderObjectsInGraph()
 {
     auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    std::vector<std::shared_ptr<graphObjects>> vDialogObjects;
+    std::vector<std::shared_ptr<graphObject>> vDialogObjects;
     // Reorder
     vDialogObjects.resize(m_vOrder.size());
     for (unsigned int i = 0; i < m_vOrder.size(); ++i)
@@ -754,25 +754,25 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
     painter.setPen(QPen(Qt::black, 2));
 
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::NONE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::NONE));
     QIcon iconNone(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::POINT));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::POINT));
     QIcon iconPoint(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CROSS));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::CROSS));
     QIcon iconCross(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::SQUARE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::SQUARE));
     QIcon iconRect(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CIRCLE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::CIRCLE));
     QIcon iconCircle(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE));
     QIcon iconTriangle(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE_REV));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE_REV));
     QIcon iconRevTriangle(pixmap);
 
     auto none = std::tuple<QString, QIcon>("None",iconNone);
