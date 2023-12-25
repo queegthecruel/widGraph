@@ -24,10 +24,10 @@ public:
     inline const std::string &m_getName()
         {return m_name;}
     void m_setName(const std::string name);
-    inline int m_getPrefferedYAxis()
+    inline enum yAxisPosition m_getPrefferedYAxis()
         {return m_prefferedYAxis;}
-    inline void m_setPrefferedAxis(int axisIndex)
-        {m_prefferedYAxis = axisIndex;}
+    inline void m_setPrefferedAxis(enum yAxisPosition axis)
+        {m_prefferedYAxis = axis;}
     inline bool m_getHasCurve()
         {return m_hasCurve;}
     inline bool m_getHasPoints()
@@ -108,7 +108,7 @@ protected:
 public:
     bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend;
 protected:
-    int m_prefferedYAxis = 0;
+    yAxisPosition m_prefferedYAxis = yAxisPosition::LEFT;
     std::string m_name;
     // Curve
         bool m_showCurve = true;
@@ -139,6 +139,7 @@ class graphObjects
 {
 public:
     graphObjects();
+    graphObjects(const graphObjects& oldGraphObject);
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) = 0;
     virtual double m_getMinX() {return 0;}
     virtual double m_getMaxX() {return 0;}
@@ -146,7 +147,7 @@ public:
     virtual double m_getMaxY() {return 0;}
     void m_setData(std::shared_ptr<dataGraphObject> data)
         {*m_data = *data;}
-    int m_getPrefferedYAxis();
+    enum yAxisPosition m_getPrefferedYAxis();
     inline std::weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
     static QPainterPath m_createPoint(QPointF point = QPoint(0,0),
@@ -167,6 +168,7 @@ public:
     graphCurve(std::string name,
                std::shared_ptr<std::vector<double>> ptr_dataX,
                std::shared_ptr<std::vector<double>> ptr_dataY);
+    graphCurve(const graphCurve& oldGraphObject);
     ~graphCurve() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override;
@@ -186,6 +188,7 @@ class WIDGRAPH_EXPORT graphYValue: public graphObjects
 {
 public:
     graphYValue(std::string name, std::shared_ptr<double> ptr_dataY);
+    graphYValue(const graphYValue& oldGraphObject);
     ~graphYValue() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinY() override
@@ -204,6 +207,7 @@ class WIDGRAPH_EXPORT graphXValue: public graphObjects
 {
 public:
     graphXValue(std::string name, std::shared_ptr<double> ptr_dataX);
+    graphXValue(const graphXValue& oldGraphObject);
     ~graphXValue() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override
@@ -222,6 +226,7 @@ class WIDGRAPH_EXPORT graphColumn: public graphObjects
 {
 public:
     graphColumn(std::string name, std::shared_ptr<std::vector<double>> ptr_dataY);
+    graphColumn(const graphColumn& oldGraphObject);
     ~graphColumn() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
 private:

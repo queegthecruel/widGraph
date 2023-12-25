@@ -64,7 +64,7 @@ void dialogGraph::m_slotLoadFile()
         auto ptr_object = graphObjects::m_createGraphObject(type);
         auto ptr_objectData = std::make_shared<dataGraphObject>(loadFileContent);
         ptr_object->m_setData(ptr_objectData);
-        ptr_graph->m_addObject(ptr_object);
+      //  ptr_graph->m_addObject(ptr_object);
     }
     loadFileContent.close();
 }

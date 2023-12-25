@@ -9,6 +9,7 @@
 #include <QGridLayout>
 #include <QMouseEvent>
 #include <QTimer>
+#include <QMimeData>
 
 
 // Graph widgets
@@ -195,6 +196,8 @@ private:
     virtual void m_drawMoveCursor(painterAntiAl &painter) = 0;
     void m_zoomByMouse();
     void m_moveByMouse();
+    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+        {return false;};
 protected:
     virtual double m_getTicksStart() = 0;
     virtual double m_getTicksEnd() = 0;
@@ -235,7 +238,7 @@ protected:
 class widGraphYAxes: public widGraphAxis
 {
 public:
-    widGraphYAxes(widGraph *graph, int position):
+    widGraphYAxes(widGraph *graph, enum yAxisPosition position):
         widGraphAxis(graph), m_axisPosition(position)
     {}
     virtual double m_getDrawAreaPositionFromValue(double value) override;
@@ -253,7 +256,7 @@ protected:
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
 protected:
-    const int m_axisPosition;
+    const enum yAxisPosition m_axisPosition;
 };
 
 class widGraphXAxis: public widGraphXAxes
@@ -294,6 +297,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -314,6 +318,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphCurve> ptr_curve) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -360,7 +365,11 @@ public:
         {return m_widY1;}
     widGraphY2Axis* m_getY2Axis()
         {return m_widY2;}
-    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+//    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_addObject(std::shared_ptr<graphCurve> ptr_object);
+    void m_addObject(std::shared_ptr<graphYValue> ptr_object);
+    void m_addObject(std::shared_ptr<graphXValue> ptr_object);
+    void m_addObject(std::shared_ptr<graphColumn> ptr_object);
     void m_removeAllObjects();
     void m_removeObject(int curveIndex);
     void m_loadValues();
@@ -368,7 +377,7 @@ public:
     void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);
     void m_setAreaStyle(int curveIndex, QColor color, int areaStyleIndex = 1, bool showArea = true);
     void m_setColumnsStyle(int curveIndex, int columnWidth = 30, bool showColumn = true);
-    void m_setCurveAxis(int curveIndex, int axis);
+    void m_setCurveAxis(int curveIndex, yAxisPosition axis);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();
     void m_takeScreenshot();
@@ -408,7 +417,17 @@ public:
     painterAntiAl(QPaintDevice *device);
 };
 
-
+class WIDGRAPH_EXPORT MimeDataWithCurve: public QMimeData
+{
+public:
+    MimeDataWithCurve(std::weak_ptr<graphCurve> ptr_curve):
+        QMimeData(), ptr_curve(ptr_curve)
+    {}
+    std::weak_ptr<graphCurve> m_getCurve() const
+        {return ptr_curve;}
+private:
+    std::weak_ptr<graphCurve> ptr_curve;
+};
 
 
 #endif // WIDGRAPH_H

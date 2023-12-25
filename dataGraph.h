@@ -121,7 +121,7 @@ struct dataLegend: public dataElement
     int m_fontText = 15;
     int m_nColumns = 1;
     bool m_showTopLine = true;
-    bool m_arrangeToAxes = false;
+    bool m_arrangeToAxes = true;
 };
 
 struct dataDrawArea: public dataElement

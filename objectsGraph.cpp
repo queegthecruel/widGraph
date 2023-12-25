@@ -23,6 +23,15 @@ graphCurve::graphCurve(std::string name,
         s_dataX = w_dataX.lock();
 }
 
+graphCurve::graphCurve(const graphCurve &oldGraphObject):
+    graphObjects(oldGraphObject)
+{
+    w_dataX = oldGraphObject.w_dataX;
+    w_dataY = oldGraphObject.w_dataY;
+    s_dataX = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataX);
+    s_dataY = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataY);
+}
+
 graphCurve::graphCurve(std::string name,
                        std::shared_ptr<std::vector<double> > ptr_dataY):
     w_dataY(ptr_dataY)
@@ -155,7 +164,12 @@ graphObjects::graphObjects()
 {
 }
 
-int graphObjects::m_getPrefferedYAxis()
+graphObjects::graphObjects(const graphObjects &oldGraphObject)
+{
+    m_data = std::make_shared<dataGraphObject>(*oldGraphObject.m_data);
+}
+
+enum yAxisPosition graphObjects::m_getPrefferedYAxis()
 {
     return m_data->m_getPrefferedYAxis();
 }
@@ -223,10 +237,16 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(wi
 {
     widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
     widGraphAxis* ptr_y;
-    if (m_getPrefferedYAxis() == 0)
+    enum yAxisPosition yAxis = m_getPrefferedYAxis();
+    switch (yAxis) {
+    case yAxisPosition::LEFT:
+    default:
         ptr_y = ptr_graph->m_getY1Axis();
-    else
+        break;
+    case yAxisPosition::RIGHT:
         ptr_y = ptr_graph->m_getY2Axis();
+        break;
+    }
     return {ptr_x, ptr_y};
 }
 
@@ -237,8 +257,13 @@ graphYValue::graphYValue(std::string name, std::shared_ptr<double> ptr_dataY):
     m_data->m_setName(name);
 
     s_dataY = w_dataY.lock();
+}
 
-    qDebug() << "Curve Y";
+graphYValue::graphYValue(const graphYValue &oldGraphObject):
+    graphObjects(oldGraphObject)
+{
+    w_dataY = oldGraphObject.w_dataY;
+    s_dataY = std::make_shared<double>(*oldGraphObject.s_dataY);
 }
 
 void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
@@ -279,8 +304,13 @@ graphXValue::graphXValue(std::string name, std::shared_ptr<double> ptr_dataX):
     m_data->m_setName(name);
 
     s_dataX = w_dataX.lock();
+}
 
-    qDebug() << "Curve X";
+graphXValue::graphXValue(const graphXValue &oldGraphObject):
+    graphObjects(oldGraphObject)
+{
+    w_dataX = oldGraphObject.w_dataX;
+    s_dataX = std::make_shared<double>(*oldGraphObject.s_dataX);
 }
 
 void graphXValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
@@ -322,7 +352,7 @@ dataGraphObject::dataGraphObject(std::ifstream &instream):
     m_hasCurve(true), m_hasPoints(true), m_hasArea(true), m_hasColumns(true), m_hasLegend(true)
 {
     // Axis
-        m_prefferedYAxis = readInt(instream);
+ //       m_prefferedYAxis = readInt(instream);
     // Name
         m_name = readString(instream);
     // Color
@@ -335,7 +365,7 @@ dataGraphObject::dataGraphObject(std::ifstream &instream):
 void dataGraphObject::m_saveToFile(std::ofstream &outstream)
 {
     // Axis
-        writeInt(outstream, m_prefferedYAxis);
+  //      writeInt(outstream, m_prefferedYAxis);
     // Name
         writeString(outstream, m_name);
     // Color
@@ -578,10 +608,17 @@ graphColumn::graphColumn(std::string name, std::shared_ptr<std::vector<double> >
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Column";
 
 }
 
+graphColumn::graphColumn(const graphColumn &oldGraphObject):
+    graphObjects(oldGraphObject)
+{
+    w_dataX = oldGraphObject.w_dataX;
+    w_dataY = oldGraphObject.w_dataY;
+    s_dataX = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataX);
+    s_dataY = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataY);
+}
 void graphColumn::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();

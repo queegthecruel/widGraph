@@ -58,10 +58,35 @@ void widGraph::hideEvent(QHideEvent */*event*/)
 {
     emit m_signalHide();
 }
-
+/*
 void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
 {
+    auto ptr_curve = std::make_shared<graphCurve>();
     m_data->m_addObject(ptr_object);
+}*/
+
+void widGraph::m_addObject(std::shared_ptr<graphCurve> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphCurve>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
+}
+
+void widGraph::m_addObject(std::shared_ptr<graphYValue> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphYValue>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
+}
+
+void widGraph::m_addObject(std::shared_ptr<graphXValue> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphXValue>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
+}
+
+void widGraph::m_addObject(std::shared_ptr<graphColumn> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphColumn>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
 }
 
 void widGraph::m_removeAllObjects()
@@ -123,13 +148,13 @@ void widGraph::m_setColumnsStyle(int curveIndex, int columnWidth, bool showColum
     ptr_objectData->m_setStyleOfColumn(columnWidth, showColumn);
 }
 
-void widGraph::m_setCurveAxis(int curveIndex, int axis)
+void widGraph::m_setCurveAxis(int curveIndex, enum yAxisPosition axis)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
     ptr_objectData->m_setPrefferedAxis(axis);
 }
 
-void widGraph::m_setCurveName(int curveIndex, const std::string &name)
+void widGraph:: m_setCurveName(int curveIndex, const std::string &name)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
     ptr_objectData->m_setName(name);
@@ -689,6 +714,7 @@ void widGraphXAxis::m_drawMoveCursor(painterAntiAl &painter)
     painter.restore();
 }
 
+
 double widGraphXAxis::m_getTicksStart()
 {
     return 0;
@@ -745,7 +771,7 @@ void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
 }
 
 widGraphY1Axis::widGraphY1Axis(widGraph *graph):
-    widGraphYAxes(graph, 0)
+    widGraphYAxes(graph, yAxisPosition::LEFT)
 {
 
 }
@@ -812,6 +838,13 @@ void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
     double right = m_getTicksStart() - 1;
     painter.drawLine(right,startScreenY,right,endScreenY);
     painter.restore();
+}
+
+bool widGraphY1Axis::m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+{
+    ptr_graph->m_addObject(ptr_curve.lock());
+    ptr_graph->m_setCurveAxis(-1, yAxisPosition::LEFT);
+    return true;
 }
 
 void widGraphYAxes::m_drawTicks(painterAntiAl &painter)
@@ -979,7 +1012,6 @@ void widGraphAxis::paintEvent(QPaintEvent *)
 
 void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
 {
-    qDebug() << "Enter";
     if (event->mimeData()->hasFormat("widGraph/curve")) {
         m_markForDrop(true);
         event->setDropAction(Qt::LinkAction);
@@ -992,39 +1024,25 @@ void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
 
 void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
 {
-    qDebug() << "Leave";
     m_unmarkForDrop();
 }
 
 void widGraphAxis::dropEvent(QDropEvent *event)
 {
-
     if (event->mimeData()->hasFormat("widGraph/curve")) {
+        const auto *mimeData = dynamic_cast<const MimeDataWithCurve*>(event->mimeData());
         QByteArray itemData = event->mimeData()->data("widGraph/curve");
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
 
-        QPixmap pixmap;
-        QPoint offset;
-        dataStream >> pixmap >> offset;
+        auto ptr_curve = mimeData->m_getCurve();
+        bool added = m_dropCurve(ptr_curve);
 
-        QLabel *newIcon = new QLabel(this);
-        newIcon->setPixmap(pixmap);
-        newIcon->move(event->position().toPoint() - offset);
-        newIcon->show();
-        newIcon->setAttribute(Qt::WA_DeleteOnClose);
-
-        if (event->source() == this) {
-            event->setDropAction(Qt::MoveAction);
-            event->accept();
-        } else {
-            event->acceptProposedAction();
-        }
-    } else {
+        event->setDropAction(Qt::LinkAction);
+        event->accept();
+    } else
         event->ignore();
-    }
-
-    qDebug() << "Drop";
     m_unmarkForDrop();
+    ptr_graph->m_loadValues();
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -1145,7 +1163,7 @@ bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QP
 }
 
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):
-    widGraphYAxes(graph, 1)
+    widGraphYAxes(graph, yAxisPosition::RIGHT)
 {
 }
 
@@ -1207,6 +1225,13 @@ void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
     double right = m_getTicksStart();
     painter.drawLine(right,startScreenY,right,endScreenY);
     painter.restore();
+}
+
+bool widGraphY2Axis::m_dropCurve(std::weak_ptr<graphCurve> ptr_curve)
+{
+    ptr_graph->m_addObject(ptr_curve.lock());
+    ptr_graph->m_setCurveAxis(-1, yAxisPosition::RIGHT);
+    return true;
 }
 
 double widGraphY2Axis::m_getTicksStart()
@@ -1283,16 +1308,19 @@ void widGraphLegend::m_drawTexts(painterAntiAl &painter)
         auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
         if (showLegend) {
             if (ptr_data->m_arrangeToAxes) {
-                int axis = ptr_curveData->m_getPrefferedYAxis();
-                if (axis == 0) {
-                    iColumn = 0;
-                    iRow = iCurveLeft++;
-                    option = Qt::AlignLeft;
-                }
-                else {
-                    iColumn = 1;
-                    iRow = iCurveRight++;
-                    option = Qt::AlignRight;
+                enum yAxisPosition axis = ptr_curveData->m_getPrefferedYAxis();
+                switch (axis) {
+                    case yAxisPosition::LEFT:
+                    default:
+                        iColumn = 0;
+                        iRow = iCurveLeft++;
+                        option = Qt::AlignLeft;
+                    break;
+                    case yAxisPosition::RIGHT:
+                        iColumn = 1;
+                        iRow = iCurveRight++;
+                        option = Qt::AlignRight;
+                    break;
                 }
             }
             else {
@@ -1315,7 +1343,16 @@ void widGraphLegend::m_supDrawText(painterAntiAl &painter,
     Qt::AlignmentFlag option)
 {
     std::string legendText;
-    std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
+    std::string axis;
+    switch (ptr_curveData->m_getPrefferedYAxis()) {
+        case yAxisPosition::LEFT:
+        default:
+            axis = "L";
+        break;
+        case yAxisPosition::RIGHT:
+            axis = "R";
+        break;
+    }
     auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
     if (overwrite)
         legendText = text;
@@ -1369,8 +1406,19 @@ int widGraphLegend::m_getNCurvesWithLegend(int yAxis)
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     for (auto &var:listCurves) {
         auto ptr_varData = var->m_getData().lock();
-        int prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
-        if (yAxis == -1 || yAxis == prefferedYAxis) {
+        enum yAxisPosition prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
+        int prefferedYAxisIndex = -1;
+        switch (prefferedYAxis) {
+        case yAxisPosition::LEFT:
+        default:
+            prefferedYAxisIndex = 0;
+            break;;
+        case yAxisPosition::RIGHT:
+            prefferedYAxisIndex = 1;
+            break;
+        }
+
+        if (yAxis == -1 || yAxis == prefferedYAxisIndex) {
             auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
             if (show)
                 ++nCurvesWithLegend;
@@ -1387,7 +1435,6 @@ int widGraphLegend::m_getNRows()
         int nCurvesLeft = m_getNCurvesWithLegend(0);
         int nCurvesRight = m_getNCurvesWithLegend(1);
         nRows = std::max(nCurvesLeft, nCurvesRight);
-        qDebug() << nCurvesLeft << nCurvesRight << nRows;
     }
     else {
         int nCurves = m_getNCurvesWithLegend();
