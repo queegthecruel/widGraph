@@ -307,9 +307,9 @@ double graphValue::m_getMinX()
 {
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
-        case orientation::HORIZONTAL:
-            return *s_data;
         case orientation::VERTICAL:
+            return *s_data;
+        case orientation::HORIZONTAL:
             return graphObject::m_getMinX();
     }
 }
@@ -318,9 +318,9 @@ double graphValue::m_getMaxX()
 {
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
-        case orientation::HORIZONTAL:
-            return *s_data;
         case orientation::VERTICAL:
+            return *s_data;
+        case orientation::HORIZONTAL:
             return graphObject::m_getMinX();
     }
 }
@@ -329,9 +329,9 @@ double graphValue::m_getMinY()
 {
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
-        case orientation::HORIZONTAL:
-            return graphObject::m_getMinX();
         case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
             return *s_data;
     }
 }
@@ -340,9 +340,9 @@ double graphValue::m_getMaxY()
 {
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
-        case orientation::HORIZONTAL:
-            return graphObject::m_getMinX();
         case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
             return *s_data;
     }
 }
@@ -351,9 +351,9 @@ double graphValue::m_getAvgY()
 {
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
-        case orientation::HORIZONTAL:
-            return graphObject::m_getMinX();
         case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
             return *s_data;
     }
 }
@@ -712,14 +712,16 @@ void graphColumn::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 
 double graphColumn::m_getMinX()
 {
-    auto it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
-    return *it;
+    auto min_it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto max_it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    return *min_it -  0.05 *abs(*max_it - *min_it);;
 }
 
 double graphColumn::m_getMaxX()
 {
-    auto it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
-    return *it;
+    auto min_it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto max_it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    return *max_it + 0.05 *abs(*max_it - *min_it);
 }
 
 double graphColumn::m_getMinY()
