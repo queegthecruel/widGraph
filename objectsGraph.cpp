@@ -9,6 +9,8 @@ graphCurve::graphCurve(std::string name,
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
     m_data->m_setName(name);
+    QIcon icon(":/images/object_curve.png");
+    m_data->m_setIcon(icon);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -38,6 +40,8 @@ graphCurve::graphCurve(std::string name,
     w_dataY(ptr_dataY)
 {
     m_data->m_setName(name);
+    QIcon icon(":/images/object_curve.png");
+    m_data->m_setIcon(icon);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -274,6 +278,8 @@ graphValue::graphValue(std::string name, std::shared_ptr<double> ptr_dataY, orie
     w_data(ptr_dataY)
 {
     m_data->m_setName(name);
+    QIcon icon(":/images/object_value.png");
+    m_data->m_setIcon(icon);
     m_data->m_setConstCurveOrientation(orient);
 
     s_data = w_data.lock();
@@ -437,6 +443,11 @@ void dataGraphObject::m_setName(const std::string name)
     m_name = name;
     if (!m_legendOverwrite)
         m_legendText = name;
+}
+
+void dataGraphObject::m_setIcon(const QIcon &icon)
+{
+    m_icon = icon;
 }
 
 void dataGraphObject::m_setCurveColor(const QColor &color)
@@ -661,6 +672,8 @@ graphColumn::graphColumn(std::string name, std::shared_ptr<std::vector<double> >
     w_dataY(ptr_dataY)
 {
     m_data->m_setName(name);
+    QIcon icon(":/images/object_columns.png");
+    m_data->m_setIcon(icon);
     m_data->m_setStyleOfColumn(30, true);
 
     s_dataY = w_dataY.lock();

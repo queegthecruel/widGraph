@@ -10,5 +10,8 @@
         <file>images/redCross.png</file>
         <file>images/moveDown.png</file>
         <file>images/moveUp.png</file>
+        <file>images/object_columns.png</file>
+        <file>images/object_curve.png</file>
+        <file>images/object_value.png</file>
     </qresource>
 </RCC>

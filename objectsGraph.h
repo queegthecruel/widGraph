@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QDebug>
+#include <QIcon>
 
 // Graph objects
 class widGraph;
@@ -24,7 +25,10 @@ public:
     void m_saveToFile(std::ofstream &outstream);
     inline const std::string &m_getName()
         {return m_name;}
+    inline const QIcon &m_getIcon()
+        {return m_icon;}
     void m_setName(const std::string name);
+    void m_setIcon(const QIcon &icon);
     inline enum yAxisPosition m_getPrefferedYAxis()
         {return m_prefferedYAxis;}
     inline void m_setYAxis(enum yAxisPosition axis)
@@ -119,6 +123,7 @@ public:
 protected:
     yAxisPosition m_prefferedYAxis = yAxisPosition::LEFT;
     std::string m_name;
+    QIcon m_icon;
     // Curve
         bool m_showCurve = true;
         int m_curveR = 0, m_curveG = 0, m_curveB = 0, m_curveA = 255;
