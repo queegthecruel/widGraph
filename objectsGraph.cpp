@@ -325,6 +325,7 @@ double graphValue::m_getMaxX()
     auto [orient] = m_data->m_getConstCurveOrientation();
     switch (orient) {
         case orientation::VERTICAL:
+        default:
             return *s_data;
         case orientation::HORIZONTAL:
             return graphObject::m_getMinX();
@@ -551,7 +552,7 @@ std::tuple<bool> dataGraphObject::m_getOperation()
     return {m_toBeDeleted};
 }
 
-std::tuple<orientation> dataGraphObject::m_getConstCurveOrientation()
+std::tuple<enum orientation> dataGraphObject::m_getConstCurveOrientation()
 {
     return {m_orientation};
 }

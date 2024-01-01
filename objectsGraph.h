@@ -1,7 +1,7 @@
 #ifndef OBJECTSGRAPH_H
 #define OBJECTSGRAPH_H
 
-#include "graph_global.h"
+#include "widGraph_global.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QDebug>

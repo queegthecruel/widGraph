@@ -1,7 +1,7 @@
 #ifndef WIDGRAPH_H
 #define WIDGRAPH_H
 
-#include "graph_global.h"
+#include "widGraph_global.h"
 #include "dataGraph.h"
 #include "objectsGraph.h"
 #include "dialogGraph.h"
