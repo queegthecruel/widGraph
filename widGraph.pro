@@ -18,6 +18,7 @@ SOURCES += \
     dataGraph.cpp \
     dialogGraph.cpp \
     objectsGraph.cpp \
+    supWidgets.cpp \
     widGraph.cpp \
     widPretty.cpp
 
@@ -25,6 +26,7 @@ HEADERS += \
     dataGraph.h \
     dialogGraph.h \
     objectsGraph.h \
+    supWidgets.h \
     widGraph.h \
     widGraph_global.h \
     widPretty.h \
