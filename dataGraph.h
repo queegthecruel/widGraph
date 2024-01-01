@@ -148,6 +148,7 @@ struct dataDrawArea: public dataElement
         dataElement::m_saveToFile(outstream);
     }
     bool m_showGrid = true;
+    bool m_showYAxesAtX = true, m_showXAxesAtY1 = true, m_showXAxesAtY2 = true;
 };
 
 struct dataControl: public dataElement

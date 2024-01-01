@@ -5,19 +5,16 @@ treeWidgetDraggable::treeWidgetDraggable()
 {
     setColumnCount(3);
     setHeaderLabels({"Item", "Unit", "Value"});
-    setColumnWidth(0, 150);
-    setColumnWidth(1, 100);
-    setColumnWidth(2, 100);
+    setColumnWidth(0, 125);
+    setColumnWidth(1, 50);
+    setColumnWidth(2, 75);
     setIndentation(8);
- //   setStyleSheet("QTreeWidget::item {"
- //                     "padding-top: 1px;"
- //                     "height: 20px;"
- //                 "}");
+
     setSelectionMode(QAbstractItemView::SingleSelection);
     setDragDropMode(InternalMove);
     setDragEnabled(false);
     // setFocusPolicy(Qt::NoFocus);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::Ignored);
 }
 
 void treeWidgetDraggable::mousePressEvent(QMouseEvent *event)
@@ -80,16 +77,27 @@ treeWidgetDraggableItem::treeWidgetDraggableItem(
 
 void treeWidgetDraggableItem::m_loadValues()
 {
-    // Name
-        QString name = "Unknown curve";
-        if (auto curve = ptr_object.lock())
-            name = curve->m_getData().lock()->m_getName().c_str();
-        setText(0, name);
     // Icon
         QIcon icon;
         if (auto curve = ptr_object.lock())
-            icon = curve->m_getData().lock()->m_getIcon();
+            icon = curve->m_getIcon();
         setIcon(0, icon);
+    // Name
+        QString name;
+        if (auto curve = ptr_object.lock())
+            name = curve->m_getName().c_str();
+        setText(0, name);
+        setToolTip(0, name);
+    // Name
+        QString unit = "-";
+        setText(1, unit);
+        setToolTip(1, unit);
+    // Info
+        QString info;
+        if (auto curve = ptr_object.lock())
+            info = curve->m_getInfo().c_str();
+        setText(2, info);
+        setToolTip(2, info);
 }
 
 treeWidgetDraggableItemAbstract::treeWidgetDraggableItemAbstract(treeWidgetDraggable *parent):
@@ -180,25 +188,29 @@ void listGraphItems::m_addDataStructure(std::shared_ptr<dataStructure> ptr_dataS
 previewGraph::previewGraph(treeWidgetDraggable *ptr_list):
     ptr_listWithCurves(ptr_list)
 {
-    m_labValues = new label("", "Number of values");
-    m_labMin = new label("", "Minimum value");
-    m_labMax = new label("", "Maximum value");
-    m_labAvg = new label("", "Average value");
-    auto *widHor = new widHorizontal({m_labValues, m_labMin, m_labMax, m_labAvg});
-    widHor->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-
-    label *labPreview = new label("Summary and preview", 12, true);
-    labPreview->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-    m_widGraph = new widGraph();
-    m_widGraph->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
-    m_setGraphParams();
-
-    VBoxLayout *layBackground = new VBoxLayout(this);
-    layBackground->addWidget(labPreview);
-    layBackground->addWidget(widHor);
-    layBackground->addWidget(m_widGraph);
-    setMinimumHeight(200);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    // Title
+        labPreview = new label("", 12, true);
+        labPreview->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    // Info
+        m_labValues = new label("", "Number of values");
+        m_labMin = new label("", "Minimum value");
+        m_labMax = new label("", "Maximum value");
+        m_labAvg = new label("", "Average value");
+        auto *widHor = new widHorizontal({m_labValues, m_labMin, m_labMax, m_labAvg});
+        widHor->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    // Preview
+        m_widGraph = new widGraph();
+        m_widGraph->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+        m_setGraphParams();
+    // Layout
+        VBoxLayout *layBackground = new VBoxLayout(this);
+        layBackground->addWidget(labPreview);
+        layBackground->addWidget(widHor);
+        layBackground->addWidget(m_widGraph);
+        setMinimumHeight(200);
+        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    // Update preview - show default values
+        m_slotUpdateCurve();
 }
 
 void previewGraph::m_setGraphParams()
@@ -223,6 +235,8 @@ QSize previewGraph::sizeHint() const
 void previewGraph::m_slotUpdateCurve()
 {
     m_widGraph->m_removeAllObjects();
+    QString title = "Summary and preview";
+
     double values = qInf();
     double min = qInf();
     double max = qInf();
@@ -230,6 +244,8 @@ void previewGraph::m_slotUpdateCurve()
     auto ptr_item = ptr_listWithCurves->m_getSelectedItem();
     if (ptr_item) {
             auto ptr_object = ptr_item->m_getGraphObject().lock();
+        // Title
+            title = ptr_object->m_getName().c_str();
         // Info
             min = ptr_object->m_getMinY();
             max = ptr_object->m_getMaxY();
@@ -242,9 +258,8 @@ void previewGraph::m_slotUpdateCurve()
                 m_widGraph->m_addObject(ptr_value);
             else if (auto ptr_column = std::dynamic_pointer_cast<graphColumn>(ptr_object))
                 m_widGraph->m_addObject(ptr_column);
-
     }
-
+    labPreview->setText(title);
     m_labValues->setText("Vals: " + QString::number(values) + " ");
     m_labMax->setText("Max: " + QString::number(max) + " ");
     m_labMin->setText("Min: " + QString::number(min) + " ");

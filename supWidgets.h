@@ -49,6 +49,7 @@ public slots:
     void m_slotUpdateCurve();
 private:
     treeWidgetDraggable *ptr_listWithCurves;
+    label *labPreview;
     label *m_labMin, *m_labMax, *m_labAvg, *m_labValues;
     widGraph *m_widGraph;
 };

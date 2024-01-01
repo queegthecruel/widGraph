@@ -178,6 +178,12 @@ int graphCurve::m_getNValues()
     return s_dataY->size();
 }
 
+std::string graphCurve::m_getInfo() const
+{
+    int nValues = w_dataY.lock()->size();
+    return "curve (" + std::to_string(nValues) + " points)";
+}
+
 graphObject::graphObject(
     bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns,
     bool hasLegend, bool hasOrientation)
@@ -192,6 +198,21 @@ graphObject::graphObject(const graphObject &oldGraphObject)
     m_data = std::make_shared<dataGraphObject>(*oldGraphObject.m_data);
 }
 
+const std::string &graphObject::m_getName() const
+{
+    return m_data->m_getName();
+}
+
+const QIcon &graphObject::m_getIcon() const
+{
+    return m_data->m_getIcon();
+}
+/*
+std::string graphObject::m_getInfo() const
+{
+    return "not overriden";
+}
+*/
 enum yAxisPosition graphObject::m_getPrefferedYAxis()
 {
     return m_data->m_getPrefferedYAxis();
@@ -368,6 +389,11 @@ double graphValue::m_getAvgY()
 int graphValue::m_getNValues()
 {
     return 1;
+}
+
+std::string graphValue::m_getInfo() const
+{
+    return std::to_string(*s_data);
 }
 
 QPainterPath graphValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
@@ -764,6 +790,12 @@ int graphColumn::m_getNValues()
 {
     s_dataY = w_dataY.lock();
     return s_dataY->size();
+}
+
+std::string graphColumn::m_getInfo() const
+{
+    int nValues = w_dataY.lock()->size();
+    return std::to_string(nValues) + " columns";
 }
 
 QPainterPath graphColumn::m_getColumnPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y, double columnWidth)

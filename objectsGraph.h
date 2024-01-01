@@ -164,6 +164,9 @@ public:
     virtual double m_getMaxY() {return 0;}
     virtual double m_getAvgY() {return 0;}
     virtual int m_getNValues() {return 0;}
+    const std::string &m_getName() const;
+    const QIcon &m_getIcon() const;
+    virtual std::string m_getInfo() const {return "XXX";};
     void m_setData(std::shared_ptr<dataGraphObject> data)
         {*m_data = *data;}
     enum yAxisPosition m_getPrefferedYAxis();
@@ -195,6 +198,7 @@ public:
     virtual double m_getMaxY() override;
     virtual double m_getAvgY() override;
     virtual int m_getNValues() override;
+    virtual std::string m_getInfo() const override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
     QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);
@@ -216,6 +220,7 @@ public:
     virtual double m_getMaxY() override;
     virtual double m_getAvgY() override;
     virtual int m_getNValues() override;
+    virtual std::string m_getInfo() const override;
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
@@ -236,6 +241,7 @@ public:
     virtual double m_getMaxY() override;
     virtual double m_getAvgY() override;
     virtual int m_getNValues() override;
+    virtual std::string m_getInfo() const override;
 private:
     QPainterPath m_getColumnPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
     QPainterPath m_getColumnBorderPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);

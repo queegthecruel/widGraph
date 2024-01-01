@@ -46,8 +46,8 @@ private:
     void m_zoomByMouse();
     void m_drawHorGrid(painterAntiAl &painter);
     void m_drawVertGrid(painterAntiAl &painter);
-    void m_drawMove(painterAntiAl &painter);
     void m_drawSelectionRectangle(painterAntiAl &painter);
+    void m_drawAxesAtZeroValue(painterAntiAl &painter);
     void m_drawBorder(painterAntiAl &painter);
     void m_drawGrid(painterAntiAl &painter);
     void m_drawGraphObjects(painterAntiAl &painter);
@@ -61,7 +61,7 @@ class widGraphButton: public widGraphElement
 {
     Q_OBJECT
 public:
-    widGraphButton(widGraph *graph, const QImage &icon, const QImage &iconActive, const QString &tooltip);
+    widGraphButton(widGraph *graph, const QIcon &icon, const QIcon &iconActive, const QString &tooltip);
     void paintEvent(QPaintEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -84,7 +84,7 @@ protected:
     bool m_isCheckable = false;
     bool m_isAnimation = false;
     bool m_isVisible = false;
-    QImage m_icon, m_iconActive;
+    QIcon m_icon, m_iconActive;
     QTimer *m_timerAnimation;
 };
 

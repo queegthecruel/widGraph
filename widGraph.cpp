@@ -269,14 +269,16 @@ widGraphDrawArea::widGraphDrawArea(widGraph *graph):
 
 void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
 {
-    m_startingPoint = event->pos();
     m_isMouseZooming = false;
     m_isMouseMoving = false;
-    auto ptr_control = ptr_graph->m_getData().lock()->m_control;
-    if (ptr_control->m_zoom)
-        m_isMouseZooming = true;
-    else if (ptr_control->m_move)
-        m_isMouseMoving = true;
+    if (event->button() == Qt::LeftButton) {
+        m_startingPoint = event->pos();
+        auto ptr_control = ptr_graph->m_getData().lock()->m_control;
+        if (ptr_control->m_zoom)
+            m_isMouseZooming = true;
+        else if (ptr_control->m_move)
+            m_isMouseMoving = true;
+    }
 }
 
 void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
@@ -338,21 +340,6 @@ void widGraphDrawArea::mouseReleaseEvent(QMouseEvent */*event*/)
     ptr_graph->m_loadValues();
 }
 
-void widGraphDrawArea::m_drawMove(painterAntiAl &painter)
-{
-    painter.save();
-    QPoint currentPoint = mapFromGlobal(QCursor::pos());
-    if (m_isMouseMoving) {
-        QPen penRect(Qt::black, 1, Qt::DashLine);
-        painter.setPen(penRect);
-        QLine line(m_startingPoint, currentPoint);
-        painter.setBrush(Qt::red);
-        painter.drawEllipse(m_startingPoint, 2, 2);
-        painter.drawLine(line);
-    }
-    painter.restore();
-}
-
 void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
 {
     painter.save();
@@ -363,6 +350,26 @@ void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
         painter.setPen(penRect);
         QRect rect(m_startingPoint, currentPoint);
         painter.drawRect(rect);
+    }
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawAxesAtZeroValue(painterAntiAl &painter)
+{
+    painter.save();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_drawArea;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
+
+    if (ptr_data->m_showYAxesAtX) {
+        double posYmin = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(ptr_dataX->m_min);
+        double posYmax = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(ptr_dataX->m_max);
+        painter.drawLine(0, posYmin,width(),posYmax);
+    }
+    if (ptr_data->m_showXAxesAtY1) {
+    }
+    if (ptr_data->m_showXAxesAtY2) {
     }
     painter.restore();
 }
@@ -411,8 +418,8 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
         m_drawBorder(painter);
     // Selection rectangle
         m_drawSelectionRectangle(painter);
-    // Move trajectory
-        m_drawMove(painter);
+    // Draw axis
+        m_drawAxesAtZeroValue(painter);
 }
 
 widGraphTitle::widGraphTitle(widGraph *graph):
@@ -566,7 +573,8 @@ std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
             maxX = std::max(maxX, var->m_getMaxX());
         }
     // Return
-        return {minX, maxX};
+        const double BORDER = 0.001;
+        return {minX - BORDER, maxX + BORDER};
 }
 
 void widGraphXAxis::m_setDimensions()
@@ -802,7 +810,8 @@ std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
             maxY = std::max(maxY, var->m_getMaxY());
         }
     }
-    return {minY, maxY};
+    const double BORDER = 0.001;
+    return {minY - BORDER, maxY + BORDER};
 }
 
 void widGraphY1Axis::m_setDimensions()
@@ -1490,7 +1499,7 @@ void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 }
 
 widGraphButton::widGraphButton(widGraph *graph,
-    const QImage &icon, const QImage &iconActive,
+    const QIcon &icon, const QIcon &iconActive,
     const QString &tooltip):
     widGraphElement(graph),
     m_icon(icon), m_iconActive(iconActive)
@@ -1572,12 +1581,14 @@ void widGraphButton::m_drawInside(painterAntiAl &painter)
 {
     painter.save();
     if (m_isCheckable && m_isChecked) {
-        painter.drawImage(QRect(0, 0, width(), height()),
-                          m_iconActive);
+        m_iconActive.paint(&painter, QRect(0, 0, width(), height()));
+//        painter.drawImage(QRect(0, 0, width(), height()),
+//                          m_iconActive);
     }
     else {
-        painter.drawImage(QRect(0, 0, width(), height()),
-                          m_icon);
+        m_icon.paint(&painter, QRect(0, 0, width(), height()));
+//        painter.drawImage(QRect(0, 0, width(), height()),
+//                          m_icon);
     }
     painter.restore();
 }
@@ -1620,8 +1631,8 @@ void widGraphTitleText::m_setDimensions()
 }
 
 widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/autoAxes.png"),
-                   QImage(":/images/autoAxes.png"), "Set automatic axes")
+    widGraphButton(graph, QIcon(":/images/autoAxes.png"),
+                   QIcon(":/images/autoAxes.png"), "Set automatic axes")
 {
 
 }
@@ -1642,8 +1653,8 @@ void widGraphButtonAutoAxes::m_onClick()
 }
 
 widGraphButtonZoomIn::widGraphButtonZoomIn(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOff.png"),
-                   QImage(":/images/zoomOn.png"), "Enable/disable zoom")
+    widGraphButton(graph, QIcon(":/images/zoomOff.png"),
+                   QIcon(":/images/zoomOn.png"), "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1662,8 +1673,8 @@ void widGraphButtonZoomIn::m_onClick()
 }
 
 widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOut.png"),
-                   QImage(":/images/zoomOut.png"), "Zoom out")
+    widGraphButton(graph, QIcon(":/images/zoomOut.png"),
+                   QIcon(":/images/zoomOut.png"), "Zoom out")
 {
 }
 
@@ -1675,8 +1686,8 @@ void widGraphButtonZoomOut::m_onClick()
 }
 
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/moveOff.png"),
-                   QImage(":/images/moveOn.png"), "Enable/disable Move")
+    widGraphButton(graph, QIcon(":/images/moveOff.png"),
+                   QIcon(":/images/moveOn.png"), "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1695,8 +1706,8 @@ void widGraphButtonMove::m_onClick()
 }
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/screenshot.png"),
-                   QImage(":/images/screenshot.png"), "Take a screenshot")
+    widGraphButton(graph, QIcon(":/images/screenshot.png"),
+                   QIcon(":/images/screenshot.png"), "Take a screenshot")
 {
 }
 
