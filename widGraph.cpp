@@ -363,13 +363,16 @@ void widGraphDrawArea::m_drawAxesAtZeroValue(painterAntiAl &painter)
     auto ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
 
     if (ptr_data->m_showYAxesAtX) {
-        double posYmin = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(ptr_dataX->m_min);
-        double posYmax = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(ptr_dataX->m_max);
-        painter.drawLine(0, posYmin,width(),posYmax);
+        double posX = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(posX, 0, posX, height());
     }
     if (ptr_data->m_showXAxesAtY1) {
+        double posY1 = ptr_graph->m_getY1Axis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(0, posY1, width(), posY1);
     }
     if (ptr_data->m_showXAxesAtY2) {
+        double posY2 = ptr_graph->m_getY2Axis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(0, posY2, width(), posY2);
     }
     painter.restore();
 }

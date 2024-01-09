@@ -766,9 +766,9 @@ double graphColumn::m_getMaxX()
 
 double graphColumn::m_getMinY()
 {
-    s_dataY = w_dataY.lock();
-    auto it = std::min_element(std::begin(*s_dataY), std::end(*s_dataY));
-    return *it;
+//    s_dataY = w_dataY.lock();
+//    auto it = std::min_element(std::begin(*s_dataY), std::end(*s_dataY));
+    return 0;
 }
 
 double graphColumn::m_getMaxY()
