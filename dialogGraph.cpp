@@ -270,6 +270,11 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
 
     m_layBackground->addWidget(splitMain);
     splitMain->setSizes({300,600,400});
+
+
+    m_objects2 = new tabGraphSettingsObjects2(ptr_data.lock());
+    m_objects2->show();
+
 }
 
 void graphSettingsWidget::m_loadValues()
@@ -410,14 +415,28 @@ void tabGraphSettingsObjects::m_loadValues()
     int pos = 0;
     for (auto &var: m_vDataCopy) {
         auto *widgetStyle = new widGraphObjectSettingMain(var);
+        auto *widgetAxis = new widGraphObjectSettingAxis();
+        auto *widgetType = new QWidget();
+        auto *widgetCurve = new widGraphObjectSettingCurve();
+        auto *widgetPoints = new widGraphObjectSettingPoints();
+        auto *widgetArea = new widGraphObjectSettingArea();
+        auto *widgetLegend = new widGraphObjectSettingLegend();
         auto *widgetOperation = new widGraphObjectSettingOperation(pos, widgetStyle);
+
+
+
         connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveUp,
                 this, &tabGraphSettingsObjects::m_slotMoveUp);
         connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveDown,
                 this, &tabGraphSettingsObjects::m_slotMoveDown);
-        m_vWidgets.push_back({widgetOperation, widgetStyle});
-        m_tree->m_addChild(var->m_getName(), widgetOperation, widgetStyle);
+        m_vWidgets.push_back({widgetOperation,widgetAxis, widgetStyle});
+        m_tree->m_addChild(var->m_getName(),
+                           {widgetOperation, widgetAxis, widgetType,
+                            widgetCurve, widgetPoints, widgetArea,
+                            widgetLegend,
+                            widgetStyle});
         widgetStyle->m_loadValues();
+//        widgetAxis->m_loadValues();
         widgetOperation->m_loadValues();
         ++pos;
     }
@@ -426,8 +445,9 @@ void tabGraphSettingsObjects::m_loadValues()
 void tabGraphSettingsObjects::m_saveDataInWidgets()
 {
     for (auto &var: m_vWidgets) {
-        auto [ptr_widOperation, ptr_widStyle] = var;
+        auto [ptr_widOperation, ptr_widAxis, ptr_widStyle] = var;
         ptr_widOperation->m_saveValues();
+   //     ptr_widAxis->m_saveValues();
         ptr_widStyle->m_saveValues();
     }
 }
@@ -979,8 +999,8 @@ void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
 
 treeWidgetGraphObjects::treeWidgetGraphObjects()
 {
-    setColumnCount(3);
-    setHeaderLabels({"Object name","Operations","Style"});
+    setColumnCount(9);
+    setHeaderLabels({"Object name", "Operations", "Y Axis", "Type",  "Curve", "Points", "Area", "Legend", "Style"});
     QFont font;
     font.setBold(true);
     font.setPixelSize(12);
@@ -988,6 +1008,7 @@ treeWidgetGraphObjects::treeWidgetGraphObjects()
     header()->setStyleSheet("border:none; border-bottom:1px solid black;");
     setColumnWidth(0, 150);
     setColumnWidth(1, 75);
+    setColumnWidth(2, 60);
     setIndentation(8);
     setStyleSheet("QTreeWidget::item {"
                       "padding-top: 1px 0;"
@@ -1012,7 +1033,8 @@ void treeWidgetGraphObjects::dropEvent(QDropEvent *event)
 }
 
 QTreeWidgetItem *treeWidgetGraphObjects::m_addChild(const std::string &text,
-  QWidget *ptr_widget, QWidget *ptr_widget2, const std::string &tooltip)
+  QVector<QWidget *> widgets,
+  const std::string &tooltip)
 {
     // Create item
         QTreeWidgetItem *item = new QTreeWidgetItem(this);
@@ -1026,10 +1048,23 @@ QTreeWidgetItem *treeWidgetGraphObjects::m_addChild(const std::string &text,
         if (tooltipText == "")
             tooltipText = text;
         item->setToolTip(0, QString::fromStdString(tooltipText));
-    // Second
-        setItemWidget(item, 1, ptr_widget);
-    // Third
-        setItemWidget(item, 2, ptr_widget2);
+
+    // Operation
+    setItemWidget(item, 1, widgets[0]);
+    // Axis
+    setItemWidget(item, 2, widgets[1]);
+    // Axis
+    setItemWidget(item, 3, widgets[2]);
+    // Axis
+    setItemWidget(item, 4, widgets[3]);
+    // Axis
+    setItemWidget(item, 5, widgets[4]);
+    // Axis
+    setItemWidget(item, 6, widgets[5]);
+    // Axis
+    setItemWidget(item, 7, widgets[6]);
+    // Fourth
+        setItemWidget(item, 8, widgets[7]);
     return item;
 }
 
@@ -1145,4 +1180,223 @@ void widGraphObjectSettingOrientation::m_setEnabled(bool enabled)
 {
     m_radioHorizontal->setEnabled(enabled);
     m_radioVertical->setEnabled(enabled);
+}
+
+widGraphObjectSettingAxis::widGraphObjectSettingAxis()
+{
+    m_radioLeft = new radiobutton("L");
+    m_radioRight = new radiobutton("R");
+    m_layBackground->addWidget(m_radioLeft);
+    m_layBackground->addWidget(m_radioRight);
+    m_addEndOfWidget();
+}
+
+void widGraphObjectSettingAxis::m_setValues(yAxisPosition orient)
+{
+    m_radioLeft->m_setChecked(orient == yAxisPosition::LEFT);
+    m_radioRight->m_setChecked(orient == yAxisPosition::RIGHT);
+
+}
+
+std::tuple<yAxisPosition> widGraphObjectSettingAxis::m_getValues()
+{
+    enum yAxisPosition orient;
+    if (m_radioLeft->isChecked())
+        orient = yAxisPosition::LEFT;
+    else if (m_radioLeft->isChecked())
+        orient = yAxisPosition::RIGHT;
+    else
+        orient = yAxisPosition::LEFT;
+    return {orient};
+
+}
+
+void widGraphObjectSettingAxis::m_setEnabled(bool enabled)
+{
+    m_radioLeft->setEnabled(enabled);
+    m_radioRight->setEnabled(enabled);
+}
+
+objectPropertiesTableView::objectPropertiesTableView()
+{
+
+}
+
+int objectPropertiesTableView::rowCount(const QModelIndex &parent) const
+{return 4;}
+
+int objectPropertiesTableView::columnCount(const QModelIndex &parent) const
+{return 6;}
+
+QVariant objectPropertiesTableView::data(const QModelIndex &index, int role) const
+{
+    if (role == Qt::DisplayRole) {
+        return index.row();
+    }
+    if (role == Qt::DecorationRole) {
+        return QIcon(":/images/autoAxes.png");
+    }
+    return QVariant();
+}
+
+QVariant objectPropertiesTableView::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal) {
+        if (role == Qt::DisplayRole) {
+            switch (section) {
+                case NAME: return "Object name";
+                case YAXIS: return "Y axis";
+                case CURVE: return "Curve";
+                case POINTS: return "Points";
+                case AREA: return "Area";
+                case LEGEND: return "Legend";
+            }
+        }
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+Qt::ItemFlags objectPropertiesTableView::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+    return flags;
+}
+
+tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_data):
+    tabGraph("Curves"),
+    ptr_graphData(ptr_data)
+{
+    m_model = new objectPropertiesTableView();
+    m_table = new QTableView();
+    m_table->setModel(m_model);
+
+    delegateYAxis* delYAxis = new delegateYAxis();
+    m_table->setItemDelegateForColumn(objectPropertiesTableView::YAXIS, delYAxis);
+    delegateCurve* delCurve = new delegateCurve();
+    m_table->setItemDelegateForColumn(objectPropertiesTableView::CURVE, delCurve);
+    delegatePoints* delPoints= new delegatePoints();
+    m_table->setItemDelegateForColumn(objectPropertiesTableView::POINTS, delPoints);
+    delegateArea* delArea = new delegateArea();
+    m_table->setItemDelegateForColumn(objectPropertiesTableView::AREA, delArea);
+    delegateLegend* delLegend = new delegateLegend();
+    m_table->setItemDelegateForColumn(objectPropertiesTableView::LEGEND, delLegend);
+
+/*
+    for (int var = 0; var < m_model->rowCount(); ++var)
+    {
+//        m_table->openPersistentEditor(m_model->index(var, 0, QModelIndex()));
+        m_table->openPersistentEditor(m_model->index(var, objectPropertiesTableView::YAXIS, QModelIndex()));
+        m_table->openPersistentEditor(m_model->index(var, objectPropertiesTableView::CURVE, QModelIndex()));
+        m_table->openPersistentEditor(m_model->index(var, objectPropertiesTableView::POINTS, QModelIndex()));
+        m_table->openPersistentEditor(m_model->index(var, objectPropertiesTableView::AREA, QModelIndex()));
+        m_table->openPersistentEditor(m_model->index(var, objectPropertiesTableView::LEGEND, QModelIndex()));
+    }*/
+    m_layBackground->addWidget(m_table);
+}
+
+delegateYAxis::delegateYAxis()
+{
+}
+
+QWidget *delegateYAxis::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingAxis *wid = new widGraphObjectSettingAxis();
+    wid->setParent(parent);
+    return wid;
+}
+
+void delegateYAxis::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingAxis *> (editor);
+    int style = index.data().toInt();
+    wid->m_setValues(yAxisPosition::LEFT);
+}
+
+delegateCurve::delegateCurve()
+{
+}
+
+QWidget *delegateCurve::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingCurve *wid = new widGraphObjectSettingCurve();
+    wid->setParent(parent);
+    return wid;
+}
+
+void delegateCurve::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingCurve *> (editor);
+    int style = index.data().toInt();
+    wid->m_setValues(Qt::red, 2, style, true);
+}
+
+delegatePoints::delegatePoints()
+{
+}
+
+QWidget *delegatePoints::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingPoints *wid = new widGraphObjectSettingPoints();
+    wid->setParent(parent);
+    return wid;
+}
+
+void delegatePoints::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingPoints *> (editor);
+    int style = index.data().toInt();
+    wid->m_setValues(Qt::red, 5, 2, style, true);
+}
+
+delegateArea::delegateArea()
+{
+}
+
+QWidget *delegateArea::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingArea *wid = new widGraphObjectSettingArea();
+    wid->setParent(parent);
+    return wid;
+}
+
+void delegateArea::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingArea *> (editor);
+    int style = index.data().toInt();
+    wid->m_setValues(Qt::red, style, true);
+}
+
+delegateLegend::delegateLegend()
+{
+}
+
+QWidget *delegateLegend::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingLegend *wid = new widGraphObjectSettingLegend();
+    wid->setParent(parent);
+    return wid;
+}
+
+void delegateLegend::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingLegend *> (editor);
+    wid->m_setValues(true, "", true);
+}
+
+delegateOperation::delegateOperation()
+{
+
+}
+
+QWidget *delegateOperation::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+   /* widGraphObjectSettingOperation*wid = new widGraphObjectSettingOperation();
+    wid->setParent(parent);
+    return wid;*/
+}
+
+void delegateOperation::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+  /*  auto *wid = qobject_cast<widGraphObjectSettingOperation *> (editor);
+    wid->m_setValues(true);*/
 }

@@ -1,6 +1,5 @@
 #include "dataGraph.h"
 
-
 dataElement::dataElement() {}
 
 dataElement::dataElement(std::ifstream &) {}
@@ -8,8 +7,6 @@ dataElement::dataElement(std::ifstream &) {}
 void dataElement::m_saveToFile(std::ofstream &)
 {
 }
-
-
 
 dataTitle::dataTitle()
 {

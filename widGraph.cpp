@@ -576,7 +576,7 @@ std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
             maxX = std::max(maxX, var->m_getMaxX());
         }
     // Return
-        const double BORDER = 0.001;
+        const double BORDER = 0.00;
         return {minX - BORDER, maxX + BORDER};
 }
 
@@ -813,7 +813,7 @@ std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
             maxY = std::max(maxY, var->m_getMaxY());
         }
     }
-    const double BORDER = 0.001;
+    const double BORDER = 0.00;
     return {minY - BORDER, maxY + BORDER};
 }
 
