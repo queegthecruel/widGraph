@@ -320,6 +320,7 @@ void combobox::m_addItems(const QVector<QString> &items)
 
 void combobox::m_addItems(const QVector<std::tuple<QString, QIcon> > &items, QSize size, bool showText)
 {
+    blockSignals(true);
     setIconSize(size);
     int index = 0;
     for (auto &var:items) {
@@ -332,6 +333,7 @@ void combobox::m_addItems(const QVector<std::tuple<QString, QIcon> > &items, QSi
         setItemIcon(index, icon);
         ++index;
     }
+    blockSignals(false);
 }
 
 void combobox::m_setCurrentIndex(int index)
@@ -450,9 +452,11 @@ void colorPicker::m_slotColorSelectedAndConfirmed(QColor color)
 
 void colorPicker::m_slotColorConfirmed()
 {
-    m_color = m_butPreview->m_getColor();
-    m_button->m_setColor(m_color);
+    m_setColor(m_butPreview->m_getColor());
+//    m_color = m_butPreview->m_getColor();
+//    m_button->m_setColor(m_color);
     m_menu->hide();
+    emit m_signalColorChanged();
 }
 
 void colorPicker::m_setColor(const QColor &color)

@@ -210,6 +210,8 @@ public:
          QColor(119, 173, 48), QColor(77, 191, 239),
          QColor(163, 20, 47), QColor(17, 119, 51),
          };
+signals:
+    void m_signalColorChanged();
 private:
     QWidget *m_createWidgetWithColorSet(int nColumns, const std::vector<QColor> &vColors, const QString &title);
     void m_createMainButton(HBoxLayout *lay);
