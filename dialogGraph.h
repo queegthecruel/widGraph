@@ -38,6 +38,7 @@ class tabGraphSettings: public tabGraph
 {
 public:
     tabGraphSettings(const QString &name);
+protected:
     treeWidget *m_tree;
 };
 

@@ -254,6 +254,7 @@ checkEdit::checkEdit(enum validator valid)
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->setSpacing(1);
     layBackground->addWidget(m_check);
+    layBackground->addSpacing(1);
     layBackground->addWidget(m_edit);
     layBackground->addStretch();
 }
@@ -293,7 +294,7 @@ spinbox::spinbox(int min, int max):
     setMinimum(min);
     setMaximum(max);
     setMaximumWidth(50);
-    setStyleSheet("spinbox {"
+   /* setStyleSheet("spinbox {"
                     "background: white;"
                     "border: 1px solid gray;"
                   "}"
@@ -305,7 +306,7 @@ spinbox::spinbox(int min, int max):
                     "background: white;"
                     "border: 1px solid darkblue;"
                   "}"
-   );
+   );*/
 }
 void spinbox::m_setValue(int value)
 {

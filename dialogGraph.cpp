@@ -1528,7 +1528,7 @@ bool objectPropertiesTableModel::m_setPoints(int role, const QVariant &value, st
 {
     auto [color, width, shape, style, show] = ptr_object->m_getStyleOfPoints();
     switch (role){
-    case Qt::UserRole + 10:
+    case Qt::UserRole:
          color = value.value<QColor>();
          break;
       case Qt::UserRole + 1:
@@ -1693,7 +1693,7 @@ tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_
 
 void tabGraphSettingsObjects2::m_slotDataChanged()
 {
-    qDebug() << "Data changed";
+
 }
 
 delegateYAxis::delegateYAxis()
