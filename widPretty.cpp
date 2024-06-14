@@ -248,7 +248,9 @@ checkEdit::checkEdit(enum validator valid)
     connect(m_check, &QAbstractButton::toggled,
             m_edit, &QCheckBox::setEnabled);
     connect(m_check, &QAbstractButton::toggled,
-            this, [this](){emit m_signalToggled();});
+            this, &checkEdit::m_slotSendToggled);
+    connect(m_edit, &lineEdit::m_signalTextFinished,
+            this, &checkEdit::m_slotSendEditingFinished);
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->setSpacing(1);
     layBackground->addWidget(m_check);
@@ -273,6 +275,16 @@ void checkEdit::m_setValues(bool checked, double value)
 void checkEdit::m_setEnabled(bool enabled)
 {
     setEnabled(enabled);
+}
+
+void checkEdit::m_slotSendToggled()
+{
+    emit m_signalToggled();
+}
+
+void checkEdit::m_slotSendEditingFinished()
+{
+    emit m_signalEditingFinished();
 }
 
 spinbox::spinbox(int min, int max):

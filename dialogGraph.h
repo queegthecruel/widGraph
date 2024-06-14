@@ -125,8 +125,11 @@ class widGraphObjectSetting: public QWidget
     Q_OBJECT
 public:
     widGraphObjectSetting();
+    void m_setVisible(bool status);
 protected:
     void m_addEndOfWidget();
+    void m_addWidget(QWidget* ptr_widget);
+    void m_addSpacing(int nPixels);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForCurve(int iconWidth = 40, int iconHeight = 15);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForPoints(int iconSize = 17);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForArea(int iconWidth = 40, int iconHeight = 15);
@@ -134,7 +137,10 @@ protected:
     QWidget *m_separator();
 signals:
     void m_signalChanged();
-protected:
+protected slots:
+    void m_slotSendSignalChanged();
+private:
+    QWidget *m_widBackground;
     HBoxLayout *m_layBackground;
 };
 
@@ -265,8 +271,11 @@ public:
     void m_setValues(enum yAxisPosition orient);
     std::tuple<enum yAxisPosition> m_getValues();
     virtual void m_setEnabled(bool enabled) override;
-protected:
+private slots:
+    void m_slotSendSignal(bool status);
+private:
     radiobutton *m_radioLeft, *m_radioRight;
+    yAxisPosition m_state;
 };
 
 class dataGraphObject;
@@ -323,7 +332,6 @@ private:
 private:
     std::weak_ptr<dataGraph> ptr_data;
 };
-
 
 class delegateYAxis: public QStyledItemDelegate
 {
@@ -464,7 +472,7 @@ public:
     ~graphSettingsWidget() = default;
     void m_loadValues();
     void m_saveValues();
-protected:
+private:
     std::weak_ptr<dataGraph> ptr_data;
     std::vector<tabGraph*> m_tabs;
 

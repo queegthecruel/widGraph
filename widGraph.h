@@ -196,7 +196,7 @@ private:
     virtual void m_drawMoveCursor(painterAntiAl &painter) = 0;
     void m_zoomByMouse();
     void m_moveByMouse();
-    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_curve)
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> /*ptr_curve*/)
         {return false;};
 protected:
     virtual double m_getTicksStart() = 0;

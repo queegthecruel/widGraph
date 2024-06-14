@@ -146,8 +146,12 @@ public:
     inline double m_value()
         {return m_edit->m_number();}
     void m_setEnabled(bool enabled);
+private slots:
+    void m_slotSendToggled();
+    void m_slotSendEditingFinished();
 signals:
     void m_signalToggled();
+    void m_signalEditingFinished();
 protected:
     checkbox *m_check;
     lineEdit *m_edit;
