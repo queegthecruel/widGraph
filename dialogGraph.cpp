@@ -432,8 +432,6 @@ void tabGraphSettingsObjects::m_loadValues()
         auto *widgetLegend = new widGraphObjectSettingLegend();
         auto *widgetOperation = new widGraphObjectSettingOperation(pos, widgetStyle);
 
-
-
         connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveUp,
                 this, &tabGraphSettingsObjects::m_slotMoveUp);
         connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveDown,
@@ -571,7 +569,7 @@ void widGraphObjectSettingMain::m_loadValues()
         m_widColumn->m_setValues(columnWidth, columnEnabled);
         if (!data->m_getHasColumn())
             m_widColumn->setVisible(false);
-    // Column
+    // Const curve
         auto [constCurveOrient] = data->m_getConstCurveOrientation();
         m_widOrientation->m_setValues(constCurveOrient);
         if (!data->m_getHasOrientation())
@@ -614,13 +612,15 @@ widGraphObjectSettingCurve::widGraphObjectSettingCurve():
     m_colorPickerCurve = new colorPicker();
     connect(m_colorPickerCurve, &colorPicker::m_signalColorChanged,
             this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
-    //XXX; // probably fires signal after initialization
+    m_colorPickerCurve->setToolTip("Select curve color");
     m_editCurveThick = new spinbox();
     connect(m_editCurveThick, &spinbox::valueChanged,
             this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
+    m_editCurveThick->setToolTip("Curve thickness");
     m_comboCurveStyle = new combobox(65);
     connect(m_comboCurveStyle, &combobox::currentIndexChanged,
             this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
+    m_comboCurveStyle->setToolTip("Curve style");
 
     int iconWidth = 40;
     int iconHeight = 15;
@@ -663,6 +663,7 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
 widGraphObjectSettingWithName::widGraphObjectSettingWithName(const QString &name)
 {
     m_checkEnable = new checkbox(name + ": ");
+    m_checkEnable->setToolTip("Show " + name.toLower());
     m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
                                  "QCheckBox::unchecked {color:gray;}"
                                  "QCheckBox::disabled {color:gray;}");
@@ -757,15 +758,19 @@ widGraphObjectSettingPoints::widGraphObjectSettingPoints():
     m_colorPickerPoints = new colorPicker();
     connect(m_colorPickerPoints, &colorPicker::m_signalColorChanged,
             this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_colorPickerPoints->setToolTip("Select points color");
     m_editThickness = new spinbox();
     connect(m_editThickness, &spinbox::valueChanged,
             this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_editThickness->setToolTip("Set pen thickness");
     m_editShapeSize = new spinbox();
     connect(m_editShapeSize, &spinbox::valueChanged,
             this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_editShapeSize->setToolTip("Set size of point");
     m_comboShape = new combobox(50);
     connect(m_comboShape, &combobox::currentIndexChanged,
             this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_comboShape->setToolTip("Select shape of points");
 
     int iconSize = 17;
     auto vOptions = m_getIconsForPoints(iconSize);
@@ -859,9 +864,11 @@ widGraphObjectSettingArea::widGraphObjectSettingArea():
     m_colorPickerArea = new colorPicker();
     connect(m_colorPickerArea, &colorPicker::m_signalColorChanged,
             this, &widGraphObjectSettingArea::m_slotSendSignalChanged);
+    m_colorPickerArea->setToolTip("Select color of area below curve");
     m_comboAreaStyle = new combobox(65);
     connect(m_comboAreaStyle, &combobox::currentIndexChanged,
             this, &widGraphObjectSettingArea::m_slotSendSignalChanged);
+    m_comboAreaStyle->setToolTip("Select style of area filling");
 
     int iconWidth = 40;
     int iconHeight = 15;
@@ -1031,7 +1038,7 @@ widGraphObjectSettingLegend::widGraphObjectSettingLegend():
     widGraphObjectSettingWithName("Legend")
 {
     m_editText = new checkEdit(validator::NONE);
-
+    m_editText->setToolTip("Overwrite text in legend");
     connect(m_editText, &checkEdit::m_signalToggled,
             this, &widGraphObjectSettingLegend::m_slotSendSignalChanged);
     connect(m_editText, &checkEdit::m_signalEditingFinished,
@@ -1250,9 +1257,11 @@ widGraphObjectSettingAxis::widGraphObjectSettingAxis()
     m_radioLeft = new radiobutton("L");
     connect(m_radioLeft, &radiobutton::toggled,
             this, &widGraphObjectSettingAxis::m_slotSendSignal);
+    m_radioLeft->setToolTip("Left y axis");
     m_radioRight = new radiobutton("R");
     connect(m_radioRight, &radiobutton::toggled,
             this, &widGraphObjectSettingAxis::m_slotSendSignal);
+    m_radioRight->setToolTip("Right y axis");
     m_addWidget(m_radioLeft);
     m_addWidget(m_radioRight);
     m_addEndOfWidget();
@@ -1445,6 +1454,7 @@ QVariant objectPropertiesTableModel::m_name(int role, std::shared_ptr<dataGraphO
     auto text = ptr_object->m_getName();
     switch (role) {
     case Qt::DisplayRole:
+    case Qt::ToolTipRole:
         return QString::fromStdString(text);
     case Qt::FontRole:
         {QFont font;
@@ -1658,7 +1668,6 @@ tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_
     connect(m_model, &objectPropertiesTableModel::dataChanged,
             this, &tabGraphSettingsObjects2::m_slotDataChanged);
 
-
     delegateYAxis* delYAxis = new delegateYAxis();
     m_table->setItemDelegateForColumn(
                 objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::YAXIS),
@@ -1688,7 +1697,6 @@ tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_
                 m_table->openPersistentEditor(m_model->index(row, col));
 
     m_layBackground->addWidget(m_table);
-//    resize(1200, height());
 }
 
 void tabGraphSettingsObjects2::m_slotDataChanged()
