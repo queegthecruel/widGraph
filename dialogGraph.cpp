@@ -249,11 +249,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_yAxis2 = new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2);
     m_legend = new tabGraphSettingsLegend(ptr_data.lock()->m_legend);
     m_drawArea = new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea);
-    m_objects = new tabGraphSettingsObjects(ptr_data.lock());
-
-
-    m_objects2 = new tabGraphSettingsObjects2(ptr_data.lock());
-//    m_objects2->show();
+    m_objects2 = new tabGraphSettingsObjects(ptr_data.lock());
 
     m_tabs.push_back(m_title);
     m_tabs.push_back(m_xAxis);
@@ -261,8 +257,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_tabs.push_back(m_yAxis2);
     m_tabs.push_back(m_legend);
     m_tabs.push_back(m_drawArea);
-    // m_tabs.push_back(m_objects);
-    m_tabs.push_back(m_objects2);
+    m_tabs.push_back(m_objects);
 
     QSplitter *splitGeneral = new QSplitter(Qt::Horizontal);
     splitGeneral->addWidget(m_title);
@@ -276,7 +271,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     QSplitter *splitMain = new QSplitter(Qt::Vertical);
     splitMain->addWidget(splitGeneral);
     splitMain->addWidget(splitAxes);
-    splitMain->addWidget(m_objects2);
+    splitMain->addWidget(m_objects);
 
     m_layBackground->addWidget(splitMain);
     splitMain->setSizes({300,600,600});
@@ -392,138 +387,6 @@ void tabGraphSettingsAxis::m_slotAutoStepToggled()
 }
 
 
-tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data):
-    tabGraph("Curves"),
-    ptr_graphData(ptr_data)
-{
-    m_createCopyOfGraphData();
-    m_tree = new treeWidgetGraphObjects();
-    m_layBackground->addWidget(m_tree);
-    connect(m_tree, &treeWidgetGraphObjects::m_signalMoved,
-            this, &tabGraphSettingsObjects::m_slotMoved);
-}
-
-void tabGraphSettingsObjects::m_createCopyOfGraphData()
-{
-    m_vDataCopy.clear();
-    m_vOrder.clear();
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    for (unsigned int i = 0; i < ptr_vGraphObjects.size(); ++i) {
-        m_vOrder.push_back(i);
-        auto ptr_graphData = ptr_vGraphObjects[i]->m_getData();
-        auto newData = std::make_shared<dataGraphObject>(*ptr_graphData.lock());
-        m_vDataCopy.push_back(newData);
-    }
-}
-
-void tabGraphSettingsObjects::m_loadValues()
-{
-    m_vWidgets.clear();
-    m_tree->clear();
-
-    int pos = 0;
-    for (auto &var: m_vDataCopy) {
-        auto *widgetStyle = new widGraphObjectSettingMain(var);
-        auto *widgetAxis = new widGraphObjectSettingAxis();
-        auto *widgetType = new QWidget();
-        auto *widgetCurve = new widGraphObjectSettingCurve();
-        auto *widgetPoints = new widGraphObjectSettingPoints();
-        auto *widgetArea = new widGraphObjectSettingArea();
-        auto *widgetLegend = new widGraphObjectSettingLegend();
-        auto *widgetOperation = new widGraphObjectSettingOperation(pos, widgetStyle);
-
-        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveUp,
-                this, &tabGraphSettingsObjects::m_slotMoveUp);
-        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveDown,
-                this, &tabGraphSettingsObjects::m_slotMoveDown);
-        m_vWidgets.push_back({widgetOperation,widgetAxis, widgetStyle});
-        m_tree->m_addChild(var->m_getName(),
-                           {widgetOperation, widgetAxis, widgetType,
-                            widgetCurve, widgetPoints, widgetArea,
-                            widgetLegend,
-                            widgetStyle});
-        widgetStyle->m_loadValues();
-//        widgetAxis->m_loadValues();
-        widgetOperation->m_loadValues();
-        ++pos;
-    }
-}
-
-void tabGraphSettingsObjects::m_saveDataInWidgets()
-{
-    for (auto &var: m_vWidgets) {
-        auto [ptr_widOperation, ptr_widAxis, ptr_widStyle] = var;
-        ptr_widOperation->m_saveValues();
-   //     ptr_widAxis->m_saveValues();
-        ptr_widStyle->m_saveValues();
-    }
-}
-
-void tabGraphSettingsObjects::m_reorderObjectsInGraph()
-{
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    std::vector<std::shared_ptr<graphObject>> vDialogObjects;
-    // Reorder
-    vDialogObjects.resize(m_vOrder.size());
-    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
-        vDialogObjects[i] = ptr_vGraphObjects[m_vOrder[i]];
-    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
-        ptr_vGraphObjects[i] = vDialogObjects[i];
-    // Assign data
-    for (unsigned int i = 0; i < m_vDataCopy.size(); ++i)
-        ptr_vGraphObjects[i]->m_setData(m_vDataCopy[i]);
-}
-
-void tabGraphSettingsObjects::m_deleteDeletedItemsInGraph()
-{
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    for (int i = ptr_vGraphObjects.size() - 1; i >= 0; --i)
-    {
-        auto [toBeDeleted] = ptr_vGraphObjects[i]->m_getData().lock()->m_getOperation();
-        if (toBeDeleted)
-            ptr_vGraphObjects.erase(ptr_vGraphObjects.begin() + i);
-    }
-}
-
-void tabGraphSettingsObjects::m_saveValues()
-{
-    // Save data in the widgets
-        m_saveDataInWidgets();
-    // Reorder the objects - if moved by user
-        m_reorderObjectsInGraph();
-    // Delete - if deleted by user
-        m_deleteDeletedItemsInGraph();
-    // Create copy of data from graphs for use in widgets
-        m_createCopyOfGraphData();
-    // Load values
-        m_loadValues();
-}
-
-void tabGraphSettingsObjects::m_slotMoved(int from, int to)
-{
-    int maxIndex = (int) m_vDataCopy.size() - 1;
-    from = std::max(from, 0);
-    from = std::min(from, maxIndex);
-    to = std::max(to, 0);
-    to = std::min(to, maxIndex);
-    m_saveDataInWidgets();
-    std::swap(*m_vDataCopy[to], *m_vDataCopy[from]);
-    std::swap(m_vOrder[to], m_vOrder[from]);
-    m_loadValues();
-}
-
-void tabGraphSettingsObjects::m_slotMoveUp(int from)
-{
-    int to = from - 1;
-    m_slotMoved(from, to);
-}
-
-void tabGraphSettingsObjects::m_slotMoveDown(int from)
-{
-    int to = from + 1;
-    m_slotMoved(from, to);
-}
-
 widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
     ptr_data(data)
 {
@@ -594,7 +457,7 @@ void widGraphObjectSettingMain::m_saveValues()
     // Area
         auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
         data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
-    // Column
+    // Orientation
         auto [constCurveOrient] = m_widOrientation->m_getValues();
         data->m_setConstCurveOrientation(constCurveOrient);
     // Column
@@ -662,11 +525,8 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
 
 widGraphObjectSettingWithName::widGraphObjectSettingWithName(const QString &name)
 {
-    m_checkEnable = new checkbox(name + ": ");
+    m_checkEnable = new checkbox("");
     m_checkEnable->setToolTip("Show " + name.toLower());
-    m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
-                                 "QCheckBox::unchecked {color:gray;}"
-                                 "QCheckBox::disabled {color:gray;}");
     connect(m_checkEnable, &QCheckBox::toggled,
             this, &widGraphObjectSettingWithName::m_slotEnabledToggled);
     connect(m_checkEnable, &QCheckBox::toggled,
@@ -701,7 +561,7 @@ widGraphObjectSetting::widGraphObjectSetting()
     lay->addWidget(m_widBackground);
     m_layBackground = new HBoxLayout(m_widBackground);
     m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(m_separator());
+  //  m_layBackground->addWidget(m_separator());
     m_layBackground->addSpacing(1);
 }
 
@@ -1008,7 +868,7 @@ widGraphObjectSettingColumn::widGraphObjectSettingColumn():
     widGraphObjectSettingWithName("Column")
 {
     m_editColumnThick = new spinbox();
-
+    m_editColumnThick->setToolTip("Set column thickness");
     connect(m_editColumnThick, &spinbox::valueChanged,
             this, &widGraphObjectSettingColumn::m_slotSendSignalChanged);
     m_addWidget(m_editColumnThick);
@@ -1319,7 +1179,7 @@ int objectPropertiesTableModel::rowCount(const QModelIndex &/*parent*/) const
 {return ptr_data.lock()->m_vectorOfObjects.size();}
 
 int objectPropertiesTableModel::columnCount(const QModelIndex &/*parent*/) const
-{return 6;}
+{return 7;}
 
 QVariant objectPropertiesTableModel::data(const QModelIndex &index, int role) const
 {
@@ -1340,6 +1200,8 @@ QVariant objectPropertiesTableModel::data(const QModelIndex &index, int role) co
         return m_area(role, ptr_objectData);
       case objectPropertiesColumns::LEGEND:
         return m_legend(role, ptr_objectData);
+      case objectPropertiesColumns::COLUMN:
+        return m_column(role, ptr_objectData);
     }
     return QVariant();
 }
@@ -1363,6 +1225,8 @@ bool objectPropertiesTableModel::setData(const QModelIndex &index, const QVarian
         return m_setArea(role, value, ptr_objectData);
       case objectPropertiesColumns::LEGEND:
         return m_setLegend(role, value, ptr_objectData);
+      case objectPropertiesColumns::COLUMN:
+        return m_setColumn(role, value, ptr_objectData);
     }
     return true;
 }
@@ -1381,6 +1245,7 @@ QVariant objectPropertiesTableModel::headerData(int section, Qt::Orientation ori
                 case objectPropertiesColumns::POINTS: return "Points";
                 case objectPropertiesColumns::AREA: return "Area";
                 case objectPropertiesColumns::LEGEND: return "Legend";
+                case objectPropertiesColumns::COLUMN: return "Column";
               }
             break;
         }
@@ -1405,6 +1270,7 @@ Qt::ItemFlags objectPropertiesTableModel::flags(const QModelIndex &index) const
       case objectPropertiesColumns::POINTS:
       case objectPropertiesColumns::AREA:
       case objectPropertiesColumns::LEGEND:
+      case objectPropertiesColumns::COLUMN:
         flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
         break;
     }
@@ -1426,6 +1292,8 @@ int objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns col
       return 4;
     case objectPropertiesColumns::LEGEND:
       return 5;
+    case objectPropertiesColumns::COLUMN:
+      return 6;
   }
 }
 
@@ -1438,13 +1306,14 @@ objectPropertiesColumns objectPropertiesTableModel::m_getEnumFromIndex(int index
     case 3: return objectPropertiesColumns::POINTS;
     case 4: return objectPropertiesColumns::AREA;
     case 5: return objectPropertiesColumns::LEGEND;
+    case 6: return objectPropertiesColumns::COLUMN;
   default:
       qDebug() << "Unknown enum objectPropertiesColumns";
       return objectPropertiesColumns::NAME;
   }
 }
 
-bool objectPropertiesTableModel::m_setName(int role, const QVariant &/*value*/, std::shared_ptr<dataGraphObject> /*ptr_object*/)
+bool objectPropertiesTableModel::m_setName(int /*role*/, const QVariant &/*value*/, std::shared_ptr<dataGraphObject> /*ptr_object*/)
 {
     return true;
 }
@@ -1620,6 +1489,38 @@ QVariant objectPropertiesTableModel::m_legend(int role, std::shared_ptr<dataGrap
     }
 }
 
+bool objectPropertiesTableModel::m_setColumn(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [width, show] = ptr_object->m_getStyleOfColumns();
+    switch (role){
+      case Qt::UserRole:
+         width = value.value<int>();
+         break;
+      case Qt::UserRole + 1:
+         show = value.value<bool>();
+         break;
+      default:
+         return false;
+    }
+    ptr_object->m_setStyleOfColumn(width, show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_column(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [width, show] = ptr_object->m_getStyleOfColumns();
+    switch (role){
+    case Qt::UserRole + 10:
+        return ptr_object->m_getHasColumn();
+      case Qt::UserRole:
+          return width;
+      case Qt::UserRole + 1:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
 bool objectPropertiesTableModel::m_setArea(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
 {
     auto [color, style, show] = ptr_object->m_getStyleOfArea();
@@ -1658,16 +1559,35 @@ QVariant objectPropertiesTableModel::m_area(int role, std::shared_ptr<dataGraphO
     }
 }
 
-tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_data):
+tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data):
     tabGraph("Curves"),
     ptr_graphData(ptr_data)
+{
+    m_createTableAndModel();
+    m_layBackground->addWidget(m_table);
+}
+
+void tabGraphSettingsObjects::m_createTableAndModel()
 {
     m_model = new objectPropertiesTableModel(ptr_graphData.lock());
     m_table = new QTableView();
     m_table->setModel(m_model);
     connect(m_model, &objectPropertiesTableModel::dataChanged,
-            this, &tabGraphSettingsObjects2::m_slotDataChanged);
+            this, &tabGraphSettingsObjects::m_slotDataChanged);
+    m_setDelegatesToTableColumns();
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+    m_table->setColumnWidth(0, 200);
+    for (int row = 0; row < m_model->rowCount(); ++row)
+        for (int col = 0; col < m_model->columnCount(); ++col)
+            if (col != 0)
+                m_table->openPersistentEditor(m_model->index(row, col));
+}
 
+void tabGraphSettingsObjects::m_setDelegatesToTableColumns()
+{
     delegateYAxis* delYAxis = new delegateYAxis();
     m_table->setItemDelegateForColumn(
                 objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::YAXIS),
@@ -1688,18 +1608,13 @@ tabGraphSettingsObjects2::tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_
     m_table->setItemDelegateForColumn(
                 objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::LEGEND),
                 delLegend);
-
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-
-    for (int row = 0; row < m_model->rowCount(); ++row)
-        for (int col = 0; col < m_model->columnCount(); ++col)
-            if (col != 0)
-                m_table->openPersistentEditor(m_model->index(row, col));
-
-    m_layBackground->addWidget(m_table);
+    delegateColumn* delColumn = new delegateColumn();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::COLUMN),
+                delColumn);
 }
 
-void tabGraphSettingsObjects2::m_slotDataChanged()
+void tabGraphSettingsObjects::m_slotDataChanged()
 {
 
 }
@@ -1904,7 +1819,7 @@ void delegateLegend::setEditorData(QWidget *editor, const QModelIndex &index) co
     std::string text = index.data(Qt::UserRole + 1).value<QString>().toStdString();
     bool show = index.data(Qt::UserRole + 2).value<bool>();
     wid->m_setValues(overwrite, text, show);
-    wid->setVisible(isShown);
+    wid->m_setVisible(isShown);
 }
 
 void delegateLegend::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
@@ -1945,3 +1860,42 @@ void delegateOperation::setModelData(QWidget * editor,
                                      QAbstractItemModel * model,
                                      const QModelIndex &index) const {}
 
+
+delegateColumn::delegateColumn()
+{
+
+}
+
+QWidget *delegateColumn::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingColumn *wid = new widGraphObjectSettingColumn();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingColumn::m_signalChanged,
+            this, &delegateColumn::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateColumn::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    int width = index.data(Qt::UserRole).value<int>();
+    bool show = index.data(Qt::UserRole + 1).value<bool>();
+    wid->m_setValues(width, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegateColumn::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (editor);
+    auto [width, show] = wid->m_getValues();
+    model->setData(index, width, Qt::UserRole);
+    model->setData(index, show, Qt::UserRole + 1);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1});
+}
+
+void delegateColumn::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (sender());
+    emit commitData(wid);
+}

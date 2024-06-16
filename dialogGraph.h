@@ -303,7 +303,7 @@ protected:
 #include <QAbstractTableModel>
 #include <QTableView>
 #include <QStyledItemDelegate>
-enum class objectPropertiesColumns {NAME, YAXIS, CURVE, POINTS, AREA, LEGEND};
+enum class objectPropertiesColumns {NAME, YAXIS, CURVE, POINTS, AREA, LEGEND, COLUMN};
 class objectPropertiesTableModel: public QAbstractTableModel
 {
 public:
@@ -330,6 +330,8 @@ private:
     QVariant m_area(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
     bool m_setLegend(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
     QVariant m_legend(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setColumn(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_column(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
 private:
     std::weak_ptr<dataGraph> ptr_data;
 };
@@ -403,13 +405,28 @@ private slots:
     void commitAndCloseEditor();
 };
 
-class tabGraphSettingsObjects2: public tabGraph
+class delegateColumn: public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    tabGraphSettingsObjects2(std::weak_ptr<dataGraph> ptr_data);
+    delegateColumn();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class tabGraphSettingsObjects: public tabGraph
+{
+    Q_OBJECT
+public:
+    tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data);
     void m_loadValues() {}
     void m_saveValues() {}
+private:
+    void m_createTableAndModel();
+    void m_setDelegatesToTableColumns();
 signals:
     void m_graphDataChanged();
 private slots:
@@ -418,33 +435,6 @@ private:
     std::weak_ptr<dataGraph> ptr_graphData;
     objectPropertiesTableModel *m_model;
     QTableView *m_table;
-};
-
-class tabGraphSettingsObjects: public tabGraph
-{
-    Q_OBJECT
-public:
-    tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data);
-    virtual void m_loadValues() override;
-    virtual void m_saveValues() override;
-private:
-    void m_createCopyOfGraphData();
-    void m_saveDataInWidgets();
-    void m_reorderObjectsInGraph();
-    void m_deleteDeletedItemsInGraph();
-private slots:
-    void m_slotMoved(int from, int to);
-    void m_slotMoveUp(int from);
-    void m_slotMoveDown(int from);
-protected:
-    treeWidgetGraphObjects *m_tree;
-    std::weak_ptr<dataGraph> ptr_graphData;
-    std::vector<std::shared_ptr<dataGraphObject>> m_vDataCopy;
-    std::vector<int> m_vOrder;
-    std::vector<std::tuple<widGraphObjectSettingOperation*,
-                           widGraphObjectSettingAxis*,
-                           widGraphObjectSettingMain*
-    >> m_vWidgets;
 };
 
 class tabGraphSettingsLegend: public tabGraphSettings
@@ -483,8 +473,8 @@ private:
     tabGraphSettingsY2Axis *m_yAxis2;
     tabGraphSettingsLegend *m_legend;
     tabGraphSettingsDrawArea *m_drawArea;
+//    tabGraphSettingsObjects *m_objects;
     tabGraphSettingsObjects *m_objects;
-    tabGraphSettingsObjects2 *m_objects2;
 
     QVBoxLayout *m_layBackground;
 };

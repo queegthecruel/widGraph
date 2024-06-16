@@ -1389,21 +1389,25 @@ void widGraphLegend::m_supDrawText(painterAntiAl &painter,
     Qt::AlignmentFlag option)
 {
     std::string legendText;
-    std::string axis;
-    switch (ptr_curveData->m_getPrefferedYAxis()) {
-        case yAxisPosition::LEFT:
-        default:
-            axis = "L";
-        break;
-        case yAxisPosition::RIGHT:
-            axis = "R";
-        break;
-    }
     auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
     if (overwrite)
         legendText = text;
     else
-        legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
+        legendText = ptr_curveData->m_getName();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (!ptr_data->m_arrangeToAxes) {
+        std::string axis;
+        switch (ptr_curveData->m_getPrefferedYAxis()) {
+            case yAxisPosition::LEFT:
+            default:
+                axis = "L";
+            break;
+            case yAxisPosition::RIGHT:
+                axis = "R";
+            break;
+        }
+        legendText = legendText  + " [" + axis + "]";
+    }
     painter.drawText(rect, QString::fromStdString(legendText), option | Qt:: AlignVCenter);
 
 }
