@@ -339,6 +339,7 @@ double graphValue::m_getMinX()
         case orientation::HORIZONTAL:
             return graphObject::m_getMinX();
     }
+    return 0;
 }
 
 double graphValue::m_getMaxX()
@@ -351,6 +352,7 @@ double graphValue::m_getMaxX()
         case orientation::HORIZONTAL:
             return graphObject::m_getMinX();
     }
+    return 0;
 }
 
 double graphValue::m_getMinY()
@@ -362,6 +364,7 @@ double graphValue::m_getMinY()
         case orientation::HORIZONTAL:
             return *s_data;
     }
+    return 0;
 }
 
 double graphValue::m_getMaxY()
@@ -373,6 +376,7 @@ double graphValue::m_getMaxY()
         case orientation::HORIZONTAL:
             return *s_data;
     }
+    return 0;
 }
 
 double graphValue::m_getAvgY()
@@ -384,6 +388,7 @@ double graphValue::m_getAvgY()
         case orientation::HORIZONTAL:
             return *s_data;
     }
+    return 0;
 }
 
 int graphValue::m_getNValues()

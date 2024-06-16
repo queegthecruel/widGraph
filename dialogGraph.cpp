@@ -249,7 +249,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_yAxis2 = new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2);
     m_legend = new tabGraphSettingsLegend(ptr_data.lock()->m_legend);
     m_drawArea = new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea);
-    m_objects2 = new tabGraphSettingsObjects(ptr_data.lock());
+    m_objects = new tabGraphSettingsObjects(ptr_data.lock());
 
     m_tabs.push_back(m_title);
     m_tabs.push_back(m_xAxis);
@@ -387,90 +387,9 @@ void tabGraphSettingsAxis::m_slotAutoStepToggled()
 }
 
 
-widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
-    ptr_data(data)
-{
-    HBoxLayout *lay = new HBoxLayout(this);
-    m_widOrientation = new widGraphObjectSettingOrientation();
-    lay->addWidget(m_widOrientation, 1);
-    m_widColumn = new widGraphObjectSettingColumn();
-    lay->addWidget(m_widColumn, 1);
-    m_widCurve = new widGraphObjectSettingCurve();
-    lay->addWidget(m_widCurve, 1);
-    m_widPoints = new widGraphObjectSettingPoints();
-    lay->addWidget(m_widPoints, 1);
-    m_widArea = new widGraphObjectSettingArea();
-    lay->addWidget(m_widArea, 1);
-    m_widLegend = new widGraphObjectSettingLegend();
-    lay->addWidget(m_widLegend);
-    lay->addStretch(10);
-}
-
-void widGraphObjectSettingMain::m_loadValues()
-{
-    auto data = ptr_data.lock();
-    // Curve
-        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled]
-                = data->m_getStyleOfCurve();
-        m_widCurve->m_setValues(curveColor, curveWidth, curveStyleIndex, curveEnabled);
-        if (!data->m_getHasCurve())
-            m_widCurve->setVisible(false);
-    // Points
-        auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled]
-                = data->m_getStyleOfPoints();
-        m_widPoints->m_setValues(pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled);
-        if (!data->m_getHasPoints())
-            m_widPoints->setVisible(false);
-    // Area
-        auto [areaColor, areaStyleIndex, areaEnabled]
-                = data->m_getStyleOfArea();
-        m_widArea->m_setValues(areaColor, areaStyleIndex, areaEnabled);
-        if (!data->m_getHasArea())
-            m_widArea->setVisible(false);
-    // Column
-        auto [columnWidth, columnEnabled] = data->m_getStyleOfColumns();
-        m_widColumn->m_setValues(columnWidth, columnEnabled);
-        if (!data->m_getHasColumn())
-            m_widColumn->setVisible(false);
-    // Const curve
-        auto [constCurveOrient] = data->m_getConstCurveOrientation();
-        m_widOrientation->m_setValues(constCurveOrient);
-        if (!data->m_getHasOrientation())
-            m_widOrientation->setVisible(false);
-    // Legend
-        auto [legendOverwrite, legendText, legendEnabled]
-                = data->m_getStyleOfLegend();
-        m_widLegend->m_setValues(legendOverwrite, legendText, legendEnabled);
-        if (!data->m_getHasLegend())
-            m_widLegend->setVisible(false);
- }
-
-void widGraphObjectSettingMain::m_saveValues()
-{
-    auto data = ptr_data.lock();
-    // Curve
-        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_widCurve->m_getValues();
-        data->m_setStyleOfCurve(curveColor, curveWidth, curveStyleIndex, curveEnabled);
-    // Points
-        auto [pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled] = m_widPoints->m_getValues();
-        data->m_setStyleOfPoints(pointsColor, pointsWidth, pointsShapeSize, pointsStyleIndex, pointsEnabled);
-    // Area
-        auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
-        data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
-    // Orientation
-        auto [constCurveOrient] = m_widOrientation->m_getValues();
-        data->m_setConstCurveOrientation(constCurveOrient);
-    // Column
-        auto [columnWidth, columnEnabled] = m_widColumn->m_getValues();
-        data->m_setStyleOfColumn(columnWidth, columnEnabled);
-    // Legend
-        auto [legendOverwrite, legendText, legendEnabled] = m_widLegend->m_getValues();
-        data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
- }
-
 
 widGraphObjectSettingCurve::widGraphObjectSettingCurve():
-    widGraphObjectSettingWithName("Curve")
+    widGraphObjectSettingWithCheck("Curve")
 {
     m_colorPickerCurve = new colorPicker();
     connect(m_colorPickerCurve, &colorPicker::m_signalColorChanged,
@@ -523,14 +442,14 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
     m_comboCurveStyle->setEnabled(enabled);
 }
 
-widGraphObjectSettingWithName::widGraphObjectSettingWithName(const QString &name)
+widGraphObjectSettingWithCheck::widGraphObjectSettingWithCheck(const QString &name)
 {
     m_checkEnable = new checkbox("");
     m_checkEnable->setToolTip("Show " + name.toLower());
     connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingWithName::m_slotEnabledToggled);
+            this, &widGraphObjectSettingWithCheck::m_slotEnabledToggled);
     connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingWithName::m_slotSendSignalChanged);
+            this, &widGraphObjectSettingWithCheck::m_slotSendSignalChanged);
     m_addWidget(m_checkEnable);
     m_addSpacing(1);
 }
@@ -613,7 +532,7 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(i
 }
 
 widGraphObjectSettingPoints::widGraphObjectSettingPoints():
-    widGraphObjectSettingWithName("Points")
+    widGraphObjectSettingWithCheck("Points")
 {
     m_colorPickerPoints = new colorPicker();
     connect(m_colorPickerPoints, &colorPicker::m_signalColorChanged,
@@ -670,7 +589,7 @@ void widGraphObjectSettingPoints::m_setEnabled(bool enabled)
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
 }
-void widGraphObjectSettingWithName::m_slotEnabledToggled()
+void widGraphObjectSettingWithCheck::m_slotEnabledToggled()
 {
     m_checkEnable->setEnabled(true);
     bool enabled = m_checkEnable->isChecked();
@@ -719,7 +638,7 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
 }
 
 widGraphObjectSettingArea::widGraphObjectSettingArea():
-    widGraphObjectSettingWithName("Area")
+    widGraphObjectSettingWithCheck("Area")
 {
     m_colorPickerArea = new colorPicker();
     connect(m_colorPickerArea, &colorPicker::m_signalColorChanged,
@@ -865,7 +784,7 @@ void widGraphObjectSetting::m_slotSendSignalChanged()
 }
 
 widGraphObjectSettingColumn::widGraphObjectSettingColumn():
-    widGraphObjectSettingWithName("Column")
+    widGraphObjectSettingWithCheck("Column")
 {
     m_editColumnThick = new spinbox();
     m_editColumnThick->setToolTip("Set column thickness");
@@ -895,7 +814,7 @@ void widGraphObjectSettingColumn::m_setEnabled(bool enabled)
 }
 
 widGraphObjectSettingLegend::widGraphObjectSettingLegend():
-    widGraphObjectSettingWithName("Legend")
+    widGraphObjectSettingWithCheck("Legend")
 {
     m_editText = new checkEdit(validator::NONE);
     m_editText->setToolTip("Overwrite text in legend");
@@ -1005,9 +924,8 @@ tabGraphSettings::tabGraphSettings(const QString &name):
     m_layBackground->addWidget(m_tree);
 }
 
-widGraphObjectSettingOperation::widGraphObjectSettingOperation(
-    int pos, widGraphObjectSettingMain *ptr_widMain):
-     m_positionInVector(pos), ptr_widObjectStyle(ptr_widMain)
+widGraphObjectSettingOperation::widGraphObjectSettingOperation() //:
+//     m_positionInVector(pos), ptr_widObjectStyle(ptr_widMain)
 {
     m_layBackground = new HBoxLayout(this);
     m_butDelete = new butGraphObjectSettingButton(QIcon(":/images/redCross.png"), "Delete this object");
@@ -1029,7 +947,7 @@ widGraphObjectSettingOperation::widGraphObjectSettingOperation(
 void widGraphObjectSettingOperation::m_setValues(bool enable)
 {
     m_butDelete->setChecked(enable);
-    ptr_widObjectStyle->setEnabled(!enable);
+//    ptr_widObjectStyle->setEnabled(!enable);
 }
 
 std::tuple<bool> widGraphObjectSettingOperation::m_getValues()
@@ -1039,25 +957,30 @@ std::tuple<bool> widGraphObjectSettingOperation::m_getValues()
 
 void widGraphObjectSettingOperation::m_loadValues()
 {
-    auto ptr_data = ptr_widObjectStyle->m_getData().lock();
+    /*auto ptr_data = ptr_widObjectStyle->m_getData().lock();
     auto [toBeDeleted] = ptr_data->m_getOperation();
-    m_setValues(toBeDeleted);
+    m_setValues(toBeDeleted);*/
 }
 
 void widGraphObjectSettingOperation::m_saveValues()
 {
-    auto ptr_data = ptr_widObjectStyle->m_getData().lock();
+    /*auto ptr_data = ptr_widObjectStyle->m_getData().lock();
     auto [toBeDeleted] = m_getValues();
-    ptr_data->m_setOperation(toBeDeleted);
+    ptr_data->m_setOperation(toBeDeleted);*/
+}
+
+void widGraphObjectSettingOperation::m_setEnabled(bool enabled)
+{
+
 }
 
 void widGraphObjectSettingOperation::m_slotDeleteClicked()
 {
     m_saveValues();
-    if (ptr_widObjectStyle)
+/*    if (ptr_widObjectStyle)
         ptr_widObjectStyle->setEnabled(m_butDelete->isChecked());
     else
-        qDebug() << "No widget";
+        qDebug() << "No widget";*/
 }
 
 void widGraphObjectSettingOperation::m_slotMoveUp()
@@ -1076,39 +999,6 @@ butGraphObjectSettingButton::butGraphObjectSettingButton(QIcon icon, const QStri
     setFixedSize(QSize(25,25));
     setIconSize(QSize(20,20));
     setToolTip(tooltip);
-}
-
-widGraphObjectSettingOrientation::widGraphObjectSettingOrientation()
-{
-    m_radioHorizontal = new radiobutton("Horiz.");
-    m_radioVertical = new radiobutton("Vert.");
-    m_addWidget(m_radioHorizontal);
-    m_addWidget(m_radioVertical);
-    m_addEndOfWidget();
-}
-
-void widGraphObjectSettingOrientation::m_setValues(orientation orient)
-{
-    m_radioHorizontal->m_setChecked(orient == orientation::HORIZONTAL);
-    m_radioVertical->m_setChecked(orient == orientation::VERTICAL);
-}
-
-std::tuple<orientation> widGraphObjectSettingOrientation::m_getValues()
-{
-    enum orientation orient;
-    if (m_radioHorizontal->isChecked())
-        orient = orientation::HORIZONTAL;
-    else if (m_radioVertical->isChecked())
-        orient = orientation::VERTICAL;
-    else
-        orient = orientation::VERTICAL;
-    return {orient};
-}
-
-void widGraphObjectSettingOrientation::m_setEnabled(bool enabled)
-{
-    m_radioHorizontal->setEnabled(enabled);
-    m_radioVertical->setEnabled(enabled);
 }
 
 widGraphObjectSettingAxis::widGraphObjectSettingAxis()
@@ -1137,15 +1027,6 @@ void widGraphObjectSettingAxis::m_setValues(yAxisPosition orient)
 std::tuple<yAxisPosition> widGraphObjectSettingAxis::m_getValues()
 {
     return {m_state};
-/*    enum yAxisPosition orient;
-    if (m_radioLeft->isChecked())
-        orient = yAxisPosition::LEFT;
-    else if (m_radioLeft->isChecked())
-        orient = yAxisPosition::RIGHT;
-    else
-        orient = yAxisPosition::LEFT;
-    return {orient};
-*/
 }
 
 void widGraphObjectSettingAxis::m_setEnabled(bool enabled)
@@ -1577,6 +1458,7 @@ void tabGraphSettingsObjects::m_createTableAndModel()
     m_setDelegatesToTableColumns();
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setAlternatingRowColors(true);
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
     m_table->setColumnWidth(0, 200);
@@ -1838,35 +1720,12 @@ void delegateLegend::commitAndCloseEditor()
     emit commitData(wid);
 }
 
-delegateOperation::delegateOperation()
-{
-
-}
-
-QWidget *delegateOperation::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
-{
-   /* widGraphObjectSettingOperation*wid = new widGraphObjectSettingOperation();
-    wid->setParent(parent);
-    return wid;*/
-}
-
-void delegateOperation::setEditorData(QWidget *editor, const QModelIndex &index) const
-{
-  /*  auto *wid = qobject_cast<widGraphObjectSettingOperation *> (editor);
-    wid->m_setValues(true);*/
-}
-
-void delegateOperation::setModelData(QWidget * editor,
-                                     QAbstractItemModel * model,
-                                     const QModelIndex &index) const {}
-
-
 delegateColumn::delegateColumn()
 {
 
 }
 
-QWidget *delegateColumn::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+QWidget *delegateColumn::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
 {
     widGraphObjectSettingColumn *wid = new widGraphObjectSettingColumn();
     wid->setParent(parent);
