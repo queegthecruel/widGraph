@@ -1,5 +1,5 @@
-#ifndef GRAPH_GLOBAL_H
-#define GRAPH_GLOBAL_H
+#ifndef WIDGRAPH_GLOBAL_H
+#define WIDGRAPH_GLOBAL_H
 
 #include <QtCore/qglobal.h>
 
@@ -9,4 +9,4 @@
 #  define WIDGRAPH_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // GRAPH_GLOBAL_H
+#endif // WIDGRAPH_GLOBAL_H

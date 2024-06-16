@@ -3,11 +3,13 @@ QT += widgets
 
 TEMPLATE = lib
 DEFINES += WIDGRAPH_LIBRARY
+DEFINES += WIDPRETTY_LIBRARY
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 #CONFIG += c++17
 CONFIG += c++20
+CONFIG += optimize_full
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -17,31 +19,25 @@ SOURCES += \
     dataGraph.cpp \
     dialogGraph.cpp \
     objectsGraph.cpp \
-    widGraph.cpp
+    supWidgets.cpp \
+    widGraph.cpp \
+    widPretty.cpp
 
 HEADERS += \
     dataGraph.h \
     dialogGraph.h \
-    graph_global.h \
     objectsGraph.h \
-    widGraph.h
+    supWidgets.h \
+    widGraph.h \
+    widGraph_global.h \
+    widPretty.h \
+    widPretty_global.h
 
 # Default rules for deployment.
 unix {
     target.path = /usr/lib
 }
 !isEmpty(target.path): INSTALLS += target
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-widPretty-Release/release/ -lwidPretty
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-widPretty-Debug/debug/ -lwidPretty
-
-INCLUDEPATH += $$PWD/../build-widPretty-Release/release
-DEPENDPATH += $$PWD/../build-widPretty-Release/release
-
-LIBS += -L$$PWD/../widPretty/ -lwidPretty
-
-INCLUDEPATH += $$PWD/../widPretty
-DEPENDPATH += $$PWD/../widPretty
 
 RESOURCES += \
     images.qrc

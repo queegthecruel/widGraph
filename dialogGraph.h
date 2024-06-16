@@ -2,6 +2,7 @@
 #define DIALOGGRAPH_H
 
 #include "widPretty.h"
+
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QSplitter>
@@ -19,7 +20,7 @@ struct dataAxisY1;
 struct dataAxisY2;
 struct dataDrawArea;
 struct dataLegend;
-struct graphObjects;
+enum class orientation;
 
 class treeWidgetGraphObjects;
 class tabGraph: public QWidget
@@ -37,6 +38,7 @@ class tabGraphSettings: public tabGraph
 {
 public:
     tabGraphSettings(const QString &name);
+protected:
     treeWidget *m_tree;
 };
 
@@ -123,18 +125,34 @@ class widGraphObjectSetting: public QWidget
 {
     Q_OBJECT
 public:
-    widGraphObjectSetting(const QString &name);
+    widGraphObjectSetting();
+    void m_setVisible(bool status);
 protected:
     void m_addEndOfWidget();
+    void m_addWidget(QWidget* ptr_widget);
+    void m_addSpacing(int nPixels);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForCurve(int iconWidth = 40, int iconHeight = 15);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForPoints(int iconSize = 17);
     static QVector<std::tuple<QString, QIcon>> m_getIconsForArea(int iconWidth = 40, int iconHeight = 15);
     virtual void m_setEnabled(bool enabled) = 0;
     QWidget *m_separator();
+signals:
+    void m_signalChanged();
+protected slots:
+    void m_slotSendSignalChanged();
+private:
+    QWidget *m_widBackground;
+    HBoxLayout *m_layBackground;
+};
+
+class widGraphObjectSettingWithName: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingWithName(const QString &name);
 protected slots:
     void m_slotEnabledToggled();
 protected:
-    HBoxLayout *m_layBackground;
     checkbox *m_checkEnable;
 };
 
@@ -168,7 +186,7 @@ protected:
     butGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown, *m_butDelete;
 };
 
-class widGraphObjectSettingCurve: public widGraphObjectSetting
+class widGraphObjectSettingCurve: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -182,7 +200,7 @@ protected:
     combobox *m_comboCurveStyle;
 };
 
-class widGraphObjectSettingPoints: public widGraphObjectSetting
+class widGraphObjectSettingPoints: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -196,7 +214,7 @@ protected:
     combobox *m_comboShape;
 };
 
-class widGraphObjectSettingArea: public widGraphObjectSetting
+class widGraphObjectSettingArea: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -209,7 +227,7 @@ protected:
     combobox *m_comboAreaStyle;
 };
 
-class widGraphObjectSettingColumn: public widGraphObjectSetting
+class widGraphObjectSettingColumn: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -221,7 +239,19 @@ protected:
     spinbox *m_editColumnThick;
 };
 
-class widGraphObjectSettingLegend: public widGraphObjectSetting
+class widGraphObjectSettingOrientation: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingOrientation();
+    void m_setValues(enum orientation orient);
+    std::tuple<enum orientation> m_getValues();
+    virtual void m_setEnabled(bool enabled) override;
+protected:
+    radiobutton *m_radioHorizontal, *m_radioVertical;
+};
+
+class widGraphObjectSettingLegend: public widGraphObjectSettingWithName
 {
     Q_OBJECT
 public:
@@ -231,6 +261,22 @@ public:
     virtual void m_setEnabled(bool enabled) override;
 protected:
     checkEdit *m_editText;
+};
+
+enum class yAxisPosition;
+class widGraphObjectSettingAxis: public widGraphObjectSetting
+{
+    Q_OBJECT
+public:
+    widGraphObjectSettingAxis();
+    void m_setValues(enum yAxisPosition orient);
+    std::tuple<enum yAxisPosition> m_getValues();
+    virtual void m_setEnabled(bool enabled) override;
+private slots:
+    void m_slotSendSignal(bool status);
+private:
+    radiobutton *m_radioLeft, *m_radioRight;
+    yAxisPosition m_state;
 };
 
 class dataGraphObject;
@@ -250,7 +296,125 @@ protected:
     widGraphObjectSettingPoints *m_widPoints;
     widGraphObjectSettingArea *m_widArea;
     widGraphObjectSettingColumn *m_widColumn;
+    widGraphObjectSettingOrientation *m_widOrientation;
     widGraphObjectSettingLegend *m_widLegend;
+};
+
+#include <QAbstractTableModel>
+#include <QTableView>
+#include <QStyledItemDelegate>
+enum class objectPropertiesColumns {NAME, YAXIS, CURVE, POINTS, AREA, LEGEND, COLUMN};
+class objectPropertiesTableModel: public QAbstractTableModel
+{
+public:
+    objectPropertiesTableModel(std::shared_ptr<dataGraph> ptr_dataGraph);
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+    static int m_getIColumnFromEnum(enum objectPropertiesColumns column);
+    static enum objectPropertiesColumns m_getEnumFromIndex(int index);
+private:
+    bool m_setName(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_name(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setYAxis(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_yAxis(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setCurve(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_curve(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setPoints(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_points(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setArea(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_area(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setLegend(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_legend(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+    bool m_setColumn(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object);
+    QVariant m_column(int role, std::shared_ptr<dataGraphObject> ptr_object) const;
+private:
+    std::weak_ptr<dataGraph> ptr_data;
+};
+
+class delegateYAxis: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegateYAxis();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class delegateOperation: public QStyledItemDelegate
+{
+public:
+    delegateOperation();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+};
+
+class delegateCurve: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegateCurve();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class delegatePoints: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegatePoints();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class delegateArea: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegateArea();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class delegateLegend: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegateLegend();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
+};
+
+class delegateColumn: public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    delegateColumn();
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+private slots:
+    void commitAndCloseEditor();
 };
 
 class tabGraphSettingsObjects: public tabGraph
@@ -258,24 +422,19 @@ class tabGraphSettingsObjects: public tabGraph
     Q_OBJECT
 public:
     tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data);
-    ~tabGraphSettingsObjects() = default;
-    virtual void m_loadValues() override;
-    virtual void m_saveValues() override;
+    void m_loadValues() {}
+    void m_saveValues() {}
 private:
-    void m_createCopyOfGraphData();
-    void m_saveDataInWidgets();
-    void m_reorderObjectsInGraph();
-    void m_deleteDeletedItemsInGraph();
+    void m_createTableAndModel();
+    void m_setDelegatesToTableColumns();
+signals:
+    void m_graphDataChanged();
 private slots:
-    void m_slotMoved(int from, int to);
-    void m_slotMoveUp(int from);
-    void m_slotMoveDown(int from);
-protected:
-    treeWidgetGraphObjects *m_tree;
+    void m_slotDataChanged();
+private:
     std::weak_ptr<dataGraph> ptr_graphData;
-    std::vector<std::shared_ptr<dataGraphObject>> m_vDataCopy;
-    std::vector<int> m_vOrder;
-    std::vector<std::tuple<widGraphObjectSettingOperation*, widGraphObjectSettingMain*>> m_vWidgets;
+    objectPropertiesTableModel *m_model;
+    QTableView *m_table;
 };
 
 class tabGraphSettingsLegend: public tabGraphSettings
@@ -304,7 +463,7 @@ public:
     ~graphSettingsWidget() = default;
     void m_loadValues();
     void m_saveValues();
-protected:
+private:
     std::weak_ptr<dataGraph> ptr_data;
     std::vector<tabGraph*> m_tabs;
 
@@ -314,6 +473,7 @@ protected:
     tabGraphSettingsY2Axis *m_yAxis2;
     tabGraphSettingsLegend *m_legend;
     tabGraphSettingsDrawArea *m_drawArea;
+//    tabGraphSettingsObjects *m_objects;
     tabGraphSettingsObjects *m_objects;
 
     QVBoxLayout *m_layBackground;
@@ -339,10 +499,12 @@ signals:
     void m_emitClose();
     void m_emitLoadFile();
     void m_emitSaveFile();
+    void m_emitDataChanged();
 protected:
     HBoxLayout *m_layBackground;
     QPushButton *m_butClose, *m_butApply;
     QPushButton *m_butLoadFile, *m_butSaveFile;
+    QPushButton *m_butTest;
 };
 
 class dialogGraph: public dialogs
@@ -360,6 +522,7 @@ public slots:
     void m_slotApply();
     void m_slotSaveFile();
     void m_slotLoadFile();
+    void m_slotDataChanged();
 protected:
     widGraph *ptr_graph;
     std::weak_ptr<dataGraph> ptr_data;
@@ -374,7 +537,9 @@ class treeWidgetGraphObjects: public QTreeWidget
 public:
     treeWidgetGraphObjects();
     void dropEvent(QDropEvent *event) override;
-    QTreeWidgetItem *m_addChild(const std::string &text, QWidget *ptr_widget, QWidget *ptr_widget2, const std::string &tooltip = "");
+    QTreeWidgetItem *m_addChild(const std::string &text,
+        QVector<QWidget*> widgets,
+        const std::string &tooltip = "");
 signals:
     void m_signalMoved(int from, int to);
 };

@@ -2,10 +2,15 @@
 #include "dataGraph.h"
 #include "widGraph.h"
 
-graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::shared_ptr<std::vector<double> > ptr_dataY):
+graphCurve::graphCurve(std::string name,
+                       std::shared_ptr<std::vector<double> > ptr_dataX,
+                       std::shared_ptr<std::vector<double> > ptr_dataY):
+    graphObject(true, true, true, false, true, false),
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
+    m_data->m_setName(name);
+    QIcon icon(":/images/object_curve.png");
+    m_data->m_setIcon(icon);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -18,13 +23,25 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataX, std::sha
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Curve 1";
 }
 
-graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
+graphCurve::graphCurve(const graphCurve &oldGraphObject):
+    graphObject(oldGraphObject)
+{
+    w_dataX = oldGraphObject.w_dataX;
+    w_dataY = oldGraphObject.w_dataY;
+    s_dataX = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataX);
+    s_dataY = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataY);
+}
+
+graphCurve::graphCurve(std::string name,
+                       std::shared_ptr<std::vector<double> > ptr_dataY):
+    graphObject(true, true, true, false, true, false),
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, true, true, false, true);
+    m_data->m_setName(name);
+    QIcon icon(":/images/object_curve.png");
+    m_data->m_setIcon(icon);
 
     s_dataY = w_dataY.lock();
     int noY = s_dataY->size();
@@ -37,7 +54,6 @@ graphCurve::graphCurve(std::shared_ptr<std::vector<double> > ptr_dataY):
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Curve 2";
 }
 
 void graphCurve::m_drawItself(QPainter *painter, widGraph *ptr_graph)
@@ -101,7 +117,7 @@ QPainterPath graphCurve::m_getPointsPainterPath(widGraphAxis *ptr_x, widGraphAxi
              itX++, itY++) {
             QPointF point = QPointF(ptr_x->m_getDrawAreaPositionFromValue(*itX),
                                     ptr_y->m_getDrawAreaPositionFromValue(*itY));
-            QPainterPath pathPoint = graphObjects::m_createPoint(point, shapeSize, style);
+            QPainterPath pathPoint = graphObject::m_createPoint(point, shapeSize, style);
             pathPoints.addPath(pathPoint);
         }
         return pathPoints;
@@ -127,37 +143,82 @@ QPainterPath graphCurve::m_getAreaPainterPath(widGraphAxis *ptr_x, widGraphAxis 
     return pathArea;
 }
 double graphCurve::m_getMinX() {
-    auto it = min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
     return *it;
 }
 
 double graphCurve::m_getMaxX() {
-    auto it = max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
     return *it;
 }
 
 double graphCurve::m_getMinY() {
     s_dataY = w_dataY.lock();
-    auto it = min_element(std::begin(*s_dataY), std::end(*s_dataY));
+    auto it = std::min_element(std::begin(*s_dataY), std::end(*s_dataY));
     return *it;
 }
 
 double graphCurve::m_getMaxY() {
     s_dataY = w_dataY.lock();
-    auto it = max_element(std::begin(*s_dataY), std::end(*s_dataY));
+    auto it = std::max_element(std::begin(*s_dataY), std::end(*s_dataY));
     return *it;
 }
 
-graphObjects::graphObjects()
+double graphCurve::m_getAvgY()
 {
+    s_dataY = w_dataY.lock();
+    double sum = std::accumulate(std::begin(*s_dataY), std::end(*s_dataY), 0.0);
+    double m =  sum / s_dataY->size();
+    return m;
 }
 
-int graphObjects::m_getPrefferedYAxis()
+int graphCurve::m_getNValues()
+{
+    s_dataY = w_dataY.lock();
+    return s_dataY->size();
+}
+
+std::string graphCurve::m_getInfo() const
+{
+    int nValues = w_dataY.lock()->size();
+    return "curve (" + std::to_string(nValues) + " points)";
+}
+
+graphObject::graphObject(
+    bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns,
+    bool hasLegend, bool hasOrientation)
+{
+    m_data = std::make_shared<dataGraphObject>(
+            hasCurve, hasPoints, hasArea, hasColumns,
+            hasLegend, hasOrientation);
+}
+
+graphObject::graphObject(const graphObject &oldGraphObject)
+{
+    m_data = std::make_shared<dataGraphObject>(*oldGraphObject.m_data);
+}
+
+const std::string &graphObject::m_getName() const
+{
+    return m_data->m_getName();
+}
+
+const QIcon &graphObject::m_getIcon() const
+{
+    return m_data->m_getIcon();
+}
+/*
+std::string graphObject::m_getInfo() const
+{
+    return "not overriden";
+}
+*/
+enum yAxisPosition graphObject::m_getPrefferedYAxis()
 {
     return m_data->m_getPrefferedYAxis();
 }
 
-QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, pointsShapes style)
+QPainterPath graphObject::m_createPoint(QPointF point, double shapeSize, pointsShapes style)
 {
     double widthHalf = shapeSize/2;
     QPainterPath path;
@@ -210,75 +271,50 @@ QPainterPath graphObjects::m_createPoint(QPointF point, double shapeSize, points
     return path;
 }
 
-std::shared_ptr<graphObjects> graphObjects::m_createGraphObject(int /*type*/)
+std::shared_ptr<graphObject> graphObject::m_createGraphObject(int /*type*/)
 {
-    std::shared_ptr<graphObjects> ptr_object = nullptr;
+    std::shared_ptr<graphObject> ptr_object = nullptr;
     return ptr_object;
 }
 
-std::tuple<widGraphAxis *, widGraphAxis *> graphObjects::m_getAppropriateAxes(widGraph *ptr_graph)
+std::tuple<widGraphAxis *, widGraphAxis *> graphObject::m_getAppropriateAxes(widGraph *ptr_graph)
 {
     widGraphAxis* ptr_x = ptr_graph->m_getXAxis();
     widGraphAxis* ptr_y;
-    if (m_getPrefferedYAxis() == 0)
+    enum yAxisPosition yAxis = m_getPrefferedYAxis();
+    switch (yAxis) {
+    case yAxisPosition::LEFT:
+    default:
         ptr_y = ptr_graph->m_getY1Axis();
-    else
+        break;
+    case yAxisPosition::RIGHT:
         ptr_y = ptr_graph->m_getY2Axis();
+        break;
+    }
     return {ptr_x, ptr_y};
 }
 
-graphYValue::graphYValue(std::shared_ptr<double> ptr_dataY):
-    w_dataY(ptr_dataY)
+graphValue::graphValue(std::string name, std::shared_ptr<double> ptr_dataY, orientation orient):
+    graphObject(true, false, false, false, true, true),
+    w_data(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
+    m_data->m_setName(name);
+    QIcon icon(":/images/object_value.png");
+    m_data->m_setIcon(icon);
+    m_data->m_setConstCurveOrientation(orient);
 
-    s_dataY = w_dataY.lock();
-
-    qDebug() << "Curve Y";
+    s_data = w_data.lock();
 }
 
-void graphYValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
+graphValue::graphValue(const graphValue &oldGraphObject):
+    graphObject(oldGraphObject)
 {
-    painter->save();
-    // Get appropriate axes
-        auto [ptr_x, ptr_y] = m_getAppropriateAxes(ptr_graph);
-    // Draw curve
-        auto [curveColor, curveWidth, curveStyleIndex, curveEnabled] = m_data->m_getStyleOfCurve();
-        if (curveEnabled) {
-            QPainterPath pathCurve = m_getCurvePainterPath(ptr_x, ptr_y);
-            painter->setPen(QPen(curveColor, curveWidth,
-                            dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
-            painter->drawPath(pathCurve);
-        }
-    painter->restore();
+    w_data = oldGraphObject.w_data;
+    s_data = std::make_shared<double>(*oldGraphObject.s_data);
+//    m_orientation = oldGraphObject.m_orientation;
 }
 
-QPainterPath graphYValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
-{
-    QPainterPath pathCurve;
-    // Move to the first point
-        double minX = ptr_x->m_getData().lock()->m_min;
-        double maxX = ptr_x->m_getData().lock()->m_max;
-        pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(minX),
-                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
-    // All points
-        pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(maxX),
-                    ptr_y->m_getDrawAreaPositionFromValue(*s_dataY));
-    return pathCurve;
-}
-
-
-graphXValue::graphXValue(std::shared_ptr<double> ptr_dataX):
-    w_dataX(ptr_dataX)
-{
-    m_data = std::make_shared<dataGraphObject>(true, false, false, false, true);
-
-    s_dataX = w_dataX.lock();
-
-    qDebug() << "Curve X";
-}
-
-void graphXValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
+void graphValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
     // Get appropriate axes
@@ -291,25 +327,113 @@ void graphXValue::m_drawItself(QPainter *painter, widGraph *ptr_graph)
                             dataGraphObject::getPenStyleFromIndex(curveStyleIndex)));
             painter->drawPath(pathCurve);
         }
-    painter->restore();
+        painter->restore();
 }
 
-QPainterPath graphXValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
+double graphValue::m_getMinX()
+{
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+            return *s_data;
+        case orientation::HORIZONTAL:
+            return graphObject::m_getMinX();
+    }
+}
+
+double graphValue::m_getMaxX()
+{
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+        default:
+            return *s_data;
+        case orientation::HORIZONTAL:
+            return graphObject::m_getMinX();
+    }
+}
+
+double graphValue::m_getMinY()
+{
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
+            return *s_data;
+    }
+}
+
+double graphValue::m_getMaxY()
+{
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
+            return *s_data;
+    }
+}
+
+double graphValue::m_getAvgY()
+{
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+            return graphObject::m_getMinX();
+        case orientation::HORIZONTAL:
+            return *s_data;
+    }
+}
+
+int graphValue::m_getNValues()
+{
+    return 1;
+}
+
+std::string graphValue::m_getInfo() const
+{
+    return std::to_string(*s_data);
+}
+
+QPainterPath graphValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
 {
     QPainterPath pathCurve;
-    // Move to the first point
-        double minY = ptr_y->m_getData().lock()->m_min;
-        double maxY = ptr_y->m_getData().lock()->m_max;
-        pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX),
-                         ptr_y->m_getDrawAreaPositionFromValue(minY));
-    // All points
-        pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(*s_dataX),
-                         ptr_y->m_getDrawAreaPositionFromValue(maxY));
+    auto [orient] = m_data->m_getConstCurveOrientation();
+    switch (orient) {
+        case orientation::VERTICAL:
+            {
+            // Move to the first point
+                double minY = ptr_y->m_getData().lock()->m_min;
+                double maxY = ptr_y->m_getData().lock()->m_max;
+                pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(*s_data),
+                                 ptr_y->m_getDrawAreaPositionFromValue(minY));
+            // All points
+                pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(*s_data),
+                                 ptr_y->m_getDrawAreaPositionFromValue(maxY));
+            }
+            break;
+        case orientation::HORIZONTAL:
+            {
+            // Move to the first point
+                double minX = ptr_x->m_getData().lock()->m_min;
+                double maxX = ptr_x->m_getData().lock()->m_max;
+                pathCurve.moveTo(ptr_x->m_getDrawAreaPositionFromValue(minX),
+                            ptr_y->m_getDrawAreaPositionFromValue(*s_data));
+            // All points
+                pathCurve.lineTo(ptr_x->m_getDrawAreaPositionFromValue(maxX),
+                            ptr_y->m_getDrawAreaPositionFromValue(*s_data));
+            }
+            break;
+    }
     return pathCurve;
 }
 
-dataGraphObject::dataGraphObject(bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns, bool hasLegend):
-    m_hasCurve(hasCurve), m_hasPoints(hasPoints), m_hasArea(hasArea), m_hasColumns(hasColumns), m_hasLegend(hasLegend)
+dataGraphObject::dataGraphObject(
+    bool hasCurve, bool hasPoints, bool hasArea, bool hasColumns,
+    bool hasLegend, bool hasOrientation):
+    m_hasCurve(hasCurve), m_hasPoints(hasPoints), m_hasArea(hasArea), m_hasColumns(hasColumns),
+    m_hasLegend(hasLegend), m_hasOrientation(hasOrientation)
 {
 }
 
@@ -317,7 +441,7 @@ dataGraphObject::dataGraphObject(std::ifstream &instream):
     m_hasCurve(true), m_hasPoints(true), m_hasArea(true), m_hasColumns(true), m_hasLegend(true)
 {
     // Axis
-        m_prefferedYAxis = readInt(instream);
+ //       m_prefferedYAxis = readInt(instream);
     // Name
         m_name = readString(instream);
     // Color
@@ -330,7 +454,7 @@ dataGraphObject::dataGraphObject(std::ifstream &instream):
 void dataGraphObject::m_saveToFile(std::ofstream &outstream)
 {
     // Axis
-        writeInt(outstream, m_prefferedYAxis);
+  //      writeInt(outstream, m_prefferedYAxis);
     // Name
         writeString(outstream, m_name);
     // Color
@@ -346,6 +470,11 @@ void dataGraphObject::m_setName(const std::string name)
     m_name = name;
     if (!m_legendOverwrite)
         m_legendText = name;
+}
+
+void dataGraphObject::m_setIcon(const QIcon &icon)
+{
+    m_icon = icon;
 }
 
 void dataGraphObject::m_setCurveColor(const QColor &color)
@@ -414,6 +543,11 @@ void dataGraphObject::m_setOperation(bool toBeDeleted)
     m_setToBeDeleted(toBeDeleted);
 }
 
+void dataGraphObject::m_setConstCurveOrientation(orientation orient)
+{
+    m_setOrientation(orient);
+}
+
 std::tuple<QColor, int, int, int, bool> dataGraphObject::m_getStyleOfPoints()
 {
     return {m_getPointsColor(), m_pointsWidth, m_pointsShapeSize, m_pointsStyleIndex, m_showPoints};
@@ -442,6 +576,11 @@ std::tuple<bool, const std::string &, bool> dataGraphObject::m_getStyleOfLegend(
 std::tuple<bool> dataGraphObject::m_getOperation()
 {
     return {m_toBeDeleted};
+}
+
+std::tuple<enum orientation> dataGraphObject::m_getConstCurveOrientation()
+{
+    return {m_orientation};
 }
 
 Qt::PenStyle dataGraphObject::getPenStyleFromIndex(int index)
@@ -555,10 +694,13 @@ pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
     }
 }
 
-graphColumn::graphColumn(std::shared_ptr<std::vector<double> > ptr_dataY):
+graphColumn::graphColumn(std::string name, std::shared_ptr<std::vector<double> > ptr_dataY):
+    graphObject(true, false, true, true, true, false),
     w_dataY(ptr_dataY)
 {
-    m_data = std::make_shared<dataGraphObject>(true, false, true, true, true);
+    m_data->m_setName(name);
+    QIcon icon(":/images/object_columns.png");
+    m_data->m_setIcon(icon);
     m_data->m_setStyleOfColumn(30, true);
 
     s_dataY = w_dataY.lock();
@@ -572,10 +714,16 @@ graphColumn::graphColumn(std::shared_ptr<std::vector<double> > ptr_dataY):
     }
     else
         s_dataX = w_dataX.lock();
-    qDebug() << "Column";
-
 }
 
+graphColumn::graphColumn(const graphColumn &oldGraphObject):
+    graphObject(oldGraphObject)
+{
+    w_dataX = oldGraphObject.w_dataX;
+    w_dataY = oldGraphObject.w_dataY;
+    s_dataX = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataX);
+    s_dataY = std::make_shared<std::vector<double>>(*oldGraphObject.s_dataY);
+}
 void graphColumn::m_drawItself(QPainter *painter, widGraph *ptr_graph)
 {
     painter->save();
@@ -599,7 +747,55 @@ void graphColumn::m_drawItself(QPainter *painter, widGraph *ptr_graph)
                 painter->drawPath(pathCurve);
             }
         }
-    painter->restore();
+        painter->restore();
+}
+
+double graphColumn::m_getMinX()
+{
+    auto min_it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto max_it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    return *min_it -  0.05 *abs(*max_it - *min_it);;
+}
+
+double graphColumn::m_getMaxX()
+{
+    auto min_it = std::min_element(std::begin(*s_dataX), std::end(*s_dataX));
+    auto max_it = std::max_element(std::begin(*s_dataX), std::end(*s_dataX));
+    return *max_it + 0.05 *abs(*max_it - *min_it);
+}
+
+double graphColumn::m_getMinY()
+{
+//    s_dataY = w_dataY.lock();
+//    auto it = std::min_element(std::begin(*s_dataY), std::end(*s_dataY));
+    return 0;
+}
+
+double graphColumn::m_getMaxY()
+{
+    s_dataY = w_dataY.lock();
+    auto it = std::max_element(std::begin(*s_dataY), std::end(*s_dataY));
+    return *it;
+}
+
+double graphColumn::m_getAvgY()
+{
+    s_dataY = w_dataY.lock();
+    double sum = std::accumulate(std::begin(*s_dataY), std::end(*s_dataY), 0.0);
+    double m =  sum / s_dataY->size();
+    return m;
+}
+
+int graphColumn::m_getNValues()
+{
+    s_dataY = w_dataY.lock();
+    return s_dataY->size();
+}
+
+std::string graphColumn::m_getInfo() const
+{
+    int nValues = w_dataY.lock()->size();
+    return std::to_string(nValues) + " columns";
 }
 
 QPainterPath graphColumn::m_getColumnPainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y, double columnWidth)

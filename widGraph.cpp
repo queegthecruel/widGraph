@@ -2,6 +2,7 @@
 #include "dialogGraph.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QMimeData>
 
 widGraph::widGraph()
 {
@@ -57,10 +58,29 @@ void widGraph::hideEvent(QHideEvent */*event*/)
 {
     emit m_signalHide();
 }
-
+/*
 void widGraph::m_addObject(std::shared_ptr<graphObjects> ptr_object)
 {
+    auto ptr_curve = std::make_shared<graphCurve>();
     m_data->m_addObject(ptr_object);
+}*/
+
+void widGraph::m_addObject(std::shared_ptr<graphCurve> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphCurve>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
+}
+
+void widGraph::m_addObject(std::shared_ptr<graphValue> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphValue>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
+}
+
+void widGraph::m_addObject(std::shared_ptr<graphColumn> ptr_object)
+{
+    auto ptr_curve = std::make_shared<graphColumn>(*ptr_object);
+    m_data->m_addObject(ptr_curve);
 }
 
 void widGraph::m_removeAllObjects()
@@ -122,13 +142,19 @@ void widGraph::m_setColumnsStyle(int curveIndex, int columnWidth, bool showColum
     ptr_objectData->m_setStyleOfColumn(columnWidth, showColumn);
 }
 
-void widGraph::m_setCurveAxis(int curveIndex, int axis)
+void widGraph::m_setCurveAxis(int curveIndex, enum yAxisPosition axis)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
-    ptr_objectData->m_setPrefferedAxis(axis);
+    ptr_objectData->m_setYAxis(axis);
 }
 
-void widGraph::m_setCurveName(int curveIndex, const std::string &name)
+void widGraph::m_setConstCurveOrientation(int curveIndex, orientation orient)
+{
+    auto ptr_objectData = m_getObjectFromIndex(curveIndex);
+    ptr_objectData->m_setConstCurveOrientation(orient);
+}
+
+void widGraph:: m_setCurveName(int curveIndex, const std::string &name)
 {
     auto ptr_objectData = m_getObjectFromIndex(curveIndex);
     ptr_objectData->m_setName(name);
@@ -217,7 +243,7 @@ void widGraphDrawArea::m_drawVertGrid(painterAntiAl &painter)
     std::vector<double> vTicks = widGraphAxis::m_getTicksPosition(niceMin, max, step);
     for (const auto &var: vTicks) {
         double posX = ptr_x->m_getDrawAreaPositionFromValue(var);
-        painter.drawLine(posX,0,posX,width());
+        painter.drawLine(posX,0,posX,height());
     }
 }
 
@@ -243,14 +269,16 @@ widGraphDrawArea::widGraphDrawArea(widGraph *graph):
 
 void widGraphDrawArea::mousePressEvent(QMouseEvent *event)
 {
-    m_startingPoint = event->pos();
     m_isMouseZooming = false;
     m_isMouseMoving = false;
-    auto ptr_control = ptr_graph->m_getData().lock()->m_control;
-    if (ptr_control->m_zoom)
-        m_isMouseZooming = true;
-    else if (ptr_control->m_move)
-        m_isMouseMoving = true;
+    if (event->button() == Qt::LeftButton) {
+        m_startingPoint = event->pos();
+        auto ptr_control = ptr_graph->m_getData().lock()->m_control;
+        if (ptr_control->m_zoom)
+            m_isMouseZooming = true;
+        else if (ptr_control->m_move)
+            m_isMouseMoving = true;
+    }
 }
 
 void widGraphDrawArea::mouseMoveEvent(QMouseEvent *event)
@@ -312,21 +340,6 @@ void widGraphDrawArea::mouseReleaseEvent(QMouseEvent */*event*/)
     ptr_graph->m_loadValues();
 }
 
-void widGraphDrawArea::m_drawMove(painterAntiAl &painter)
-{
-    painter.save();
-    QPoint currentPoint = mapFromGlobal(QCursor::pos());
-    if (m_isMouseMoving) {
-        QPen penRect(Qt::black, 1, Qt::DashLine);
-        painter.setPen(penRect);
-        QLine line(m_startingPoint, currentPoint);
-        painter.setBrush(Qt::red);
-        painter.drawEllipse(m_startingPoint, 2, 2);
-        painter.drawLine(line);
-    }
-    painter.restore();
-}
-
 void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
 {
     painter.save();
@@ -337,6 +350,29 @@ void widGraphDrawArea::m_drawSelectionRectangle(painterAntiAl &painter)
         painter.setPen(penRect);
         QRect rect(m_startingPoint, currentPoint);
         painter.drawRect(rect);
+    }
+    painter.restore();
+}
+
+void widGraphDrawArea::m_drawAxesAtZeroValue(painterAntiAl &painter)
+{
+    painter.save();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_drawArea;
+    auto ptr_dataX = ptr_graph->m_getData().lock()->m_X;
+    auto ptr_dataY1 = ptr_graph->m_getData().lock()->m_Y1;
+    auto ptr_dataY2 = ptr_graph->m_getData().lock()->m_Y2;
+
+    if (ptr_data->m_showYAxesAtX) {
+        double posX = ptr_graph->m_getXAxis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(posX, 0, posX, height());
+    }
+    if (ptr_data->m_showXAxesAtY1) {
+        double posY1 = ptr_graph->m_getY1Axis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(0, posY1, width(), posY1);
+    }
+    if (ptr_data->m_showXAxesAtY2) {
+        double posY2 = ptr_graph->m_getY2Axis()->m_getDrawAreaPositionFromValue(0);
+        painter.drawLine(0, posY2, width(), posY2);
     }
     painter.restore();
 }
@@ -385,8 +421,8 @@ void widGraphDrawArea::paintEvent(QPaintEvent */*event*/)
         m_drawBorder(painter);
     // Selection rectangle
         m_drawSelectionRectangle(painter);
-    // Move trajectory
-        m_drawMove(painter);
+    // Draw axis
+        m_drawAxesAtZeroValue(painter);
 }
 
 widGraphTitle::widGraphTitle(widGraph *graph):
@@ -432,17 +468,22 @@ void widGraphTitle::leaveEvent(QEvent *event)
 
 void widGraphTitle::m_setDimensions()
 {
-    auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
-    ptr_dataTitle->m_height = m_spaceAbove +
-            m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
-    setFixedHeight(ptr_dataTitle->m_height);
+    // Height of the title
+        auto ptr_dataTitle = ptr_graph->m_getData().lock()->m_title;
+        if (ptr_dataTitle->m_manualSize)
+            ptr_dataTitle->m_height = ptr_dataTitle->m_manualSizeValue;
+        else {
+            ptr_dataTitle->m_height = m_spaceAbove +
+                    m_rowSpacing*ptr_dataTitle->m_fontText + m_spaceBelow;
+        }
+        setFixedHeight(ptr_dataTitle->m_height);
 
-    auto ptr_data = ptr_graph->m_getData().lock();
-
-    m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
-    m_text->m_setDimensions();
-    m_setButtonsDimensions();
-    m_loadButtonsValues();
+    // Dimensions of thext and buttons
+        auto ptr_data = ptr_graph->m_getData().lock();
+        m_layBackground->setContentsMargins(ptr_data->m_Y1->m_width,0,ptr_data->m_Y2->m_width,0);
+        m_text->m_setDimensions();
+        m_setButtonsDimensions();
+        m_loadButtonsValues();
 }
 
 void widGraphTitle::m_drawLine(painterAntiAl &painter)
@@ -535,7 +576,8 @@ std::tuple<double, double> widGraphXAxis::m_getMinAndMaxOfObjects()
             maxX = std::max(maxX, var->m_getMaxX());
         }
     // Return
-        return {minX, maxX};
+        const double BORDER = 0.00;
+        return {minX - BORDER, maxX + BORDER};
 }
 
 void widGraphXAxis::m_setDimensions()
@@ -688,6 +730,17 @@ void widGraphXAxis::m_drawMoveCursor(painterAntiAl &painter)
     painter.restore();
 }
 
+bool widGraphXAxis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
+{
+    if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::VERTICAL);
+    } else
+        return false;
+    return true;
+}
+
+
 double widGraphXAxis::m_getTicksStart()
 {
     return 0;
@@ -744,7 +797,7 @@ void widGraphXAxes::m_supDrawTick(painterAntiAl &painter, double location)
 }
 
 widGraphY1Axis::widGraphY1Axis(widGraph *graph):
-    widGraphYAxes(graph, 0)
+    widGraphYAxes(graph, yAxisPosition::LEFT)
 {
 
 }
@@ -760,7 +813,8 @@ std::tuple<double, double> widGraphYAxes::m_getMinAndMaxOfObjects()
             maxY = std::max(maxY, var->m_getMaxY());
         }
     }
-    return {minY, maxY};
+    const double BORDER = 0.00;
+    return {minY - BORDER, maxY + BORDER};
 }
 
 void widGraphY1Axis::m_setDimensions()
@@ -811,6 +865,21 @@ void widGraphY1Axis::m_drawLine(painterAntiAl &painter)
     double right = m_getTicksStart() - 1;
     painter.drawLine(right,startScreenY,right,endScreenY);
     painter.restore();
+}
+
+bool widGraphY1Axis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
+{
+    if(auto ptr_curve = std::dynamic_pointer_cast<graphCurve>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_curve);
+    } else if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::HORIZONTAL);
+    } else if (auto ptr_column = std::dynamic_pointer_cast<graphColumn>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_column);
+    } else
+        return false;
+    ptr_graph->m_setCurveAxis(-1, yAxisPosition::LEFT);
+    return true;
 }
 
 void widGraphYAxes::m_drawTicks(painterAntiAl &painter)
@@ -899,7 +968,9 @@ double widGraphY1Axis::m_getTextEnds()
 
 widGraphAxis::widGraphAxis(widGraph *graph):
     widGraphElement(graph)
-{}
+{
+    setAcceptDrops(true);
+}
 
 void widGraphAxis::mousePressEvent(QMouseEvent *event)
 {
@@ -972,6 +1043,44 @@ void widGraphAxis::paintEvent(QPaintEvent *)
         // Draw move cursor
             m_drawMoveCursor(painter);
     }
+}
+
+void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
+{
+    auto ptr_dataControl = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_dataControl->m_allowDrop) {
+        if (event->mimeData()->hasFormat("widGraph/curve")) {
+            m_markForDrop(true);
+            event->setDropAction(Qt::LinkAction);
+            event->accept();
+        } else {
+            m_markForDrop(false);
+            event->ignore();
+        }
+    }
+}
+
+void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
+{
+    m_unmarkForDrop();
+}
+
+void widGraphAxis::dropEvent(QDropEvent *event)
+{
+    if (event->mimeData()->hasFormat("widGraph/curve")) {
+        const auto *mimeData = dynamic_cast<const MimeDataWithGraphObject*>(event->mimeData());
+        QByteArray itemData = event->mimeData()->data("widGraph/curve");
+        QDataStream dataStream(&itemData, QIODevice::ReadOnly);
+
+        auto ptr_curve = mimeData->m_getGraphObject();
+        bool added = m_dropCurve(ptr_curve);
+
+        event->setDropAction(Qt::LinkAction);
+        event->accept();
+    } else
+        event->ignore();
+    m_unmarkForDrop();
+    ptr_graph->m_loadValues();
 }
 
 double widGraphAxis::m_supCalculateNiceNumbers(float range, bool round)
@@ -1069,6 +1178,19 @@ std::vector<double> widGraphAxis::m_getTicksPosition(double min, double max, dou
     return vTicks;
 }
 
+void widGraphAxis::m_markForDrop(bool status)
+{
+    if (status)
+        setStyleSheet("background: rgba(0,0,255, 20%);");
+    else
+        setStyleSheet("background: rgba(255,0,0, 20%);");
+}
+
+void widGraphAxis::m_unmarkForDrop()
+{
+    setStyleSheet("background: transparent;");
+}
+
 bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QPoint &x2)
 {
     int dist_x = x1.x() - x2.x();
@@ -1079,7 +1201,7 @@ bool widGraphAxis::m_supDistanceForActionIsSufficient(const QPoint &x1, const QP
 }
 
 widGraphY2Axis::widGraphY2Axis(widGraph *graph):
-    widGraphYAxes(graph, 1)
+    widGraphYAxes(graph, yAxisPosition::RIGHT)
 {
 }
 
@@ -1141,6 +1263,21 @@ void widGraphY2Axis::m_drawLine(painterAntiAl &painter)
     double right = m_getTicksStart();
     painter.drawLine(right,startScreenY,right,endScreenY);
     painter.restore();
+}
+
+bool widGraphY2Axis::m_dropCurve(std::weak_ptr<graphObject> ptr_object)
+{
+    if(auto ptr_curve = std::dynamic_pointer_cast<graphCurve>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_curve);
+    } else if (auto ptr_value = std::dynamic_pointer_cast<graphValue>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_value);
+        ptr_graph->m_setConstCurveOrientation(-1, orientation::HORIZONTAL);
+    } else if (auto ptr_column = std::dynamic_pointer_cast<graphColumn>(ptr_object.lock())) {
+        ptr_graph->m_addObject(ptr_column);
+    } else
+        return false;
+    ptr_graph->m_setCurveAxis(-1, yAxisPosition::RIGHT);
+    return true;
 }
 
 double widGraphY2Axis::m_getTicksStart()
@@ -1217,16 +1354,19 @@ void widGraphLegend::m_drawTexts(painterAntiAl &painter)
         auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
         if (showLegend) {
             if (ptr_data->m_arrangeToAxes) {
-                int axis = ptr_curveData->m_getPrefferedYAxis();
-                if (axis == 0) {
-                    iColumn = 0;
-                    iRow = iCurveLeft++;
-                    option = Qt::AlignLeft;
-                }
-                else {
-                    iColumn = 1;
-                    iRow = iCurveRight++;
-                    option = Qt::AlignRight;
+                enum yAxisPosition axis = ptr_curveData->m_getPrefferedYAxis();
+                switch (axis) {
+                    case yAxisPosition::LEFT:
+                    default:
+                        iColumn = 0;
+                        iRow = iCurveLeft++;
+                        option = Qt::AlignLeft;
+                    break;
+                    case yAxisPosition::RIGHT:
+                        iColumn = 1;
+                        iRow = iCurveRight++;
+                        option = Qt::AlignRight;
+                    break;
                 }
             }
             else {
@@ -1249,12 +1389,25 @@ void widGraphLegend::m_supDrawText(painterAntiAl &painter,
     Qt::AlignmentFlag option)
 {
     std::string legendText;
-    std::string axis = ptr_curveData->m_getPrefferedYAxis() == 0 ? "L" : "R";
     auto [overwrite, text, showLegend] = ptr_curveData->m_getStyleOfLegend();
     if (overwrite)
         legendText = text;
     else
-        legendText = ptr_curveData->m_getName() + " [" + axis + "]" ;
+        legendText = ptr_curveData->m_getName();
+    auto ptr_data = ptr_graph->m_getData().lock()->m_legend;
+    if (!ptr_data->m_arrangeToAxes) {
+        std::string axis;
+        switch (ptr_curveData->m_getPrefferedYAxis()) {
+            case yAxisPosition::LEFT:
+            default:
+                axis = "L";
+            break;
+            case yAxisPosition::RIGHT:
+                axis = "R";
+            break;
+        }
+        legendText = legendText  + " [" + axis + "]";
+    }
     painter.drawText(rect, QString::fromStdString(legendText), option | Qt:: AlignVCenter);
 
 }
@@ -1303,8 +1456,19 @@ int widGraphLegend::m_getNCurvesWithLegend(int yAxis)
     const auto &listCurves = ptr_graph->m_getData().lock()->m_vectorOfObjects;
     for (auto &var:listCurves) {
         auto ptr_varData = var->m_getData().lock();
-        int prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
-        if (yAxis == -1 || yAxis == prefferedYAxis) {
+        enum yAxisPosition prefferedYAxis = ptr_varData->m_getPrefferedYAxis();
+        int prefferedYAxisIndex = -1;
+        switch (prefferedYAxis) {
+        case yAxisPosition::LEFT:
+        default:
+            prefferedYAxisIndex = 0;
+            break;;
+        case yAxisPosition::RIGHT:
+            prefferedYAxisIndex = 1;
+            break;
+        }
+
+        if (yAxis == -1 || yAxis == prefferedYAxisIndex) {
             auto [overwrite, text, show] = var->m_getData().lock()->m_getStyleOfLegend();
             if (show)
                 ++nCurvesWithLegend;
@@ -1321,7 +1485,6 @@ int widGraphLegend::m_getNRows()
         int nCurvesLeft = m_getNCurvesWithLegend(0);
         int nCurvesRight = m_getNCurvesWithLegend(1);
         nRows = std::max(nCurvesLeft, nCurvesRight);
-        qDebug() << nCurvesLeft << nCurvesRight << nRows;
     }
     else {
         int nCurves = m_getNCurvesWithLegend();
@@ -1336,12 +1499,14 @@ int widGraphLegend::m_getNRows()
 
 void widGraphElement::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    ptr_graph->m_openDialog();
+    auto ptr_dataControl = ptr_graph->m_getData().lock()->m_control;
+    if (ptr_dataControl->m_allowDialog)
+        ptr_graph->m_openDialog();
     event->accept();
 }
 
 widGraphButton::widGraphButton(widGraph *graph,
-    const QImage &icon, const QImage &iconActive,
+    const QIcon &icon, const QIcon &iconActive,
     const QString &tooltip):
     widGraphElement(graph),
     m_icon(icon), m_iconActive(iconActive)
@@ -1423,12 +1588,14 @@ void widGraphButton::m_drawInside(painterAntiAl &painter)
 {
     painter.save();
     if (m_isCheckable && m_isChecked) {
-        painter.drawImage(QRect(0, 0, width(), height()),
-                          m_iconActive);
+        m_iconActive.paint(&painter, QRect(0, 0, width(), height()));
+//        painter.drawImage(QRect(0, 0, width(), height()),
+//                          m_iconActive);
     }
     else {
-        painter.drawImage(QRect(0, 0, width(), height()),
-                          m_icon);
+        m_icon.paint(&painter, QRect(0, 0, width(), height()));
+//        painter.drawImage(QRect(0, 0, width(), height()),
+//                          m_icon);
     }
     painter.restore();
 }
@@ -1471,8 +1638,8 @@ void widGraphTitleText::m_setDimensions()
 }
 
 widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/autoAxes.png"),
-                   QImage(":/images/autoAxes.png"), "Set automatic axes")
+    widGraphButton(graph, QIcon(":/images/autoAxes.png"),
+                   QIcon(":/images/autoAxes.png"), "Set automatic axes")
 {
 
 }
@@ -1480,7 +1647,7 @@ widGraphButtonAutoAxes::widGraphButtonAutoAxes(widGraph *graph):
 void widGraphButtonAutoAxes::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     auto ptr_dataX = ptr_data->m_X;
     auto ptr_dataY1 = ptr_data->m_Y1;
     auto ptr_dataY2 = ptr_data->m_Y2;
@@ -1493,8 +1660,8 @@ void widGraphButtonAutoAxes::m_onClick()
 }
 
 widGraphButtonZoomIn::widGraphButtonZoomIn(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOff.png"),
-                   QImage(":/images/zoomOn.png"), "Enable/disable zoom")
+    widGraphButton(graph, QIcon(":/images/zoomOff.png"),
+                   QIcon(":/images/zoomOn.png"), "Enable/disable zoom")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1513,21 +1680,21 @@ void widGraphButtonZoomIn::m_onClick()
 }
 
 widGraphButtonZoomOut::widGraphButtonZoomOut(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/zoomOut.png"),
-                   QImage(":/images/zoomOut.png"), "Zoom out")
+    widGraphButton(graph, QIcon(":/images/zoomOut.png"),
+                   QIcon(":/images/zoomOut.png"), "Zoom out")
 {
 }
 
 void widGraphButtonZoomOut::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     ptr_graph->m_zoomOut();
 }
 
 widGraphButtonMove::widGraphButtonMove(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/moveOff.png"),
-                   QImage(":/images/moveOn.png"), "Enable/disable Move")
+    widGraphButton(graph, QIcon(":/images/moveOff.png"),
+                   QIcon(":/images/moveOn.png"), "Enable/disable Move")
 {
     // Set as checkable
         m_isCheckable = true;
@@ -1546,15 +1713,15 @@ void widGraphButtonMove::m_onClick()
 }
 
 widGraphButtonScreenshot::widGraphButtonScreenshot(widGraph *graph):
-    widGraphButton(graph, QImage(":/images/screenshot.png"),
-                   QImage(":/images/screenshot.png"), "Take a screenshot")
+    widGraphButton(graph, QIcon(":/images/screenshot.png"),
+                   QIcon(":/images/screenshot.png"), "Take a screenshot")
 {
 }
 
 void widGraphButtonScreenshot::m_onClick()
 {
     auto ptr_data = ptr_graph->m_getData().lock();
-    ptr_data->m_control->m_setNothing();
+    ptr_data->m_control->m_setNoZoomNoMove();
     ptr_graph->m_takeScreenshot();
 }
 

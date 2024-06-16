@@ -1,7 +1,7 @@
 #ifndef WIDGRAPH_H
 #define WIDGRAPH_H
 
-#include "graph_global.h"
+#include "widGraph_global.h"
 #include "dataGraph.h"
 #include "objectsGraph.h"
 #include "dialogGraph.h"
@@ -9,6 +9,8 @@
 #include <QGridLayout>
 #include <QMouseEvent>
 #include <QTimer>
+#include <QMimeData>
+
 
 // Graph widgets
 class widGraph;
@@ -35,7 +37,7 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    virtual void m_setDimensions() override {};
+    virtual void m_setDimensions() override {}
     void m_setAxisMinMax(double startX, double endX,
         double startY1, double endY1, double startY2, double endY2);
     bool m_cancelOperation();
@@ -44,8 +46,8 @@ private:
     void m_zoomByMouse();
     void m_drawHorGrid(painterAntiAl &painter);
     void m_drawVertGrid(painterAntiAl &painter);
-    void m_drawMove(painterAntiAl &painter);
     void m_drawSelectionRectangle(painterAntiAl &painter);
+    void m_drawAxesAtZeroValue(painterAntiAl &painter);
     void m_drawBorder(painterAntiAl &painter);
     void m_drawGrid(painterAntiAl &painter);
     void m_drawGraphObjects(painterAntiAl &painter);
@@ -59,7 +61,7 @@ class widGraphButton: public widGraphElement
 {
     Q_OBJECT
 public:
-    widGraphButton(widGraph *graph, const QImage &icon, const QImage &iconActive, const QString &tooltip);
+    widGraphButton(widGraph *graph, const QIcon &icon, const QIcon &iconActive, const QString &tooltip);
     void paintEvent(QPaintEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -82,7 +84,7 @@ protected:
     bool m_isCheckable = false;
     bool m_isAnimation = false;
     bool m_isVisible = false;
-    QImage m_icon, m_iconActive;
+    QIcon m_icon, m_iconActive;
     QTimer *m_timerAnimation;
 };
 
@@ -170,6 +172,9 @@ public:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent */*event*/) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragLeaveEvent(QDragLeaveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
     virtual std::weak_ptr<dataAxis> m_getData() = 0;
     static double m_supCalculateNiceNumbers(float range, bool round);
     static std::tuple<double, double, double> m_calculateNiceMaxMin(double min, double max);
@@ -177,6 +182,8 @@ public:
     void m_setAxisMinMax(double start, double end);
     bool m_cancelOperation();
     static std::vector<double> m_getTicksPosition(double min, double max, double step);
+    void m_markForDrop(bool status);
+    void m_unmarkForDrop();
 private:
     virtual double m_getPositionFromValue(double value) = 0;
     virtual double m_getValueFromPosition(double position) = 0;
@@ -189,6 +196,8 @@ private:
     virtual void m_drawMoveCursor(painterAntiAl &painter) = 0;
     void m_zoomByMouse();
     void m_moveByMouse();
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> /*ptr_curve*/)
+        {return false;};
 protected:
     virtual double m_getTicksStart() = 0;
     virtual double m_getTicksEnd() = 0;
@@ -229,7 +238,7 @@ protected:
 class widGraphYAxes: public widGraphAxis
 {
 public:
-    widGraphYAxes(widGraph *graph, int position):
+    widGraphYAxes(widGraph *graph, enum yAxisPosition position):
         widGraphAxis(graph), m_axisPosition(position)
     {}
     virtual double m_getDrawAreaPositionFromValue(double value) override;
@@ -247,7 +256,7 @@ protected:
     virtual void m_drawNumbers(painterAntiAl &painter) override;
     virtual void m_drawText(painterAntiAl &painter) override;
 protected:
-    const int m_axisPosition;
+    const enum yAxisPosition m_axisPosition;
 };
 
 class widGraphXAxis: public widGraphXAxes
@@ -269,6 +278,7 @@ private:
     virtual void m_drawText(painterAntiAl &painter) override;
     virtual void m_drawZoomCursor(painterAntiAl &painter) override;
     virtual void m_drawMoveCursor(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_object) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -288,6 +298,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_object) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -308,6 +319,7 @@ public:
     virtual std::weak_ptr<dataAxis> m_getData() override;
 private:
     virtual void m_drawLine(painterAntiAl &painter) override;
+    virtual bool m_dropCurve(std::weak_ptr<graphObject> ptr_curve) override;
 protected:
     virtual double m_getTicksStart() override;
     virtual double m_getTicksEnd() override;
@@ -354,7 +366,9 @@ public:
         {return m_widY1;}
     widGraphY2Axis* m_getY2Axis()
         {return m_widY2;}
-    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_addObject(std::shared_ptr<graphCurve> ptr_object);
+    void m_addObject(std::shared_ptr<graphValue> ptr_object);
+    void m_addObject(std::shared_ptr<graphColumn> ptr_object);
     void m_removeAllObjects();
     void m_removeObject(int curveIndex);
     void m_loadValues();
@@ -362,7 +376,8 @@ public:
     void m_setPointsStyle(int curveIndex, QColor color, int penPointsWidth = 3, int pointsShapeSize = 10, int pointsStyleIndex = 1, bool showPoints = true);
     void m_setAreaStyle(int curveIndex, QColor color, int areaStyleIndex = 1, bool showArea = true);
     void m_setColumnsStyle(int curveIndex, int columnWidth = 30, bool showColumn = true);
-    void m_setCurveAxis(int curveIndex, int axis);
+    void m_setCurveAxis(int curveIndex, yAxisPosition axis);
+    void m_setConstCurveOrientation(int curveIndex, enum orientation orient);
     void m_setCurveName(int curveIndex, const std::string& name);
     void m_openDialog();
     void m_takeScreenshot();
@@ -402,7 +417,17 @@ public:
     painterAntiAl(QPaintDevice *device);
 };
 
-
+class WIDGRAPH_EXPORT MimeDataWithGraphObject: public QMimeData
+{
+public:
+    MimeDataWithGraphObject(std::weak_ptr<graphObject> ptr_curve):
+        QMimeData(), ptr_object(ptr_curve)
+    {}
+    std::weak_ptr<graphObject> m_getGraphObject() const
+        {return ptr_object;}
+private:
+    std::weak_ptr<graphObject> ptr_object;
+};
 
 
 #endif // WIDGRAPH_H

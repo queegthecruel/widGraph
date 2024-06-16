@@ -18,11 +18,24 @@ void writeBool(std::ofstream &outstream, const bool& value);
 // Graph data
 struct dataElement
 {
-    dataElement() {}
-    dataElement(std::ifstream &/*instream*/) {}
-    ~dataElement() = default;
-    void m_saveToFile(std::ofstream &/*outstream*/)
+    dataElement();
+    dataElement(std::ifstream &/*instream*/);
+    void m_saveToFile(std::ofstream &/*outstream*/);
+    void m_setVisible(bool status, int manualSize = -1)
     {
+        if (status) {
+            m_show = true;
+            m_manualSize = false;
+            if (manualSize != -1) {
+                m_manualSize = true;
+                m_manualSizeValue = manualSize;
+            }
+        }
+        else {
+            m_show = true;
+            m_manualSize = true;
+            m_manualSizeValue = 0;
+        }
     }
 
     bool m_show = true;
@@ -121,7 +134,7 @@ struct dataLegend: public dataElement
     int m_fontText = 15;
     int m_nColumns = 1;
     bool m_showTopLine = true;
-    bool m_arrangeToAxes = false;
+    bool m_arrangeToAxes = true;
 };
 
 struct dataDrawArea: public dataElement
@@ -135,6 +148,7 @@ struct dataDrawArea: public dataElement
         dataElement::m_saveToFile(outstream);
     }
     bool m_showGrid = true;
+    bool m_showYAxesAtX = true, m_showXAxesAtY1 = true, m_showXAxesAtY2 = false;
 };
 
 struct dataControl: public dataElement
@@ -148,12 +162,15 @@ struct dataControl: public dataElement
         dataElement::m_saveToFile(outstream);
     }
     bool m_zoom = false, m_move = false;
+    bool m_allowDialog = true;
+    bool m_allowDrop = false;
+
     void m_setMove(bool status);
     void m_setZoom(bool status);
-    void m_setNothing();
+    void m_setNoZoomNoMove();
 };
 
-class graphObjects;
+class graphObject;
 struct dataGraph
 {
     dataGraph();
@@ -162,7 +179,7 @@ struct dataGraph
     dataGraph& operator=(const dataGraph& oldData) = delete;
     ~dataGraph() = default;
     void m_saveToFile(std::ofstream &outstream);
-    void m_addObject(std::shared_ptr<graphObjects> ptr_object);
+    void m_addObject(std::shared_ptr<graphObject> ptr_object);
     void m_removeAllObjects();
     void m_removeObject(int curveIndex);
 
@@ -174,7 +191,7 @@ struct dataGraph
     std::shared_ptr<dataDrawArea> m_drawArea;
     std::shared_ptr<dataControl> m_control;
 
-    std::vector<std::shared_ptr<graphObjects>> m_vectorOfObjects;
+    std::vector<std::shared_ptr<graphObject>> m_vectorOfObjects;
 };
 
 

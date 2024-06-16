@@ -8,6 +8,8 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     m_widContent = new graphSettingsWidget(ptr_data);
 
     m_widFooter = new footerDialogGraph();
+    connect(m_widFooter, &footerDialogGraph::m_emitDataChanged,
+            this, &dialogGraph::m_slotDataChanged);
     connect(m_widFooter, &footerDialogGraph::m_emitApply,
             this, &dialogGraph::m_slotApply);
     connect(m_widFooter, &footerDialogGraph::m_emitClose,
@@ -25,6 +27,10 @@ dialogGraph::dialogGraph(widGraph *graph, std::weak_ptr<dataGraph> data):
     resize(1024,700);
 }
 
+void dialogGraph::m_slotDataChanged()
+{
+    ptr_graph->m_loadValues();
+}
 void dialogGraph::m_slotClose()
 {
     close();
@@ -61,10 +67,10 @@ void dialogGraph::m_slotLoadFile()
     int nGraphObjects = readInt(loadFileContent);
     for (int i = 0; i < nGraphObjects; ++i) {
         int type = readInt(loadFileContent);
-        auto ptr_object = graphObjects::m_createGraphObject(type);
+        auto ptr_object = graphObject::m_createGraphObject(type);
         auto ptr_objectData = std::make_shared<dataGraphObject>(loadFileContent);
         ptr_object->m_setData(ptr_objectData);
-        ptr_graph->m_addObject(ptr_object);
+      //  ptr_graph->m_addObject(ptr_object);
     }
     loadFileContent.close();
 }
@@ -231,7 +237,6 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
 {
     m_layBackground = new QVBoxLayout(this);
     m_layBackground->setContentsMargins(2,2,2,2);
-//    m_layBackground->setSpacing(0);
     setStyleSheet(""
                   ".QSplitter"
                         "{background: gray;}"
@@ -244,7 +249,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     m_yAxis2 = new tabGraphSettingsY2Axis(ptr_data.lock()->m_Y2);
     m_legend = new tabGraphSettingsLegend(ptr_data.lock()->m_legend);
     m_drawArea = new tabGraphSettingsDrawArea(ptr_data.lock()->m_drawArea);
-    m_objects = new tabGraphSettingsObjects(ptr_data.lock());
+    m_objects2 = new tabGraphSettingsObjects(ptr_data.lock());
 
     m_tabs.push_back(m_title);
     m_tabs.push_back(m_xAxis);
@@ -269,7 +274,7 @@ graphSettingsWidget::graphSettingsWidget(std::weak_ptr<dataGraph> data):
     splitMain->addWidget(m_objects);
 
     m_layBackground->addWidget(splitMain);
-    splitMain->setSizes({300,600,400});
+    splitMain->setSizes({300,600,600});
 }
 
 void graphSettingsWidget::m_loadValues()
@@ -286,10 +291,13 @@ void graphSettingsWidget::m_saveValues()
 
 footerDialogGraph::footerDialogGraph()
 {
+    m_butTest = new QPushButton("Test");
     m_butSaveFile = new QPushButton("Save to file");
     m_butLoadFile = new QPushButton("Load from file");
     m_butClose = new QPushButton("Close");
     m_butApply = new QPushButton("Apply");
+    connect(m_butTest, &QAbstractButton::clicked,
+            this, [this](){emit m_emitDataChanged();});
     connect(m_butSaveFile, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotSaveFile);
     connect(m_butLoadFile, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotLoadFile);
     connect(m_butClose, &QAbstractButton::clicked, this, &footerDialogGraph::m_slotClose);
@@ -299,6 +307,7 @@ footerDialogGraph::footerDialogGraph()
     m_layBackground->setSpacing(4);
     m_layBackground->addWidget(m_butSaveFile);
     m_layBackground->addWidget(m_butLoadFile);
+    m_layBackground->addWidget(m_butTest);
     m_layBackground->addStretch();
     m_layBackground->addWidget(m_butApply);
     m_layBackground->addWidget(m_butClose);
@@ -378,129 +387,12 @@ void tabGraphSettingsAxis::m_slotAutoStepToggled()
 }
 
 
-tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data):
-    tabGraph("Curves"),
-    ptr_graphData(ptr_data)
-{
-    m_createCopyOfGraphData();
-    m_tree = new treeWidgetGraphObjects();
-    m_layBackground->addWidget(m_tree);
-    connect(m_tree, &treeWidgetGraphObjects::m_signalMoved,
-            this, &tabGraphSettingsObjects::m_slotMoved);
-}
-
-void tabGraphSettingsObjects::m_createCopyOfGraphData()
-{
-    m_vDataCopy.clear();
-    m_vOrder.clear();
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    for (unsigned int i = 0; i < ptr_vGraphObjects.size(); ++i) {
-        m_vOrder.push_back(i);
-        auto ptr_graphData = ptr_vGraphObjects[i]->m_getData();
-        auto newData = std::make_shared<dataGraphObject>(*ptr_graphData.lock());
-        m_vDataCopy.push_back(newData);
-    }
-}
-
-void tabGraphSettingsObjects::m_loadValues()
-{
-    m_vWidgets.clear();
-    m_tree->clear();
-
-    int pos = 0;
-    for (auto &var: m_vDataCopy) {
-        auto *widgetStyle = new widGraphObjectSettingMain(var);
-        auto *widgetOperation = new widGraphObjectSettingOperation(pos, widgetStyle);
-        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveUp,
-                this, &tabGraphSettingsObjects::m_slotMoveUp);
-        connect(widgetOperation, &widGraphObjectSettingOperation::m_signalMoveDown,
-                this, &tabGraphSettingsObjects::m_slotMoveDown);
-        m_vWidgets.push_back({widgetOperation, widgetStyle});
-        m_tree->m_addChild(var->m_getName(), widgetOperation, widgetStyle);
-        widgetStyle->m_loadValues();
-        widgetOperation->m_loadValues();
-        ++pos;
-    }
-}
-
-void tabGraphSettingsObjects::m_saveDataInWidgets()
-{
-    for (auto &var: m_vWidgets) {
-        auto [ptr_widOperation, ptr_widStyle] = var;
-        ptr_widOperation->m_saveValues();
-        ptr_widStyle->m_saveValues();
-    }
-}
-
-void tabGraphSettingsObjects::m_reorderObjectsInGraph()
-{
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    std::vector<std::shared_ptr<graphObjects>> vDialogObjects;
-    // Reorder
-    vDialogObjects.resize(m_vOrder.size());
-    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
-        vDialogObjects[i] = ptr_vGraphObjects[m_vOrder[i]];
-    for (unsigned int i = 0; i < m_vOrder.size(); ++i)
-        ptr_vGraphObjects[i] = vDialogObjects[i];
-    // Assign data
-    for (unsigned int i = 0; i < m_vDataCopy.size(); ++i)
-        ptr_vGraphObjects[i]->m_setData(m_vDataCopy[i]);
-}
-
-void tabGraphSettingsObjects::m_deleteDeletedItemsInGraph()
-{
-    auto &ptr_vGraphObjects = ptr_graphData.lock()->m_vectorOfObjects;
-    for (int i = ptr_vGraphObjects.size() - 1; i >= 0; --i)
-    {
-        auto [toBeDeleted] = ptr_vGraphObjects[i]->m_getData().lock()->m_getOperation();
-        if (toBeDeleted)
-            ptr_vGraphObjects.erase(ptr_vGraphObjects.begin() + i);
-    }
-}
-
-void tabGraphSettingsObjects::m_saveValues()
-{
-    // Save data in the widgets
-        m_saveDataInWidgets();
-    // Reorder the objects - if moved by user
-        m_reorderObjectsInGraph();
-    // Delete - if deleted by user
-        m_deleteDeletedItemsInGraph();
-    // Create copy of data from graphs for use in widgets
-        m_createCopyOfGraphData();
-    // Load values
-        m_loadValues();
-}
-
-void tabGraphSettingsObjects::m_slotMoved(int from, int to)
-{
-    int maxIndex = (int) m_vDataCopy.size() - 1;
-    from = std::max(from, 0);
-    from = std::min(from, maxIndex);
-    to = std::max(to, 0);
-    to = std::min(to, maxIndex);
-    m_saveDataInWidgets();
-    std::swap(*m_vDataCopy[to], *m_vDataCopy[from]);
-    std::swap(m_vOrder[to], m_vOrder[from]);
-    m_loadValues();
-}
-
-void tabGraphSettingsObjects::m_slotMoveUp(int from)
-{
-    int to = from - 1;
-    m_slotMoved(from, to);
-}
-
-void tabGraphSettingsObjects::m_slotMoveDown(int from)
-{
-    int to = from + 1;
-    m_slotMoved(from, to);
-}
-
 widGraphObjectSettingMain::widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data):
     ptr_data(data)
 {
     HBoxLayout *lay = new HBoxLayout(this);
+    m_widOrientation = new widGraphObjectSettingOrientation();
+    lay->addWidget(m_widOrientation, 1);
     m_widColumn = new widGraphObjectSettingColumn();
     lay->addWidget(m_widColumn, 1);
     m_widCurve = new widGraphObjectSettingCurve();
@@ -540,6 +432,11 @@ void widGraphObjectSettingMain::m_loadValues()
         m_widColumn->m_setValues(columnWidth, columnEnabled);
         if (!data->m_getHasColumn())
             m_widColumn->setVisible(false);
+    // Const curve
+        auto [constCurveOrient] = data->m_getConstCurveOrientation();
+        m_widOrientation->m_setValues(constCurveOrient);
+        if (!data->m_getHasOrientation())
+            m_widOrientation->setVisible(false);
     // Legend
         auto [legendOverwrite, legendText, legendEnabled]
                 = data->m_getStyleOfLegend();
@@ -560,32 +457,44 @@ void widGraphObjectSettingMain::m_saveValues()
     // Area
         auto [areaColor, areaStyleIndex, areaEnabled] = m_widArea->m_getValues();
         data->m_setStyleOfArea(areaColor, areaStyleIndex, areaEnabled);
+    // Orientation
+        auto [constCurveOrient] = m_widOrientation->m_getValues();
+        data->m_setConstCurveOrientation(constCurveOrient);
     // Column
         auto [columnWidth, columnEnabled] = m_widColumn->m_getValues();
         data->m_setStyleOfColumn(columnWidth, columnEnabled);
-    // Column
+    // Legend
         auto [legendOverwrite, legendText, legendEnabled] = m_widLegend->m_getValues();
         data->m_setStyleOfLegend(legendOverwrite, legendText, legendEnabled);
  }
 
 
 widGraphObjectSettingCurve::widGraphObjectSettingCurve():
-    widGraphObjectSetting("Curve")
+    widGraphObjectSettingWithName("Curve")
 {
     m_colorPickerCurve = new colorPicker();
+    connect(m_colorPickerCurve, &colorPicker::m_signalColorChanged,
+            this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
+    m_colorPickerCurve->setToolTip("Select curve color");
     m_editCurveThick = new spinbox();
+    connect(m_editCurveThick, &spinbox::valueChanged,
+            this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
+    m_editCurveThick->setToolTip("Curve thickness");
     m_comboCurveStyle = new combobox(65);
+    connect(m_comboCurveStyle, &combobox::currentIndexChanged,
+            this, &widGraphObjectSettingCurve::m_slotSendSignalChanged);
+    m_comboCurveStyle->setToolTip("Curve style");
 
     int iconWidth = 40;
     int iconHeight = 15;
     auto vOptions = m_getIconsForCurve(iconWidth, iconHeight);
     m_comboCurveStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    m_layBackground->addWidget(m_checkEnable);
-    m_layBackground->addSpacing(1);
-    m_layBackground->addWidget(m_colorPickerCurve);
-    m_layBackground->addWidget(m_editCurveThick);
-    m_layBackground->addWidget(m_comboCurveStyle);
+    m_addWidget(m_checkEnable);
+    m_addSpacing(1);
+    m_addWidget(m_colorPickerCurve);
+    m_addWidget(m_editCurveThick);
+    m_addWidget(m_comboCurveStyle);
     m_addEndOfWidget();
 }
 
@@ -614,27 +523,51 @@ void widGraphObjectSettingCurve::m_setEnabled(bool enabled)
     m_comboCurveStyle->setEnabled(enabled);
 }
 
-widGraphObjectSetting::widGraphObjectSetting(const QString &name)
+widGraphObjectSettingWithName::widGraphObjectSettingWithName(const QString &name)
 {
-    m_layBackground = new HBoxLayout(this);
-    m_layBackground->setSpacing(1);
-    m_layBackground->addWidget(m_separator());
-    m_layBackground->addSpacing(1);
-
-    m_checkEnable = new checkbox(name + ": ");
-    m_checkEnable->setStyleSheet("QCheckBox::checked {color:black;}"
-                                 "QCheckBox::unchecked {color:gray;}"
-                                 "QCheckBox::disabled {color:gray;}");
+    m_checkEnable = new checkbox("");
+    m_checkEnable->setToolTip("Show " + name.toLower());
     connect(m_checkEnable, &QCheckBox::toggled,
-            this, &widGraphObjectSettingCurve::m_slotEnabledToggled);
-    m_layBackground->addWidget(m_checkEnable);
-    m_layBackground->addSpacing(1);
+            this, &widGraphObjectSettingWithName::m_slotEnabledToggled);
+    connect(m_checkEnable, &QCheckBox::toggled,
+            this, &widGraphObjectSettingWithName::m_slotSendSignalChanged);
+    m_addWidget(m_checkEnable);
+    m_addSpacing(1);
 }
 
 void widGraphObjectSetting::m_addEndOfWidget()
 {
     m_layBackground->addSpacing(2);
     m_layBackground->addStretch();
+}
+
+void widGraphObjectSetting::m_addWidget(QWidget *ptr_widget)
+{
+    m_layBackground->addWidget(ptr_widget);
+}
+
+void widGraphObjectSetting::m_addSpacing(int nPixels)
+{
+    m_layBackground->addSpacing(nPixels);
+}
+
+widGraphObjectSetting::widGraphObjectSetting()
+{
+    QHBoxLayout *lay = new QHBoxLayout();
+    lay->setContentsMargins(0,0,0,0);
+    lay->setSpacing(0);
+    setLayout(lay);
+    m_widBackground = new QWidget();
+    lay->addWidget(m_widBackground);
+    m_layBackground = new HBoxLayout(m_widBackground);
+    m_layBackground->setSpacing(1);
+  //  m_layBackground->addWidget(m_separator());
+    m_layBackground->addSpacing(1);
+}
+
+void widGraphObjectSetting::m_setVisible(bool status)
+{
+    m_widBackground->setVisible(status);
 }
 
 QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(int iconWidth, int iconHeight)
@@ -680,21 +613,33 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForCurve(i
 }
 
 widGraphObjectSettingPoints::widGraphObjectSettingPoints():
-    widGraphObjectSetting("Points")
+    widGraphObjectSettingWithName("Points")
 {
     m_colorPickerPoints = new colorPicker();
+    connect(m_colorPickerPoints, &colorPicker::m_signalColorChanged,
+            this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_colorPickerPoints->setToolTip("Select points color");
     m_editThickness = new spinbox();
+    connect(m_editThickness, &spinbox::valueChanged,
+            this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_editThickness->setToolTip("Set pen thickness");
     m_editShapeSize = new spinbox();
+    connect(m_editShapeSize, &spinbox::valueChanged,
+            this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_editShapeSize->setToolTip("Set size of point");
     m_comboShape = new combobox(50);
+    connect(m_comboShape, &combobox::currentIndexChanged,
+            this, &widGraphObjectSettingPoints::m_slotSendSignalChanged);
+    m_comboShape->setToolTip("Select shape of points");
 
     int iconSize = 17;
     auto vOptions = m_getIconsForPoints(iconSize);
     m_comboShape->m_addItems(vOptions, QSize(iconSize,iconSize), false);
 
-    m_layBackground->addWidget(m_colorPickerPoints);
-    m_layBackground->addWidget(m_editThickness);
-    m_layBackground->addWidget(m_editShapeSize);
-    m_layBackground->addWidget(m_comboShape);
+    m_addWidget(m_colorPickerPoints);
+    m_addWidget(m_editThickness);
+    m_addWidget(m_editShapeSize);
+    m_addWidget(m_comboShape);
     m_addEndOfWidget();
 }
 
@@ -725,7 +670,7 @@ void widGraphObjectSettingPoints::m_setEnabled(bool enabled)
     m_editShapeSize->setEnabled(enabled);
     m_comboShape->setEnabled(enabled);
 }
-void widGraphObjectSetting::m_slotEnabledToggled()
+void widGraphObjectSettingWithName::m_slotEnabledToggled()
 {
     m_checkEnable->setEnabled(true);
     bool enabled = m_checkEnable->isChecked();
@@ -741,25 +686,25 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
     painter.setPen(QPen(Qt::black, 2));
 
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::NONE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::NONE));
     QIcon iconNone(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::POINT));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::POINT));
     QIcon iconPoint(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CROSS));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::CROSS));
     QIcon iconCross(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::SQUARE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::SQUARE));
     QIcon iconRect(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::CIRCLE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::CIRCLE));
     QIcon iconCircle(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE));
     QIcon iconTriangle(pixmap);
     painter.fillRect(pixmap.rect(), Qt::white);
-    painter.drawPath(graphObjects::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE_REV));
+    painter.drawPath(graphObject::m_createPoint(mid, iconSize - 3, pointsShapes::TRIANGLE_REV));
     QIcon iconRevTriangle(pixmap);
 
     auto none = std::tuple<QString, QIcon>("None",iconNone);
@@ -774,18 +719,24 @@ QVector<std::tuple<QString, QIcon> > widGraphObjectSetting::m_getIconsForPoints(
 }
 
 widGraphObjectSettingArea::widGraphObjectSettingArea():
-    widGraphObjectSetting("Area")
+    widGraphObjectSettingWithName("Area")
 {
     m_colorPickerArea = new colorPicker();
+    connect(m_colorPickerArea, &colorPicker::m_signalColorChanged,
+            this, &widGraphObjectSettingArea::m_slotSendSignalChanged);
+    m_colorPickerArea->setToolTip("Select color of area below curve");
     m_comboAreaStyle = new combobox(65);
+    connect(m_comboAreaStyle, &combobox::currentIndexChanged,
+            this, &widGraphObjectSettingArea::m_slotSendSignalChanged);
+    m_comboAreaStyle->setToolTip("Select style of area filling");
 
     int iconWidth = 40;
     int iconHeight = 15;
     auto vOptions = m_getIconsForArea(iconWidth, iconHeight);
     m_comboAreaStyle->m_addItems(vOptions, QSize(iconWidth, iconHeight), false);
 
-    m_layBackground->addWidget(m_colorPickerArea);
-    m_layBackground->addWidget(m_comboAreaStyle);
+    m_addWidget(m_colorPickerArea);
+    m_addWidget(m_comboAreaStyle);
     m_addEndOfWidget();
 }
 
@@ -908,12 +859,19 @@ QWidget *widGraphObjectSetting::m_separator()
     return separator;
 }
 
+void widGraphObjectSetting::m_slotSendSignalChanged()
+{
+    emit m_signalChanged();
+}
+
 widGraphObjectSettingColumn::widGraphObjectSettingColumn():
-    widGraphObjectSetting("Column")
+    widGraphObjectSettingWithName("Column")
 {
     m_editColumnThick = new spinbox();
-
-    m_layBackground->addWidget(m_editColumnThick);
+    m_editColumnThick->setToolTip("Set column thickness");
+    connect(m_editColumnThick, &spinbox::valueChanged,
+            this, &widGraphObjectSettingColumn::m_slotSendSignalChanged);
+    m_addWidget(m_editColumnThick);
     m_addEndOfWidget();
 }
 
@@ -937,10 +895,15 @@ void widGraphObjectSettingColumn::m_setEnabled(bool enabled)
 }
 
 widGraphObjectSettingLegend::widGraphObjectSettingLegend():
-    widGraphObjectSetting("Legend")
+    widGraphObjectSettingWithName("Legend")
 {
     m_editText = new checkEdit(validator::NONE);
-    m_layBackground->addWidget(m_editText);
+    m_editText->setToolTip("Overwrite text in legend");
+    connect(m_editText, &checkEdit::m_signalToggled,
+            this, &widGraphObjectSettingLegend::m_slotSendSignalChanged);
+    connect(m_editText, &checkEdit::m_signalEditingFinished,
+            this, &widGraphObjectSettingLegend::m_slotSendSignalChanged);
+    m_addWidget(m_editText);
     m_addEndOfWidget();
 }
 
@@ -966,8 +929,8 @@ void widGraphObjectSettingLegend::m_setEnabled(bool enabled)
 
 treeWidgetGraphObjects::treeWidgetGraphObjects()
 {
-    setColumnCount(3);
-    setHeaderLabels({"Object name","Operations","Style"});
+    setColumnCount(9);
+    setHeaderLabels({"Object name", "Operations", "Y Axis", "Type",  "Curve", "Points", "Area", "Legend", "Style"});
     QFont font;
     font.setBold(true);
     font.setPixelSize(12);
@@ -975,6 +938,7 @@ treeWidgetGraphObjects::treeWidgetGraphObjects()
     header()->setStyleSheet("border:none; border-bottom:1px solid black;");
     setColumnWidth(0, 150);
     setColumnWidth(1, 75);
+    setColumnWidth(2, 60);
     setIndentation(8);
     setStyleSheet("QTreeWidget::item {"
                       "padding-top: 1px 0;"
@@ -999,7 +963,8 @@ void treeWidgetGraphObjects::dropEvent(QDropEvent *event)
 }
 
 QTreeWidgetItem *treeWidgetGraphObjects::m_addChild(const std::string &text,
-  QWidget *ptr_widget, QWidget *ptr_widget2, const std::string &tooltip)
+  QVector<QWidget *> widgets,
+  const std::string &tooltip)
 {
     // Create item
         QTreeWidgetItem *item = new QTreeWidgetItem(this);
@@ -1013,10 +978,23 @@ QTreeWidgetItem *treeWidgetGraphObjects::m_addChild(const std::string &text,
         if (tooltipText == "")
             tooltipText = text;
         item->setToolTip(0, QString::fromStdString(tooltipText));
-    // Second
-        setItemWidget(item, 1, ptr_widget);
-    // Third
-        setItemWidget(item, 2, ptr_widget2);
+
+    // Operation
+    setItemWidget(item, 1, widgets[0]);
+    // Axis
+    setItemWidget(item, 2, widgets[1]);
+    // Axis
+    setItemWidget(item, 3, widgets[2]);
+    // Axis
+    setItemWidget(item, 4, widgets[3]);
+    // Axis
+    setItemWidget(item, 5, widgets[4]);
+    // Axis
+    setItemWidget(item, 6, widgets[5]);
+    // Axis
+    setItemWidget(item, 7, widgets[6]);
+    // Fourth
+        setItemWidget(item, 8, widgets[7]);
     return item;
 }
 
@@ -1098,4 +1076,826 @@ butGraphObjectSettingButton::butGraphObjectSettingButton(QIcon icon, const QStri
     setFixedSize(QSize(25,25));
     setIconSize(QSize(20,20));
     setToolTip(tooltip);
+}
+
+widGraphObjectSettingOrientation::widGraphObjectSettingOrientation()
+{
+    m_radioHorizontal = new radiobutton("Horiz.");
+    m_radioVertical = new radiobutton("Vert.");
+    m_addWidget(m_radioHorizontal);
+    m_addWidget(m_radioVertical);
+    m_addEndOfWidget();
+}
+
+void widGraphObjectSettingOrientation::m_setValues(orientation orient)
+{
+    m_radioHorizontal->m_setChecked(orient == orientation::HORIZONTAL);
+    m_radioVertical->m_setChecked(orient == orientation::VERTICAL);
+}
+
+std::tuple<orientation> widGraphObjectSettingOrientation::m_getValues()
+{
+    enum orientation orient;
+    if (m_radioHorizontal->isChecked())
+        orient = orientation::HORIZONTAL;
+    else if (m_radioVertical->isChecked())
+        orient = orientation::VERTICAL;
+    else
+        orient = orientation::VERTICAL;
+    return {orient};
+}
+
+void widGraphObjectSettingOrientation::m_setEnabled(bool enabled)
+{
+    m_radioHorizontal->setEnabled(enabled);
+    m_radioVertical->setEnabled(enabled);
+}
+
+widGraphObjectSettingAxis::widGraphObjectSettingAxis()
+{
+    m_state = yAxisPosition::LEFT;
+    m_radioLeft = new radiobutton("L");
+    connect(m_radioLeft, &radiobutton::toggled,
+            this, &widGraphObjectSettingAxis::m_slotSendSignal);
+    m_radioLeft->setToolTip("Left y axis");
+    m_radioRight = new radiobutton("R");
+    connect(m_radioRight, &radiobutton::toggled,
+            this, &widGraphObjectSettingAxis::m_slotSendSignal);
+    m_radioRight->setToolTip("Right y axis");
+    m_addWidget(m_radioLeft);
+    m_addWidget(m_radioRight);
+    m_addEndOfWidget();
+}
+
+void widGraphObjectSettingAxis::m_setValues(yAxisPosition orient)
+{
+    m_state = orient;
+    m_radioLeft->m_setChecked(m_state == yAxisPosition::LEFT);
+    m_radioRight->m_setChecked(m_state == yAxisPosition::RIGHT);
+}
+
+std::tuple<yAxisPosition> widGraphObjectSettingAxis::m_getValues()
+{
+    return {m_state};
+/*    enum yAxisPosition orient;
+    if (m_radioLeft->isChecked())
+        orient = yAxisPosition::LEFT;
+    else if (m_radioLeft->isChecked())
+        orient = yAxisPosition::RIGHT;
+    else
+        orient = yAxisPosition::LEFT;
+    return {orient};
+*/
+}
+
+void widGraphObjectSettingAxis::m_setEnabled(bool enabled)
+{
+    m_radioLeft->setEnabled(enabled);
+    m_radioRight->setEnabled(enabled);
+}
+
+void widGraphObjectSettingAxis::m_slotSendSignal(bool status)
+{
+    if (status) {
+        switch (m_state) {
+            case yAxisPosition::LEFT:
+                m_state = yAxisPosition::RIGHT;
+                break;
+            case yAxisPosition::RIGHT:
+                m_state = yAxisPosition::LEFT;
+                break;
+        }
+        emit m_signalChanged();
+    }
+}
+
+objectPropertiesTableModel::objectPropertiesTableModel(std::shared_ptr<dataGraph> ptr_dataGraph):
+    ptr_data(ptr_dataGraph)
+{
+
+}
+
+int objectPropertiesTableModel::rowCount(const QModelIndex &/*parent*/) const
+{return ptr_data.lock()->m_vectorOfObjects.size();}
+
+int objectPropertiesTableModel::columnCount(const QModelIndex &/*parent*/) const
+{return 7;}
+
+QVariant objectPropertiesTableModel::data(const QModelIndex &index, int role) const
+{
+    int row = index.row();
+    int col = index.column();
+    auto ptr_objectData = ptr_data.lock()->m_vectorOfObjects[row]->m_getData().lock();
+    auto columnType = m_getEnumFromIndex(col);
+    switch (columnType) {
+      case objectPropertiesColumns::NAME:
+        return m_name(role, ptr_objectData);
+      case objectPropertiesColumns::YAXIS:
+        return m_yAxis(role, ptr_objectData);
+      case objectPropertiesColumns::CURVE:
+        return m_curve(role, ptr_objectData);
+      case objectPropertiesColumns::POINTS:
+        return m_points(role, ptr_objectData);
+      case objectPropertiesColumns::AREA:
+        return m_area(role, ptr_objectData);
+      case objectPropertiesColumns::LEGEND:
+        return m_legend(role, ptr_objectData);
+      case objectPropertiesColumns::COLUMN:
+        return m_column(role, ptr_objectData);
+    }
+    return QVariant();
+}
+
+bool objectPropertiesTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    int row = index.row();
+    int col = index.column();
+    auto ptr_objectData = ptr_data.lock()->m_vectorOfObjects[row]->m_getData().lock();
+    auto columnType = m_getEnumFromIndex(col);
+    switch (columnType) {
+      case objectPropertiesColumns::NAME:
+        return m_setName(role, value, ptr_objectData);
+      case objectPropertiesColumns::YAXIS:
+        return m_setYAxis(role, value, ptr_objectData);
+      case objectPropertiesColumns::CURVE:
+        return m_setCurve(role, value, ptr_objectData);
+      case objectPropertiesColumns::POINTS:
+        return m_setPoints(role, value, ptr_objectData);
+      case objectPropertiesColumns::AREA:
+        return m_setArea(role, value, ptr_objectData);
+      case objectPropertiesColumns::LEGEND:
+        return m_setLegend(role, value, ptr_objectData);
+      case objectPropertiesColumns::COLUMN:
+        return m_setColumn(role, value, ptr_objectData);
+    }
+    return true;
+}
+
+QVariant objectPropertiesTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    switch (orientation) {
+      case Qt::Horizontal:
+        switch (role) {
+          case Qt::DisplayRole:
+            auto columnType = m_getEnumFromIndex(section);
+              switch (columnType) {
+                case objectPropertiesColumns::NAME: return "Object name";
+                case objectPropertiesColumns::YAXIS: return "Y axis";
+                case objectPropertiesColumns::CURVE: return "Curve";
+                case objectPropertiesColumns::POINTS: return "Points";
+                case objectPropertiesColumns::AREA: return "Area";
+                case objectPropertiesColumns::LEGEND: return "Legend";
+                case objectPropertiesColumns::COLUMN: return "Column";
+              }
+            break;
+        }
+        break;
+
+    case Qt::Vertical:
+        break;
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+Qt::ItemFlags objectPropertiesTableModel::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags flags;
+    auto columnType = m_getEnumFromIndex(index.column());
+    switch (columnType) {
+      case objectPropertiesColumns::NAME:
+        flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+        break;
+      case objectPropertiesColumns::YAXIS:
+      case objectPropertiesColumns::CURVE:
+      case objectPropertiesColumns::POINTS:
+      case objectPropertiesColumns::AREA:
+      case objectPropertiesColumns::LEGEND:
+      case objectPropertiesColumns::COLUMN:
+        flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+        break;
+    }
+    return flags;
+}
+
+int objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns column)
+{
+  switch (column){
+    case objectPropertiesColumns::NAME:
+      return 0;
+    case objectPropertiesColumns::YAXIS:
+      return 1;
+    case objectPropertiesColumns::CURVE:
+      return 2;
+    case objectPropertiesColumns::POINTS:
+      return 3;
+    case objectPropertiesColumns::AREA:
+      return 4;
+    case objectPropertiesColumns::LEGEND:
+      return 5;
+    case objectPropertiesColumns::COLUMN:
+      return 6;
+  }
+}
+
+objectPropertiesColumns objectPropertiesTableModel::m_getEnumFromIndex(int index)
+{
+  switch (index) {
+    case 0: return objectPropertiesColumns::NAME;
+    case 1: return objectPropertiesColumns::YAXIS;
+    case 2: return objectPropertiesColumns::CURVE;
+    case 3: return objectPropertiesColumns::POINTS;
+    case 4: return objectPropertiesColumns::AREA;
+    case 5: return objectPropertiesColumns::LEGEND;
+    case 6: return objectPropertiesColumns::COLUMN;
+  default:
+      qDebug() << "Unknown enum objectPropertiesColumns";
+      return objectPropertiesColumns::NAME;
+  }
+}
+
+bool objectPropertiesTableModel::m_setName(int /*role*/, const QVariant &/*value*/, std::shared_ptr<dataGraphObject> /*ptr_object*/)
+{
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_name(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto text = ptr_object->m_getName();
+    switch (role) {
+    case Qt::DisplayRole:
+    case Qt::ToolTipRole:
+        return QString::fromStdString(text);
+    case Qt::FontRole:
+        {QFont font;
+        font.setBold(true);
+        return font;}
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setYAxis(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto yAxis = ptr_object->m_getPrefferedYAxis();
+    switch (role){
+      case Qt::UserRole:
+         yAxis = static_cast<enum yAxisPosition>(value.value<int>());
+         break;
+      default:
+         return false;
+    }
+    ptr_object->m_setYAxis(yAxis);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_yAxis(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto yAxis = ptr_object->m_getPrefferedYAxis();
+    switch (role){
+      case Qt::UserRole + 10:
+        return true;
+      case Qt::UserRole:
+          return static_cast<int>(yAxis);
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setCurve(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [color, width, style, show] = ptr_object->m_getStyleOfCurve();
+    switch (role){
+      case Qt::UserRole:
+         color = value.value<QColor>();
+         break;
+      case Qt::UserRole + 1:
+         width = value.value<int>();
+         break;
+      case Qt::UserRole + 2:
+         style = value.value<int>();
+         break;
+      case Qt::UserRole + 3:
+         show = value.value<bool>();
+         break;
+      default:
+         return false;
+    }
+    ptr_object->m_setStyleOfCurve(color, width, style, show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_curve(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [color, width, style, show] = ptr_object->m_getStyleOfCurve();
+    switch (role){
+      case Qt::UserRole + 10:
+        return ptr_object->m_getHasCurve();
+      case Qt::UserRole:
+          return color;
+      case Qt::UserRole + 1:
+          return width;
+      case Qt::UserRole + 2:
+          return style;
+      case Qt::UserRole + 3:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setPoints(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [color, width, shape, style, show] = ptr_object->m_getStyleOfPoints();
+    switch (role){
+    case Qt::UserRole:
+         color = value.value<QColor>();
+         break;
+      case Qt::UserRole + 1:
+         width = value.value<int>();
+         break;
+      case Qt::UserRole + 2:
+         shape = value.value<int>();
+         break;
+      case Qt::UserRole + 3:
+       style = value.value<int>();
+       break;
+      case Qt::UserRole + 4:
+       show = value.value<bool>();
+       break;
+      default:
+         return false;
+      break;
+    }
+    ptr_object->m_setStyleOfPoints(color, width, shape, style, show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_points(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [color, width, shape, style, show] = ptr_object->m_getStyleOfPoints();
+    switch (role){
+    case Qt::UserRole + 10:
+        return ptr_object->m_getHasPoints();
+      case Qt::UserRole:
+          return color;
+      case Qt::UserRole + 1:
+          return width;
+      case Qt::UserRole + 2:
+          return shape;
+      case Qt::UserRole + 3:
+          return style;
+      case Qt::UserRole + 4:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setLegend(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [overwrite, text, show] = ptr_object->m_getStyleOfLegend();
+    QString textQ = QString::fromStdString(text);
+    switch (role){
+      case Qt::UserRole:
+         overwrite = value.value<bool>();
+         break;
+      case Qt::UserRole + 1:
+         textQ = value.value<QString>();
+         break;
+      case Qt::UserRole + 2:
+         show = value.value<bool>();
+         break;
+      default:
+         return false;
+    }
+    ptr_object->m_setStyleOfLegend(overwrite, textQ.toStdString(), show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_legend(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [overwrite, text, show] = ptr_object->m_getStyleOfLegend();
+    switch (role){
+    case Qt::UserRole + 10:
+        return ptr_object->m_getHasLegend();
+      case Qt::UserRole:
+          return overwrite;
+      case Qt::UserRole + 1:
+          return QString::fromStdString(text);
+      case Qt::UserRole + 2:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setColumn(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [width, show] = ptr_object->m_getStyleOfColumns();
+    switch (role){
+      case Qt::UserRole:
+         width = value.value<int>();
+         break;
+      case Qt::UserRole + 1:
+         show = value.value<bool>();
+         break;
+      default:
+         return false;
+    }
+    ptr_object->m_setStyleOfColumn(width, show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_column(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [width, show] = ptr_object->m_getStyleOfColumns();
+    switch (role){
+    case Qt::UserRole + 10:
+        return ptr_object->m_getHasColumn();
+      case Qt::UserRole:
+          return width;
+      case Qt::UserRole + 1:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
+bool objectPropertiesTableModel::m_setArea(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
+{
+    auto [color, style, show] = ptr_object->m_getStyleOfArea();
+    switch (role){
+      case Qt::UserRole:
+         color = value.value<QColor>();
+         break;
+      case Qt::UserRole + 1:
+         style = value.value<int>();
+         break;
+      case Qt::UserRole + 2:
+         show = value.value<bool>();
+         break;
+      default:
+         return false;
+      break;
+    }
+    ptr_object->m_setStyleOfArea(color, style, show);
+    return true;
+}
+
+QVariant objectPropertiesTableModel::m_area(int role, std::shared_ptr<dataGraphObject> ptr_object) const
+{
+    auto [color, style, show] = ptr_object->m_getStyleOfArea();
+    switch (role){
+      case Qt::UserRole + 10:
+        return ptr_object->m_getHasArea();
+      case Qt::UserRole:
+          return color;
+      case Qt::UserRole + 1:
+          return style;
+      case Qt::UserRole + 2:
+          return show;
+      default:
+        return QVariant();
+    }
+}
+
+tabGraphSettingsObjects::tabGraphSettingsObjects(std::weak_ptr<dataGraph> ptr_data):
+    tabGraph("Curves"),
+    ptr_graphData(ptr_data)
+{
+    m_createTableAndModel();
+    m_layBackground->addWidget(m_table);
+}
+
+void tabGraphSettingsObjects::m_createTableAndModel()
+{
+    m_model = new objectPropertiesTableModel(ptr_graphData.lock());
+    m_table = new QTableView();
+    m_table->setModel(m_model);
+    connect(m_model, &objectPropertiesTableModel::dataChanged,
+            this, &tabGraphSettingsObjects::m_slotDataChanged);
+    m_setDelegatesToTableColumns();
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+    m_table->setColumnWidth(0, 200);
+    for (int row = 0; row < m_model->rowCount(); ++row)
+        for (int col = 0; col < m_model->columnCount(); ++col)
+            if (col != 0)
+                m_table->openPersistentEditor(m_model->index(row, col));
+}
+
+void tabGraphSettingsObjects::m_setDelegatesToTableColumns()
+{
+    delegateYAxis* delYAxis = new delegateYAxis();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::YAXIS),
+                delYAxis);
+    delegateCurve* delCurve = new delegateCurve();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::CURVE),
+                delCurve);
+    delegatePoints* delPoints = new delegatePoints();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::POINTS),
+                delPoints);
+    delegateArea* delArea = new delegateArea();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::AREA),
+                delArea);
+    delegateLegend* delLegend = new delegateLegend();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::LEGEND),
+                delLegend);
+    delegateColumn* delColumn = new delegateColumn();
+    m_table->setItemDelegateForColumn(
+                objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns::COLUMN),
+                delColumn);
+}
+
+void tabGraphSettingsObjects::m_slotDataChanged()
+{
+
+}
+
+delegateYAxis::delegateYAxis()
+{
+}
+
+QWidget *delegateYAxis::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+    widGraphObjectSettingAxis *wid = new widGraphObjectSettingAxis();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingAxis::m_signalChanged,
+            this, &delegateYAxis::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateYAxis::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingAxis *> (editor);
+    auto yAxis = index.data(Qt::UserRole).value<int>();
+    yAxisPosition value = yAxisPosition::LEFT;
+    switch (yAxis) {
+        case 0:
+            value = yAxisPosition::LEFT;
+            break;
+        case 1:
+            value = yAxisPosition::RIGHT;
+            break;
+    }
+    wid->m_setValues(value);
+}
+
+void delegateYAxis::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingAxis *> (editor);
+    auto [yAxis] = wid->m_getValues();
+    int value = 0;
+    switch (yAxis) {
+        case yAxisPosition::LEFT:
+            value = 0;
+            break;
+        case yAxisPosition::RIGHT:
+            value = 1;
+            break;
+    }
+    model->setData(index, value, Qt::UserRole);
+    emit model->dataChanged(index, index, {Qt::UserRole});
+}
+
+void delegateYAxis::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingAxis *> (sender());
+    emit commitData(wid);
+}
+
+delegateCurve::delegateCurve()
+{
+}
+
+QWidget *delegateCurve::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+    widGraphObjectSettingCurve *wid = new widGraphObjectSettingCurve();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingCurve::m_signalChanged,
+            this, &delegateCurve::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateCurve::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingCurve *> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    QColor color = index.data(Qt::UserRole).value<QColor>();
+    int width = index.data(Qt::UserRole + 1).value<int>();
+    int style = index.data(Qt::UserRole + 2).value<int>();
+    bool show = index.data(Qt::UserRole + 3).value<bool>();
+    wid->m_setValues(color, width, style, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegateCurve::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingCurve *> (editor);
+    auto [color, width, style, show] = wid->m_getValues();
+    model->setData(index, color, Qt::UserRole);
+    model->setData(index, width, Qt::UserRole + 1);
+    model->setData(index, style, Qt::UserRole + 2);
+    model->setData(index, show, Qt::UserRole + 3);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1, Qt::UserRole+2, Qt::UserRole+3});
+}
+
+void delegateCurve::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingCurve *> (sender());
+    emit commitData(wid);
+  //  emit closeEditor(wid);
+}
+
+delegatePoints::delegatePoints()
+{
+}
+
+QWidget *delegatePoints::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+    widGraphObjectSettingPoints *wid = new widGraphObjectSettingPoints();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingPoints::m_signalChanged,
+            this, &delegatePoints::commitAndCloseEditor);
+    return wid;
+}
+
+void delegatePoints::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingPoints *> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    QColor color = index.data(Qt::UserRole).value<QColor>();
+    int width = index.data(Qt::UserRole + 1).value<int>();
+    int shape = index.data(Qt::UserRole + 2).value<int>();
+    int style = index.data(Qt::UserRole + 3).value<int>();
+    bool show = index.data(Qt::UserRole + 4).value<bool>();
+    wid->m_setValues(color, width, shape, style, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegatePoints::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingPoints *> (editor);
+    auto [color, width, shape, style, show] = wid->m_getValues();
+    model->setData(index, color, Qt::UserRole);
+    model->setData(index, width, Qt::UserRole + 1);
+    model->setData(index, shape, Qt::UserRole + 2);
+    model->setData(index, style, Qt::UserRole + 3);
+    model->setData(index, show, Qt::UserRole + 4);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1, Qt::UserRole+2, Qt::UserRole+3, Qt::UserRole+4});
+}
+
+void delegatePoints::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingPoints *> (sender());
+    emit commitData(wid);
+}
+
+delegateArea::delegateArea()
+{
+}
+
+QWidget *delegateArea::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+    widGraphObjectSettingArea *wid = new widGraphObjectSettingArea();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingArea::m_signalChanged,
+            this, &delegateArea::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateArea::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingArea *> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    QColor color = index.data(Qt::UserRole).value<QColor>();
+    int style = index.data(Qt::UserRole + 1).value<int>();
+    bool show = index.data(Qt::UserRole + 2).value<bool>();
+    wid->m_setValues(color, style, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegateArea::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingArea *> (editor);
+    auto [color, style, show] = wid->m_getValues();
+    model->setData(index, color, Qt::UserRole);
+    model->setData(index, style, Qt::UserRole + 1);
+    model->setData(index, show, Qt::UserRole + 2);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1, Qt::UserRole+2});
+}
+
+void delegateArea::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingArea *> (sender());
+    emit commitData(wid);
+}
+
+delegateLegend::delegateLegend()
+{
+}
+
+QWidget *delegateLegend::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+    widGraphObjectSettingLegend *wid = new widGraphObjectSettingLegend();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingLegend::m_signalChanged,
+            this, &delegateLegend::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateLegend::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingLegend *> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    bool overwrite = index.data(Qt::UserRole).value<bool>();
+    std::string text = index.data(Qt::UserRole + 1).value<QString>().toStdString();
+    bool show = index.data(Qt::UserRole + 2).value<bool>();
+    wid->m_setValues(overwrite, text, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegateLegend::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingLegend *> (editor);
+    auto [overwrite, text, show] = wid->m_getValues();
+    model->setData(index, overwrite, Qt::UserRole);
+    model->setData(index, QString::fromStdString(text), Qt::UserRole + 1);
+    model->setData(index, show, Qt::UserRole + 2);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1, Qt::UserRole+2});
+}
+
+void delegateLegend::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingLegend *> (sender());
+    emit commitData(wid);
+}
+
+delegateOperation::delegateOperation()
+{
+
+}
+
+QWidget *delegateOperation::createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
+{
+   /* widGraphObjectSettingOperation*wid = new widGraphObjectSettingOperation();
+    wid->setParent(parent);
+    return wid;*/
+}
+
+void delegateOperation::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+  /*  auto *wid = qobject_cast<widGraphObjectSettingOperation *> (editor);
+    wid->m_setValues(true);*/
+}
+
+void delegateOperation::setModelData(QWidget * editor,
+                                     QAbstractItemModel * model,
+                                     const QModelIndex &index) const {}
+
+
+delegateColumn::delegateColumn()
+{
+
+}
+
+QWidget *delegateColumn::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    widGraphObjectSettingColumn *wid = new widGraphObjectSettingColumn();
+    wid->setParent(parent);
+    connect(wid, &widGraphObjectSettingColumn::m_signalChanged,
+            this, &delegateColumn::commitAndCloseEditor);
+    return wid;
+}
+
+void delegateColumn::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (editor);
+    bool isShown = index.data(Qt::UserRole + 10).value<bool>();
+    int width = index.data(Qt::UserRole).value<int>();
+    bool show = index.data(Qt::UserRole + 1).value<bool>();
+    wid->m_setValues(width, show);
+    wid->m_setVisible(isShown);
+}
+
+void delegateColumn::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (editor);
+    auto [width, show] = wid->m_getValues();
+    model->setData(index, width, Qt::UserRole);
+    model->setData(index, show, Qt::UserRole + 1);
+    emit model->dataChanged(index, index, {Qt::UserRole, Qt::UserRole+1});
+}
+
+void delegateColumn::commitAndCloseEditor()
+{
+    auto *wid = qobject_cast<widGraphObjectSettingColumn*> (sender());
+    emit commitData(wid);
 }
