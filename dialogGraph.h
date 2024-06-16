@@ -3,6 +3,9 @@
 
 #include "widPretty.h"
 
+#include <QAbstractTableModel>
+#include <QTableView>
+#include <QStyledItemDelegate>
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QSplitter>
@@ -145,11 +148,11 @@ private:
     HBoxLayout *m_layBackground;
 };
 
-class widGraphObjectSettingWithName: public widGraphObjectSetting
+class widGraphObjectSettingWithCheck: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
-    widGraphObjectSettingWithName(const QString &name);
+    widGraphObjectSettingWithCheck(const QString &name);
 protected slots:
     void m_slotEnabledToggled();
 protected:
@@ -163,15 +166,17 @@ public:
 };
 
 class widGraphObjectSettingMain;
-class widGraphObjectSettingOperation: public QWidget
+class widGraphObjectSettingOperation: public widGraphObjectSetting
 {
     Q_OBJECT
 public:
-    widGraphObjectSettingOperation(int pos, widGraphObjectSettingMain* ptr_widMain);
+    widGraphObjectSettingOperation(/*int pos, widGraphObjectSettingMain* ptr_widMain*/);
     void m_setValues(bool enable);
     std::tuple<bool> m_getValues();
     void m_loadValues();
     void m_saveValues();
+protected:
+    virtual void m_setEnabled(bool enabled) override;
 private slots:
     void m_slotDeleteClicked();
     void m_slotMoveUp();
@@ -181,12 +186,12 @@ signals:
     void m_signalMoveDown(int);
 protected:
     int m_positionInVector;
-    widGraphObjectSettingMain *ptr_widObjectStyle;
+//    widGraphObjectSettingMain *ptr_widObjectStyle;
     HBoxLayout *m_layBackground;
     butGraphObjectSettingButton *m_butMoveUp, *m_butMoveDown, *m_butDelete;
 };
 
-class widGraphObjectSettingCurve: public widGraphObjectSettingWithName
+class widGraphObjectSettingCurve: public widGraphObjectSettingWithCheck
 {
     Q_OBJECT
 public:
@@ -200,7 +205,7 @@ protected:
     combobox *m_comboCurveStyle;
 };
 
-class widGraphObjectSettingPoints: public widGraphObjectSettingWithName
+class widGraphObjectSettingPoints: public widGraphObjectSettingWithCheck
 {
     Q_OBJECT
 public:
@@ -214,7 +219,7 @@ protected:
     combobox *m_comboShape;
 };
 
-class widGraphObjectSettingArea: public widGraphObjectSettingWithName
+class widGraphObjectSettingArea: public widGraphObjectSettingWithCheck
 {
     Q_OBJECT
 public:
@@ -227,7 +232,7 @@ protected:
     combobox *m_comboAreaStyle;
 };
 
-class widGraphObjectSettingColumn: public widGraphObjectSettingWithName
+class widGraphObjectSettingColumn: public widGraphObjectSettingWithCheck
 {
     Q_OBJECT
 public:
@@ -239,19 +244,7 @@ protected:
     spinbox *m_editColumnThick;
 };
 
-class widGraphObjectSettingOrientation: public widGraphObjectSetting
-{
-    Q_OBJECT
-public:
-    widGraphObjectSettingOrientation();
-    void m_setValues(enum orientation orient);
-    std::tuple<enum orientation> m_getValues();
-    virtual void m_setEnabled(bool enabled) override;
-protected:
-    radiobutton *m_radioHorizontal, *m_radioVertical;
-};
-
-class widGraphObjectSettingLegend: public widGraphObjectSettingWithName
+class widGraphObjectSettingLegend: public widGraphObjectSettingWithCheck
 {
     Q_OBJECT
 public:
@@ -280,29 +273,7 @@ private:
 };
 
 class dataGraphObject;
-class widGraphObjectSettingMain: public QWidget
-{
-    Q_OBJECT
-public:
-    widGraphObjectSettingMain(std::weak_ptr<dataGraphObject> data);
-    ~widGraphObjectSettingMain() = default;
-    void m_loadValues();
-    void m_saveValues();
-    inline std::weak_ptr<dataGraphObject> m_getData()
-            {return ptr_data;}
-protected:
-    std::weak_ptr<dataGraphObject> ptr_data;
-    widGraphObjectSettingCurve *m_widCurve;
-    widGraphObjectSettingPoints *m_widPoints;
-    widGraphObjectSettingArea *m_widArea;
-    widGraphObjectSettingColumn *m_widColumn;
-    widGraphObjectSettingOrientation *m_widOrientation;
-    widGraphObjectSettingLegend *m_widLegend;
-};
 
-#include <QAbstractTableModel>
-#include <QTableView>
-#include <QStyledItemDelegate>
 enum class objectPropertiesColumns {NAME, YAXIS, CURVE, POINTS, AREA, LEGEND, COLUMN};
 class objectPropertiesTableModel: public QAbstractTableModel
 {
@@ -346,15 +317,6 @@ public:
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 private slots:
     void commitAndCloseEditor();
-};
-
-class delegateOperation: public QStyledItemDelegate
-{
-public:
-    delegateOperation();
-    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
-    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
-    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 };
 
 class delegateCurve: public QStyledItemDelegate
