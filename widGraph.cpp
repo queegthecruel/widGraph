@@ -1060,7 +1060,7 @@ void widGraphAxis::dragEnterEvent(QDragEnterEvent *event)
     }
 }
 
-void widGraphAxis::dragLeaveEvent(QDragLeaveEvent *event)
+void widGraphAxis::dragLeaveEvent(QDragLeaveEvent */*event*/)
 {
     m_unmarkForDrop();
 }
@@ -1073,7 +1073,7 @@ void widGraphAxis::dropEvent(QDropEvent *event)
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
 
         auto ptr_curve = mimeData->m_getGraphObject();
-        bool added = m_dropCurve(ptr_curve);
+        m_dropCurve(ptr_curve);
 
         event->setDropAction(Qt::LinkAction);
         event->accept();

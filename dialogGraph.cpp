@@ -969,7 +969,7 @@ void widGraphObjectSettingOperation::m_saveValues()
     ptr_data->m_setOperation(toBeDeleted);*/
 }
 
-void widGraphObjectSettingOperation::m_setEnabled(bool enabled)
+void widGraphObjectSettingOperation::m_setEnabled(bool /*enabled*/)
 {
 
 }
@@ -1175,6 +1175,8 @@ int objectPropertiesTableModel::m_getIColumnFromEnum(objectPropertiesColumns col
       return 5;
     case objectPropertiesColumns::COLUMN:
       return 6;
+    default:
+    return 0;
   }
 }
 
@@ -1217,7 +1219,7 @@ QVariant objectPropertiesTableModel::m_name(int role, std::shared_ptr<dataGraphO
 
 bool objectPropertiesTableModel::m_setYAxis(int role, const QVariant &value, std::shared_ptr<dataGraphObject> ptr_object)
 {
-    auto yAxis = ptr_object->m_getPrefferedYAxis();
+    enum yAxisPosition yAxis; // = ptr_object->m_getPrefferedYAxis();
     switch (role){
       case Qt::UserRole:
          yAxis = static_cast<enum yAxisPosition>(value.value<int>());
