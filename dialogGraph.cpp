@@ -335,11 +335,9 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
         m_checkManualStep = new checkEdit(validator::DOUBLE);
         connect(m_checkManualStep, &checkEdit::m_signalToggled,
                 this, &tabGraphSettingsAxis::m_slotAutoStepToggled);
-        m_editMin = new lineEdit(validator::DOUBLE);
-        m_editMax = new lineEdit(validator::DOUBLE);
+        m_editMinMax = new lineEditEdit(validator::DOUBLE);
         auto *titleMinMax = m_tree->m_addChild("Range", m_checkAutoAxis, nullptr, true);
-        m_tree->m_addChild("Min", m_editMin, titleMinMax);
-        m_tree->m_addChild("Max", m_editMax, titleMinMax);
+        m_tree->m_addChild("Min/max", m_editMinMax, titleMinMax);
         m_tree->m_addChild("Manual step", m_checkManualStep, titleMinMax);
 }
 
@@ -351,8 +349,7 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
     m_editFontSizeText->m_setNumber(s_data->m_fontText);
     m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
     m_checkManualStep->m_setValues(s_data->m_manualStep, s_data->m_step);
-    m_editMin->m_setNumber(s_data->m_min);
-    m_editMax->m_setNumber(s_data->m_max);
+    m_editMinMax->m_setValues(s_data->m_min, s_data->m_max);
     m_editText->m_setText(s_data->m_text);
     m_slotAutoAxisToggled();
 }
@@ -366,8 +363,8 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
     s_data->m_fontText = m_editFontSizeText->m_number();
     s_data->m_autoAxis = m_checkAutoAxis->isChecked();
     s_data->m_manualStep = m_checkManualStep->m_getChecked();
-    s_data->m_min = m_editMin->m_number();
-    s_data->m_max = m_editMax->m_number();
+    s_data->m_min = m_editMinMax->m_value1();
+    s_data->m_max = m_editMinMax->m_value2();
     s_data->m_step = m_checkManualStep->m_value();
     s_data->m_text = m_editText->m_text();
 }
@@ -375,8 +372,7 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
 void tabGraphSettingsAxis::m_slotAutoAxisToggled()
 {
     bool autoAxis = m_checkAutoAxis->isChecked();
-    m_editMin->setEnabled(!autoAxis);
-    m_editMax->setEnabled(!autoAxis);
+    m_editMinMax->m_setEnabled(!autoAxis);
     m_checkManualStep->setEnabled(!autoAxis);
     m_slotAutoStepToggled();
 }
