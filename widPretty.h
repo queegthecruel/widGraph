@@ -262,4 +262,35 @@ protected:
     QColor m_color;
 };
 
+
+class unit
+{
+public:
+    unit(const std::string &text, double toSI):
+    m_text(text), m_toSI(toSI)
+    {}
+
+    std::string m_getUnit()
+    {return m_text;}
+//    double m_valueInUnit();
+//    double m_valueInSI();
+private:
+    const std::string m_text;
+    const double m_toSI;
+};
+
+class WIDPRETTY_EXPORT units
+{
+private:
+    units() = delete;
+    units(const units&) = delete;
+    units operator=(const units&) = delete;
+public:
+    inline static const unit
+        m = unit("m", 1),
+        km = unit("km", 1000);
+    ;
+};
+
+
 #endif // WIDPRETTY_H
