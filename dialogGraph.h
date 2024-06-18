@@ -75,7 +75,7 @@ protected:
     lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
     checkbox *m_checkAutoAxis;
     checkEdit *m_checkManualStep;
-    lineEdit *m_editMin, *m_editMax;
+    lineEditEdit *m_editMinMax;
     lineEdit *m_editText;
 };
 

@@ -157,6 +157,34 @@ protected:
     lineEdit *m_edit;
 };
 
+
+class WIDPRETTY_EXPORT lineEditEdit: public QWidget
+{
+    Q_OBJECT
+public:
+    lineEditEdit(validator valid);
+    lineEditEdit(validator valid1, validator valid2);
+    void m_setText(const std::string &text1, const std::string &text2);
+    std::string m_getText1()
+        {return m_edit1->m_text();}
+    std::string m_getText2()
+        {return m_edit2->m_text();}
+    void m_setValues(double value1, double value2);
+    double m_value1()
+        {return m_edit1->m_number();}
+    double m_value2()
+        {return m_edit2->m_number();}
+    void m_setEnabled(bool enabled);
+private:
+    void m_createLineEdits(validator valid1, validator valid2);
+private slots:
+    void m_slotSendEditingFinished();
+signals:
+    void m_signalEditingFinished();
+private:
+    lineEdit *m_edit1, *m_edit2;
+};
+
 class WIDPRETTY_EXPORT widHorizontal: public QWidget
 {
 public:

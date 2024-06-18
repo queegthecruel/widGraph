@@ -556,3 +556,53 @@ void radiobutton::m_setChecked(bool status)
     setChecked(status);
     blockSignals(false);
 }
+
+lineEditEdit::lineEditEdit(validator valid)
+{
+    m_createLineEdits(valid, valid);
+}
+
+lineEditEdit::lineEditEdit(validator valid1, validator valid2)
+{
+    m_createLineEdits(valid1, valid2);
+}
+
+void lineEditEdit::m_setText(const std::string &text1, const std::string &text2)
+{
+    m_edit1->m_setText(text1);
+    m_edit2->m_setText(text2);
+}
+
+void lineEditEdit::m_setValues(double value1, double value2)
+{
+    m_edit1->m_setNumber(value1);
+    m_edit2->m_setNumber(value2);
+}
+
+void lineEditEdit::m_setEnabled(bool enabled)
+{
+    m_edit1->setEnabled(enabled);
+    m_edit2->setEnabled(enabled);
+}
+
+void lineEditEdit::m_createLineEdits(validator valid1, validator valid2)
+{
+    m_edit1 = new lineEdit(valid1);
+    m_edit2 = new lineEdit(valid2);
+
+    connect(m_edit1, &lineEdit::m_signalTextFinished,
+            this, &lineEditEdit::m_slotSendEditingFinished);
+    connect(m_edit2, &lineEdit::m_signalTextFinished,
+            this, &lineEditEdit::m_slotSendEditingFinished);
+    HBoxLayout *layBackground = new HBoxLayout(this);
+    layBackground->setSpacing(1);
+    layBackground->addWidget(m_edit1);
+    layBackground->addSpacing(1);
+    layBackground->addWidget(m_edit2);
+    layBackground->addStretch();
+}
+
+void lineEditEdit::m_slotSendEditingFinished()
+{
+    emit m_signalEditingFinished();
+}
