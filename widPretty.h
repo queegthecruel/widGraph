@@ -266,17 +266,18 @@ protected:
 class unit
 {
 public:
-    unit(const std::string &text, double toSI):
-    m_text(text), m_toSI(toSI)
+    unit(const std::string &textUnit, double toSI, const std::string &textSIUnit = ""):
+    m_textUnit(textUnit), m_textSIUnit(textSIUnit), m_toSI(toSI)
     {}
 
     std::string m_getUnit()
-    {return m_text;}
+    {return m_textSIUnit;}
 //    double m_valueInUnit();
 //    double m_valueInSI();
 private:
-    const std::string m_text;
+    const std::string m_textUnit, m_textSIUnit;
     const double m_toSI;
+//    unit *ptr_unitSI;
 };
 
 class WIDPRETTY_EXPORT units
@@ -288,7 +289,7 @@ private:
 public:
     inline static const unit
         m = unit("m", 1),
-        km = unit("km", 1000);
+        km = unit("km", 1000, "m");
     ;
 };
 
