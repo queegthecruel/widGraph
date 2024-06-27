@@ -103,29 +103,12 @@ HBoxLayout::HBoxLayout(QWidget *parent):
 
 lineEdit::lineEdit(enum validator valid)
 {
-    // Width
-        int maxWidth = m_supWidth(valid);
-        setMaximumWidth(maxWidth);
-        setMinimumWidth(25);
-    // Validator
-        m_supValidator(valid);
-    // Signals
-        connect(this, &QLineEdit::editingFinished,
-                this, &lineEdit::m_slotTextFinished);
-    // Style
-        setStyleSheet("lineEdit {"
-                        "background: white;"
-                        "border: 1px solid gray;"
-                      "}"
-                      "lineEdit:disabled {"
-                        "background: rgb(240,240,240);"
-                        "border: 1px solid gray;"
-                      "}"
-                      "lineEdit:focus {"
-                        "background: white;"
-                        "border: 1px solid darkblue;"
-                      "}"
-                      );
+    m_init(valid);
+}
+
+lineEdit::lineEdit(const unit &_unit, enum validator valid)
+{
+    m_init(valid);
 }
 
 void lineEdit::m_supValidator(enum validator valid)
@@ -143,7 +126,7 @@ void lineEdit::m_supValidator(enum validator valid)
         m_validator = new QIntValidator(0, qInf(), this);
         break;
     case validator::DOUBLE:
-        m_validator = new QDoubleValidator(-qInf(), qInf(), 2, this);
+        m_validator = new QDoubleValidator(-qInf(), qInf(), 3, this);
         break;
     }
 }
@@ -199,6 +182,33 @@ void lineEdit::m_slotTextFinished()
 {
     if (isModified())
         emit m_signalTextFinished();
+}
+
+void lineEdit::m_init(enum validator valid)
+{
+    // Width
+        int maxWidth = m_supWidth(valid);
+        setMaximumWidth(maxWidth);
+        setMinimumWidth(25);
+    // Validator
+        m_supValidator(valid);
+    // Signals
+        connect(this, &QLineEdit::editingFinished,
+                this, &lineEdit::m_slotTextFinished);
+    // Style
+        setStyleSheet("lineEdit {"
+                        "background: white;"
+                        "border: 1px solid gray;"
+                      "}"
+                      "lineEdit:disabled {"
+                        "background: rgb(240,240,240);"
+                        "border: 1px solid gray;"
+                      "}"
+                      "lineEdit:focus {"
+                        "background: white;"
+                        "border: 1px solid darkblue;"
+                      "}"
+                      );
 }
 
 checkbox::checkbox(const QString &title):
@@ -605,4 +615,20 @@ void lineEditEdit::m_createLineEdits(validator valid1, validator valid2)
 void lineEditEdit::m_slotSendEditingFinished()
 {
     emit m_signalEditingFinished();
+}
+
+lineedit2::lineedit2(const unit &_unit, validator valid)
+{
+    m_lineValue = new QLineEdit();
+    m_lineUnit = new QLineEdit();
+    m_lineUnit->setText(_unit.m_getUnit());
+    m_lineUnit->setReadOnly(true);
+    m_lineUnit->setFixedWidth(20);
+    HBoxLayout *layBackground = new HBoxLayout(this);
+    layBackground->setContentsMargins(0,0,0,0);
+    layBackground->setSpacing(1);
+    layBackground->addWidget(m_lineValue);
+    layBackground->addSpacing(1);
+    layBackground->addWidget(m_lineUnit);
+    layBackground->addSpacing(1);
 }

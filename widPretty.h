@@ -18,12 +18,14 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMenu>
 
+class unit;
 enum class validator {NONE, INT, INT_POS, INT_POS_0, DOUBLE};
 class WIDPRETTY_EXPORT lineEdit: public QLineEdit
 {
     Q_OBJECT
 public:
     lineEdit(enum validator valid);
+    lineEdit(const unit& _unit, enum validator valid = validator::DOUBLE);
     void m_setText(const std::string &text);
     void m_setNumber(double value);
     inline std::string m_text()
@@ -36,9 +38,21 @@ public slots:
 signals:
     void m_signalTextFinished();
 private:
+    void m_init(enum validator valid);
     void m_supValidator(enum validator valid);
     int m_supWidth(enum validator valid);
 protected:
+    QValidator *m_validator = nullptr;
+    QTimer *m_redBoxTimer = nullptr;
+};
+
+class WIDPRETTY_EXPORT lineedit2: public QWidget
+{
+public:
+    lineedit2(const unit& _unit, enum validator valid = validator::DOUBLE);
+private:
+    QLineEdit *m_lineValue;
+    QLineEdit *m_lineUnit;
     QValidator *m_validator = nullptr;
     QTimer *m_redBoxTimer = nullptr;
 };
@@ -262,22 +276,36 @@ protected:
     QColor m_color;
 };
 
+class WIDPRETTY_EXPORT consts
+{
+private:
+    consts() = delete;
+    consts(const consts&) = delete;
+    consts operator=(const consts&) = delete;
+public:
+    inline static const double
+        SI = 1,
+        PI = 3.14159,
+        G = 9.81;
+};
 
 class unit
 {
 public:
-    unit(const std::string &textUnit, double toSI, const std::string &textSIUnit = ""):
-    m_textUnit(textUnit), m_textSIUnit(textSIUnit), m_toSI(toSI)
+    unit(const QString &textUnit, double toSI, const unit & unitSI):
+    m_textUnit(textUnit), m_toSI(toSI), m_unitSI(unitSI)
     {}
-
-    std::string m_getUnit()
-    {return m_textSIUnit;}
-//    double m_valueInUnit();
-//    double m_valueInSI();
+    unit(const QString &textUnit):
+    m_textUnit(textUnit), m_toSI(consts::SI), m_unitSI(*this)
+    {}
+    const QString &m_getUnit() const
+        {return m_textUnit;}
+    double m_getConversion() const
+        {return m_toSI;}
 private:
-    const std::string m_textUnit, m_textSIUnit;
+    const QString m_textUnit;
     const double m_toSI;
-//    unit *ptr_unitSI;
+    const unit& m_unitSI;
 };
 
 class WIDPRETTY_EXPORT units
@@ -288,10 +316,11 @@ private:
     units operator=(const units&) = delete;
 public:
     inline static const unit
-        m = unit("m", 1),
-        km = unit("km", 1000, "m");
-    ;
+        m = unit("m"),
+        km = unit("km", 1000, m);
 };
+
+
 
 
 #endif // WIDPRETTY_H
