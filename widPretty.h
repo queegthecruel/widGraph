@@ -1,11 +1,13 @@
 #ifndef WIDPRETTY_H
 #define WIDPRETTY_H
 
+#include "constants.h"
 #include "widPretty_global.h"
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QRadioButton>
@@ -18,7 +20,6 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMenu>
 
-class unit;
 enum class validator {NONE, INT, INT_POS, INT_POS_0, DOUBLE};
 class WIDPRETTY_EXPORT lineEdit: public QLineEdit
 {
@@ -48,13 +49,26 @@ protected:
 
 class WIDPRETTY_EXPORT lineedit2: public QWidget
 {
+    Q_OBJECT
 public:
-    lineedit2(const unit& _unit, enum validator valid = validator::DOUBLE);
+    lineedit2(enum validator valid, unit _unit);
+    lineedit2(enum validator valid, const QVector<unit> &_vUnits);
+private:
+    void m_setLayout();
+    void m_createUnits();
+    void m_createLineEdit(validator valid);
+    unit m_getUnit();
+    void m_setUnit(const unit &_unit);
+    void m_setUnit(int i);
+private slots:
+    void m_slotUnits(QAction *action);
 private:
     QLineEdit *m_lineValue;
-    QLineEdit *m_lineUnit;
+    QToolButton *m_butUnit;
     QValidator *m_validator = nullptr;
     QTimer *m_redBoxTimer = nullptr;
+    QVector<unit> m_vUnits;
+    int m_iUnit;
 };
 
 class WIDPRETTY_EXPORT checkbox: public QCheckBox
@@ -205,6 +219,12 @@ public:
     widHorizontal(std::vector<QWidget *> vWidgets);
 };
 
+class WIDPRETTY_EXPORT widVertical: public QWidget
+{
+public:
+    widVertical(std::vector<QWidget *> vWidgets);
+};
+
 
 class WIDPRETTY_EXPORT colorButton: public pushbutton
 {
@@ -275,51 +295,6 @@ protected:
     pushbutton *m_butOK;
     QColor m_color;
 };
-
-class WIDPRETTY_EXPORT consts
-{
-private:
-    consts() = delete;
-    consts(const consts&) = delete;
-    consts operator=(const consts&) = delete;
-public:
-    inline static const double
-        SI = 1,
-        PI = 3.14159,
-        G = 9.81;
-};
-
-class unit
-{
-public:
-    unit(const QString &textUnit, double toSI, const unit & unitSI):
-    m_textUnit(textUnit), m_toSI(toSI), m_unitSI(unitSI)
-    {}
-    unit(const QString &textUnit):
-    m_textUnit(textUnit), m_toSI(consts::SI), m_unitSI(*this)
-    {}
-    const QString &m_getUnit() const
-        {return m_textUnit;}
-    double m_getConversion() const
-        {return m_toSI;}
-private:
-    const QString m_textUnit;
-    const double m_toSI;
-    const unit& m_unitSI;
-};
-
-class WIDPRETTY_EXPORT units
-{
-private:
-    units() = delete;
-    units(const units&) = delete;
-    units operator=(const units&) = delete;
-public:
-    inline static const unit
-        m = unit("m"),
-        km = unit("km", 1000, m);
-};
-
 
 
 

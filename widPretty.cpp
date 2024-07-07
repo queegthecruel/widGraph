@@ -385,6 +385,15 @@ widHorizontal::widHorizontal(std::vector<QWidget *> vWidgets)
         layBackground->addWidget(var);
 }
 
+
+widVertical::widVertical(std::vector<QWidget *> vWidgets)
+{
+    VBoxLayout *layBackground = new VBoxLayout(this);
+    for (auto &var : vWidgets)
+        layBackground->addWidget(var);
+}
+
+
 QWidget* colorPicker::m_createWidgetWithColorSet(int nColumns,
                                                  const std::vector<QColor> &vColors,const QString& title)
 {
@@ -617,18 +626,87 @@ void lineEditEdit::m_slotSendEditingFinished()
     emit m_signalEditingFinished();
 }
 
-lineedit2::lineedit2(const unit &_unit, validator valid)
+void lineedit2::m_setUnit(const unit& _unit)
+{
+    int i = m_vUnits.indexOf(_unit);
+ /*   int j = 0;
+    for (const unit &var: m_vUnits) {
+        if (var == _unit)
+            break;
+        else
+            ++j;
+    }*/
+    m_setUnit(i);
+}
+
+void lineedit2::m_setUnit(int i)
+{
+    if (i != -1 && i < m_butUnit->actions().size()) {
+        m_iUnit = i;
+        auto *ptr_selectedAction = m_butUnit->actions()[m_iUnit];
+        m_butUnit->setDefaultAction(ptr_selectedAction);
+    }
+}
+
+void lineedit2::m_createUnits()
+{
+    m_butUnit = new QToolButton();
+    m_butUnit->setContentsMargins(0,0,0,0);
+//    m_butUnit->setStyleSheet(
+  //      "margin-left: 0px;"
+    //    "margin-right: 0px;");
+    m_butUnit->setFixedWidth(40);
+    m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
+
+
+    for(const auto &var: m_vUnits)
+        m_butUnit->addAction(new QAction(var.m_getUnit(), this));
+    connect(m_butUnit, &QToolButton::triggered,
+            this, &lineedit2::m_slotUnits);
+    const unit &_unit = m_getUnit();
+    m_setUnit(_unit);
+
+}
+
+lineedit2::lineedit2(validator valid, unit _unit):
+    m_vUnits({_unit}), m_iUnit(0)
+{
+    m_createLineEdit(valid);
+    m_createUnits();
+    m_setLayout();
+}
+
+lineedit2::lineedit2(validator valid, const QVector<unit> &_vUnits):
+    m_vUnits(_vUnits), m_iUnit(0)
+{
+    m_createLineEdit(valid);
+    m_createUnits();
+    m_setLayout();
+}
+
+void lineedit2::m_createLineEdit(validator valid)
 {
     m_lineValue = new QLineEdit();
-    m_lineUnit = new QLineEdit();
-    m_lineUnit->setText(_unit.m_getUnit());
-    m_lineUnit->setReadOnly(true);
-    m_lineUnit->setFixedWidth(20);
+}
+
+unit lineedit2::m_getUnit()
+{
+    return m_vUnits[m_iUnit];
+}
+
+void lineedit2::m_slotUnits(QAction *action)
+{
+    const auto &vActions = m_butUnit->actions();
+    int i = vActions.indexOf(action);
+    m_setUnit(i);
+}
+
+void lineedit2::m_setLayout()
+{
+    auto *vWids = new widHorizontal({m_lineValue, m_butUnit});
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->setContentsMargins(0,0,0,0);
     layBackground->setSpacing(1);
-    layBackground->addWidget(m_lineValue);
-    layBackground->addSpacing(1);
-    layBackground->addWidget(m_lineUnit);
-    layBackground->addSpacing(1);
+    layBackground->addWidget(vWids);
 }
+
