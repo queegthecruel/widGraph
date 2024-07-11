@@ -53,19 +53,29 @@ class WIDPRETTY_EXPORT lineedit2: public QWidget
 public:
     lineedit2(enum validator valid, unit _unit);
     lineedit2(enum validator valid, const QVector<unit> &_vUnits);
+    void m_setText(const QString &text);
+    QString m_getText() const;
+    void m_setValue(double valueInSI);
+    double m_getValue() const;
 private:
     void m_setLayout();
     void m_createUnits();
     void m_createLineEdit(validator valid);
-    unit m_getUnit();
+    const unit &m_getUnit() const;
     void m_setUnit(const unit &_unit);
     void m_setUnit(int i);
+    void m_setTooltip();
 private slots:
     void m_slotUnits(QAction *action);
+    void m_slotValueChanged();
+    void m_slotEditingFinished();
+signals:
+    void m_signalFinished();
 private:
     QLineEdit *m_lineValue;
     QToolButton *m_butUnit;
     QValidator *m_validator = nullptr;
+    enum validator m_valid;
     QTimer *m_redBoxTimer = nullptr;
     QVector<unit> m_vUnits;
     int m_iUnit;

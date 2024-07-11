@@ -7,6 +7,16 @@ bool unit::operator==(const unit &rhsUnit) const
     bool conversionOK = m_toSI == rhsUnit.m_toSI;
     return textOK && conversionOK;
 }
+
+double unit::m_toUnitFromSI(double valueInSI) const
+{
+    return valueInSI/m_toSI;
+}
+
+double unit::m_toSIFromUnit(double valueInUnit) const
+{
+    return valueInUnit*m_toSI;
+}
 /*
 bool operator==(const unit &lhs, const unit &rhs)
 {

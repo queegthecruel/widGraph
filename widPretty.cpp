@@ -641,31 +641,48 @@ void lineedit2::m_setUnit(const unit& _unit)
 
 void lineedit2::m_setUnit(int i)
 {
-    if (i != -1 && i < m_butUnit->actions().size()) {
+    int nActions = m_butUnit->actions().size();
+    if (i != -1 && i < nActions) {
         m_iUnit = i;
-        auto *ptr_selectedAction = m_butUnit->actions()[m_iUnit];
+        auto vActions = m_butUnit->actions();
+        auto *ptr_selectedAction = vActions[m_iUnit];
         m_butUnit->setDefaultAction(ptr_selectedAction);
     }
+}
+
+void lineedit2::m_setTooltip()
+{
+    QString tooltip;
+    switch (m_valid) {
+        case validator::NONE:
+            tooltip = m_getText();
+        break;
+        default:
+            double valueInSI = m_getValue();
+            const auto &_unit = m_getUnit();
+            double valueInUnit = _unit.m_toUnitFromSI(valueInSI);
+            tooltip = QString::number(valueInUnit) + " " +_unit.m_getUnit() +
+                              " = " +
+                      QString::number(valueInUnit) + " " +_unit.m_getSIUnit().m_getUnit();
+        break;
+    }
+    m_lineValue->setToolTip(tooltip);
 }
 
 void lineedit2::m_createUnits()
 {
     m_butUnit = new QToolButton();
     m_butUnit->setContentsMargins(0,0,0,0);
-//    m_butUnit->setStyleSheet(
-  //      "margin-left: 0px;"
-    //    "margin-right: 0px;");
     m_butUnit->setFixedWidth(40);
-    m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
-
-
-    for(const auto &var: m_vUnits)
-        m_butUnit->addAction(new QAction(var.m_getUnit(), this));
-    connect(m_butUnit, &QToolButton::triggered,
-            this, &lineedit2::m_slotUnits);
+    if (m_vUnits.size() > 1) {
+        m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
+        for(const auto &var: m_vUnits)
+            m_butUnit->addAction(new QAction(var.m_getUnit(), this));
+        connect(m_butUnit, &QToolButton::triggered,
+                this, &lineedit2::m_slotUnits);
+    }
     const unit &_unit = m_getUnit();
     m_setUnit(_unit);
-
 }
 
 lineedit2::lineedit2(validator valid, unit _unit):
@@ -684,12 +701,48 @@ lineedit2::lineedit2(validator valid, const QVector<unit> &_vUnits):
     m_setLayout();
 }
 
-void lineedit2::m_createLineEdit(validator valid)
+void lineedit2::m_setText(const QString &text)
 {
-    m_lineValue = new QLineEdit();
+    blockSignals(true);
+    m_lineValue->setText(text);
+    m_setTooltip();
+    blockSignals(false);
 }
 
-unit lineedit2::m_getUnit()
+QString lineedit2::m_getText() const
+{
+    return m_lineValue->text();
+}
+
+void lineedit2::m_setValue(double valueInSI)
+{
+    blockSignals(true);
+    const auto &_unit = m_getUnit();
+    double valueInUnit = _unit.m_toUnitFromSI(valueInSI);
+    m_lineValue->setText(QString::number(valueInUnit));
+    m_setTooltip();
+    blockSignals(false);
+}
+
+double lineedit2::m_getValue() const
+{
+    double valueInUnit = m_lineValue->text().toDouble();
+    double conversion = m_getUnit().m_getConversion();
+    double valueInSI = valueInUnit / conversion;
+    return valueInSI;
+}
+
+void lineedit2::m_createLineEdit(validator valid)
+{
+    m_valid = valid;
+    m_lineValue = new QLineEdit();
+    connect(m_lineValue, &QLineEdit::editingFinished,
+            this, &lineedit2::m_slotEditingFinished);
+    connect(this, &lineedit2::m_signalFinished,
+            this, &lineedit2::m_slotValueChanged);
+}
+
+const unit &lineedit2::m_getUnit() const
 {
     return m_vUnits[m_iUnit];
 }
@@ -699,6 +752,17 @@ void lineedit2::m_slotUnits(QAction *action)
     const auto &vActions = m_butUnit->actions();
     int i = vActions.indexOf(action);
     m_setUnit(i);
+}
+
+void lineedit2::m_slotValueChanged()
+{
+    m_setTooltip();
+}
+
+void lineedit2::m_slotEditingFinished()
+{
+//    if (m_lineValue->textChanged())
+    emit m_signalFinished();
 }
 
 void lineedit2::m_setLayout()

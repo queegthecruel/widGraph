@@ -31,13 +31,15 @@ public:
         {return m_textUnit;}
     double m_getConversion() const
         {return m_toSI;}
+    const unit &m_getSIUnit() const
+        {return m_unitSI;}
+    double m_toUnitFromSI(double valueInSI) const;
+    double m_toSIFromUnit(double valueInUnit) const;
 private:
     const QString m_textUnit;
     const double m_toSI;
     const unit& m_unitSI;
 };
-
-// bool operator==(const unit& lhs, const unit& rhs);
 
 class CONSTANTS_EXPORT units
 {
