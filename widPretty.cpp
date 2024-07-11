@@ -663,7 +663,7 @@ void lineedit2::m_setTooltip()
             double valueInUnit = _unit.m_toUnitFromSI(valueInSI);
             tooltip = QString::number(valueInUnit) + " " +_unit.m_getUnit() +
                               " = " +
-                      QString::number(valueInUnit) + " " +_unit.m_getSIUnit().m_getUnit();
+                      QString::number(valueInSI) + " " +_unit.m_getSIUnit().m_getUnit();
         break;
     }
     m_lineValue->setToolTip(tooltip);
@@ -674,13 +674,11 @@ void lineedit2::m_createUnits()
     m_butUnit = new QToolButton();
     m_butUnit->setContentsMargins(0,0,0,0);
     m_butUnit->setFixedWidth(40);
-    if (m_vUnits.size() > 1) {
-        m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
-        for(const auto &var: m_vUnits)
-            m_butUnit->addAction(new QAction(var.m_getUnit(), this));
-        connect(m_butUnit, &QToolButton::triggered,
-                this, &lineedit2::m_slotUnits);
-    }
+    m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
+    for(const auto &var: m_vUnits)
+        m_butUnit->addAction(new QAction(var.m_getUnit(), this));
+    connect(m_butUnit, &QToolButton::triggered,
+            this, &lineedit2::m_slotUnits);
     const unit &_unit = m_getUnit();
     m_setUnit(_unit);
 }
@@ -727,8 +725,7 @@ void lineedit2::m_setValue(double valueInSI)
 double lineedit2::m_getValue() const
 {
     double valueInUnit = m_lineValue->text().toDouble();
-    double conversion = m_getUnit().m_getConversion();
-    double valueInSI = valueInUnit / conversion;
+    double valueInSI = m_getUnit().m_toSIFromUnit(valueInUnit);
     return valueInSI;
 }
 
@@ -752,6 +749,7 @@ void lineedit2::m_slotUnits(QAction *action)
     const auto &vActions = m_butUnit->actions();
     int i = vActions.indexOf(action);
     m_setUnit(i);
+    m_slotEditingFinished();
 }
 
 void lineedit2::m_slotValueChanged()
