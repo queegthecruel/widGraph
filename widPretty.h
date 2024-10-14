@@ -21,12 +21,13 @@
 #include <QtWidgets/QMenu>
 
 enum class validator {NONE, INT, INT_POS, INT_POS_0, DOUBLE};
-class WIDPRETTY_EXPORT lineEdit: public QLineEdit
+/*
+class WIDPRETTY_EXPORT lineedit: public Qlineedit2
 {
     Q_OBJECT
 public:
-    lineEdit(enum validator valid);
-    lineEdit(const unit& _unit, enum validator valid = validator::DOUBLE);
+    lineedit(enum validator valid);
+    lineedit(const unit& _unit, enum validator valid = validator::DOUBLE);
     void m_setText(const std::string &text);
     void m_setNumber(double value);
     inline std::string m_text()
@@ -46,21 +47,28 @@ protected:
     QValidator *m_validator = nullptr;
     QTimer *m_redBoxTimer = nullptr;
 };
-
-class WIDPRETTY_EXPORT lineedit2: public QWidget
+*/
+class WIDPRETTY_EXPORT lineedit: public QWidget
 {
     Q_OBJECT
 public:
-    lineedit2(enum validator valid, unit _unit);
-    lineedit2(enum validator valid, const QVector<unit> &_vUnits);
+    lineedit(enum validator valid);
+    lineedit(enum validator valid, unit _unit);
+    lineedit(enum validator valid, const QVector<unit> &_vUnits);
     void m_setText(const QString &text);
-    QString m_getText() const;
+    QString m_text() const;
     void m_setValue(double valueInSI);
-    double m_getValue() const;
+    double m_value() const;
+    void m_setNumber(double value);
+    double m_number() const;
+    void m_setEnabled(bool enabled);
+    void m_redBoxAnimation(int ms = 1000);
 private:
+    void m_init();
     void m_setLayout();
     void m_createUnits();
-    void m_createLineEdit(validator valid);
+    void m_createValidator();
+    void m_createlineedit();
     const unit &m_getUnit() const;
     void m_setUnit(const unit &_unit);
     void m_setUnit(int i);
@@ -72,13 +80,15 @@ private slots:
 signals:
     void m_signalFinished();
 private:
-    QLineEdit *m_lineValue;
-    QToolButton *m_butUnit;
-    QValidator *m_validator = nullptr;
-    enum validator m_valid;
-    QTimer *m_redBoxTimer = nullptr;
-    QVector<unit> m_vUnits;
-    int m_iUnit;
+    // Widgets
+        QLineEdit *m_lineValue;
+        QToolButton *m_butUnit;
+        QValidator *m_validator = nullptr;
+        QTimer *m_redBoxTimer = nullptr;
+    // Data
+        enum validator m_valid;
+        QVector<unit> m_vUnits;
+        int m_iUnit;
 };
 
 class WIDPRETTY_EXPORT checkbox: public QCheckBox
@@ -175,14 +185,11 @@ class WIDPRETTY_EXPORT checkEdit: public QWidget
     Q_OBJECT
 public:
     checkEdit(validator valid);
-    void m_setText(bool checked, const std::string &text);
-    std::string m_getText()
-        {return m_edit->m_text();}
-    bool m_getChecked()
-        {return m_check->isChecked();}
+    void m_setText(bool checked, const QString &text);
+    QString m_getText();
+    bool m_getChecked();
     void m_setValues(bool checked, double value);
-    inline double m_value()
-        {return m_edit->m_number();}
+    double m_value();
     void m_setEnabled(bool enabled);
 private slots:
     void m_slotSendToggled();
@@ -192,35 +199,31 @@ signals:
     void m_signalEditingFinished();
 protected:
     checkbox *m_check;
-    lineEdit *m_edit;
+    lineedit *m_edit;
 };
 
 
-class WIDPRETTY_EXPORT lineEditEdit: public QWidget
+class WIDPRETTY_EXPORT lineEditedit: public QWidget
 {
     Q_OBJECT
 public:
-    lineEditEdit(validator valid);
-    lineEditEdit(validator valid1, validator valid2);
-    void m_setText(const std::string &text1, const std::string &text2);
-    std::string m_getText1()
-        {return m_edit1->m_text();}
-    std::string m_getText2()
-        {return m_edit2->m_text();}
+    lineEditedit(validator valid);
+    lineEditedit(validator valid1, validator valid2);
+    void m_setText(const QString &text1, const QString &text2);
+    QString m_getText1();
+    QString m_getText2();
     void m_setValues(double value1, double value2);
-    double m_value1()
-        {return m_edit1->m_number();}
-    double m_value2()
-        {return m_edit2->m_number();}
+    double m_value1();
+    double m_value2();
     void m_setEnabled(bool enabled);
 private:
-    void m_createLineEdits(validator valid1, validator valid2);
+    void createLineedits(validator valid1, validator valid2);
 private slots:
     void m_slotSendEditingFinished();
 signals:
     void m_signalEditingFinished();
 private:
-    lineEdit *m_edit1, *m_edit2;
+    lineedit *m_edit1, *m_edit2;
 };
 
 class WIDPRETTY_EXPORT widHorizontal: public QWidget
@@ -259,7 +262,7 @@ public:
     widCustomColor();
     void m_setColor(const QColor &color);
 protected slots:
-    void m_slotLineEditChanged();
+    void m_slotLineeditChanged();
 signals:
     void m_signalColorChanged(QColor color);
 protected:
@@ -273,7 +276,7 @@ class WIDPRETTY_EXPORT colorPicker: public QWidget
 public:
     colorPicker();
     const QColor &m_getColor()
-    {return m_color;}
+        {return m_color;}
     void m_setColor(const QColor &color);
     inline static const std::vector<QColor> baseColors =
         {Qt::white, Qt::black, Qt::cyan, Qt::darkCyan,

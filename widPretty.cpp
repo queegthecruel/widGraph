@@ -100,18 +100,18 @@ HBoxLayout::HBoxLayout(QWidget *parent):
     setContentsMargins(0,0,0,0);
     setSpacing(0);
 }
-
-lineEdit::lineEdit(enum validator valid)
+/*
+lineedit2::lineedit2(enum validator valid)
 {
     m_init(valid);
 }
 
-lineEdit::lineEdit(const unit &_unit, enum validator valid)
+lineedit2::lineedit2(const unit &_unit, enum validator valid)
 {
     m_init(valid);
 }
 
-void lineEdit::m_supValidator(enum validator valid)
+void lineedit2::m_supValidator(enum validator valid)
 {
     switch (valid) {
     case validator::NONE:
@@ -131,7 +131,7 @@ void lineEdit::m_supValidator(enum validator valid)
     }
 }
 
-int lineEdit::m_supWidth(enum validator valid)
+int lineedit2::m_supWidth(enum validator valid)
 {
     int maxWidth = 0;
     switch (valid) {
@@ -148,21 +148,21 @@ int lineEdit::m_supWidth(enum validator valid)
     return maxWidth;
 }
 
-void lineEdit::m_setText(const std::string &text)
+void lineedit2::m_setText(const std::string &text)
 {
     blockSignals(true);
     setText(QString::fromStdString(text));
     blockSignals(false);
 }
 
-void lineEdit::m_setNumber(double value)
+void lineedit2::m_setNumber(double value)
 {
     blockSignals(true);
     setText(QString::number(value));
     blockSignals(false);
 }
 
-void lineEdit::m_redBoxAnimation(int ms)
+void lineedit2::m_redBoxAnimation(int ms)
 {
     QString stylesheet = styleSheet();
 
@@ -178,13 +178,13 @@ void lineEdit::m_redBoxAnimation(int ms)
     m_redBoxTimer->start();
 }
 
-void lineEdit::m_slotTextFinished()
+void lineedit2::m_slotTextFinished()
 {
     if (isModified())
         emit m_signalTextFinished();
 }
 
-void lineEdit::m_init(enum validator valid)
+void lineedit2::m_init(enum validator valid)
 {
     // Width
         int maxWidth = m_supWidth(valid);
@@ -193,24 +193,24 @@ void lineEdit::m_init(enum validator valid)
     // Validator
         m_supValidator(valid);
     // Signals
-        connect(this, &QLineEdit::editingFinished,
-                this, &lineEdit::m_slotTextFinished);
+        connect(this, &Qlineedit2::editingFinished,
+                this, &lineedit2::m_slotTextFinished);
     // Style
-        setStyleSheet("lineEdit {"
+        setStyleSheet("lineedit2 {"
                         "background: white;"
                         "border: 1px solid gray;"
                       "}"
-                      "lineEdit:disabled {"
+                      "lineedit2:disabled {"
                         "background: rgb(240,240,240);"
                         "border: 1px solid gray;"
                       "}"
-                      "lineEdit:focus {"
+                      "lineedit2:focus {"
                         "background: white;"
                         "border: 1px solid darkblue;"
                       "}"
                       );
 }
-
+*/
 checkbox::checkbox(const QString &title):
   QCheckBox(title)
 {
@@ -253,13 +253,13 @@ void label::m_init(const QString &text, const QString &tooltip, int pixelSize, b
 
 checkEdit::checkEdit(enum validator valid)
 {
-    m_edit = new lineEdit(valid);
+    m_edit = new lineedit(valid);
     m_check = new checkbox();
     connect(m_check, &QAbstractButton::toggled,
             m_edit, &QCheckBox::setEnabled);
     connect(m_check, &QAbstractButton::toggled,
             this, &checkEdit::m_slotSendToggled);
-    connect(m_edit, &lineEdit::m_signalTextFinished,
+    connect(m_edit, &lineedit::m_signalFinished,
             this, &checkEdit::m_slotSendEditingFinished);
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->setSpacing(1);
@@ -269,12 +269,18 @@ checkEdit::checkEdit(enum validator valid)
     layBackground->addStretch();
 }
 
-void checkEdit::m_setText(bool checked, const std::string &text)
+void checkEdit::m_setText(bool checked, const QString &text)
 {
     m_check->m_setChecked(checked);
     m_edit->m_setText(text);
     m_edit->setEnabled(checked);
 }
+
+QString checkEdit::m_getText()
+{return m_edit->m_text();}
+
+bool checkEdit::m_getChecked()
+{return m_check->isChecked();}
 
 void checkEdit::m_setValues(bool checked, double value)
 {
@@ -282,6 +288,9 @@ void checkEdit::m_setValues(bool checked, double value)
     m_edit->m_setNumber(value);
     m_edit->setEnabled(checked);
 }
+
+double checkEdit::m_value()
+{return m_edit->m_number();}
 
 void checkEdit::m_setEnabled(bool enabled)
 {
@@ -529,13 +538,13 @@ widCustomColor::widCustomColor()
     m_editB = new spinbox(0,255);
     m_editA = new spinbox(0,255);
     connect(m_editR, &spinbox::valueChanged,
-            this, &widCustomColor::m_slotLineEditChanged);
+            this, &widCustomColor::m_slotLineeditChanged);
     connect(m_editG, &spinbox::valueChanged,
-            this, &widCustomColor::m_slotLineEditChanged);
+            this, &widCustomColor::m_slotLineeditChanged);
     connect(m_editB, &spinbox::valueChanged,
-            this, &widCustomColor::m_slotLineEditChanged);
+            this, &widCustomColor::m_slotLineeditChanged);
     connect(m_editA, &spinbox::valueChanged,
-            this, &widCustomColor::m_slotLineEditChanged);
+            this, &widCustomColor::m_slotLineeditChanged);
 
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->addWidget(m_editR);
@@ -553,7 +562,7 @@ void widCustomColor::m_setColor(const QColor &color)
     m_editA->m_setValue(m_color.alpha());
 }
 
-void widCustomColor::m_slotLineEditChanged()
+void widCustomColor::m_slotLineeditChanged()
 {
     QColor color(m_editR->value(),
                  m_editG->value(),
@@ -576,43 +585,55 @@ void radiobutton::m_setChecked(bool status)
     blockSignals(false);
 }
 
-lineEditEdit::lineEditEdit(validator valid)
+lineEditedit::lineEditedit(validator valid)
 {
-    m_createLineEdits(valid, valid);
+    createLineedits(valid, valid);
 }
 
-lineEditEdit::lineEditEdit(validator valid1, validator valid2)
+lineEditedit::lineEditedit(validator valid1, validator valid2)
 {
-    m_createLineEdits(valid1, valid2);
+    createLineedits(valid1, valid2);
 }
 
-void lineEditEdit::m_setText(const std::string &text1, const std::string &text2)
+void lineEditedit::m_setText(const QString &text1, const QString &text2)
 {
     m_edit1->m_setText(text1);
     m_edit2->m_setText(text2);
 }
 
-void lineEditEdit::m_setValues(double value1, double value2)
+QString lineEditedit::m_getText1()
+{return m_edit1->m_text();}
+
+QString lineEditedit::m_getText2()
+{return m_edit2->m_text();}
+
+void lineEditedit::m_setValues(double value1, double value2)
 {
     m_edit1->m_setNumber(value1);
     m_edit2->m_setNumber(value2);
 }
 
-void lineEditEdit::m_setEnabled(bool enabled)
+double lineEditedit::m_value1()
+{return m_edit1->m_number();}
+
+double lineEditedit::m_value2()
+{return m_edit2->m_number();}
+
+void lineEditedit::m_setEnabled(bool enabled)
 {
     m_edit1->setEnabled(enabled);
     m_edit2->setEnabled(enabled);
 }
 
-void lineEditEdit::m_createLineEdits(validator valid1, validator valid2)
+void lineEditedit::createLineedits(validator valid1, validator valid2)
 {
-    m_edit1 = new lineEdit(valid1);
-    m_edit2 = new lineEdit(valid2);
+    m_edit1 = new lineedit(valid1);
+    m_edit2 = new lineedit(valid2);
 
-    connect(m_edit1, &lineEdit::m_signalTextFinished,
-            this, &lineEditEdit::m_slotSendEditingFinished);
-    connect(m_edit2, &lineEdit::m_signalTextFinished,
-            this, &lineEditEdit::m_slotSendEditingFinished);
+    connect(m_edit1, &lineedit::m_signalFinished,
+            this, &lineEditedit::m_slotSendEditingFinished);
+    connect(m_edit2, &lineedit::m_signalFinished,
+            this, &lineEditedit::m_slotSendEditingFinished);
     HBoxLayout *layBackground = new HBoxLayout(this);
     layBackground->setSpacing(1);
     layBackground->addWidget(m_edit1);
@@ -621,25 +642,18 @@ void lineEditEdit::m_createLineEdits(validator valid1, validator valid2)
     layBackground->addStretch();
 }
 
-void lineEditEdit::m_slotSendEditingFinished()
+void lineEditedit::m_slotSendEditingFinished()
 {
     emit m_signalEditingFinished();
 }
 
-void lineedit2::m_setUnit(const unit& _unit)
+void lineedit::m_setUnit(const unit& _unit)
 {
     int i = m_vUnits.indexOf(_unit);
- /*   int j = 0;
-    for (const unit &var: m_vUnits) {
-        if (var == _unit)
-            break;
-        else
-            ++j;
-    }*/
     m_setUnit(i);
 }
 
-void lineedit2::m_setUnit(int i)
+void lineedit::m_setUnit(int i)
 {
     int nActions = m_butUnit->actions().size();
     if (i != -1 && i < nActions) {
@@ -650,16 +664,16 @@ void lineedit2::m_setUnit(int i)
     }
 }
 
-void lineedit2::m_setTooltip()
+void lineedit::m_setTooltip()
 {
     QString tooltip;
     switch (m_valid) {
         case validator::NONE:
-            tooltip = m_getText();
+            tooltip = m_text();
         break;
         default:
-            double valueInSI = m_getValue();
-            const auto &_unit = m_getUnit();
+            double valueInSI = m_value();
+            const unit &_unit = m_getUnit();
             double valueInUnit = _unit.m_toUnitFromSI(valueInSI);
             tooltip = QString::number(valueInUnit) + " " +_unit.m_getUnit() +
                               " = " +
@@ -669,37 +683,60 @@ void lineedit2::m_setTooltip()
     m_lineValue->setToolTip(tooltip);
 }
 
-void lineedit2::m_createUnits()
+void lineedit::m_createUnits()
 {
     m_butUnit = new QToolButton();
     m_butUnit->setContentsMargins(0,0,0,0);
     m_butUnit->setFixedWidth(40);
-    m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
+    if (m_vUnits.size() > 1)
+        m_butUnit->setPopupMode(QToolButton::MenuButtonPopup);
     for(const auto &var: m_vUnits)
         m_butUnit->addAction(new QAction(var.m_getUnit(), this));
     connect(m_butUnit, &QToolButton::triggered,
-            this, &lineedit2::m_slotUnits);
+            this, &lineedit::m_slotUnits);
     const unit &_unit = m_getUnit();
     m_setUnit(_unit);
 }
 
-lineedit2::lineedit2(validator valid, unit _unit):
-    m_vUnits({_unit}), m_iUnit(0)
+void lineedit::m_createValidator()
 {
-    m_createLineEdit(valid);
-    m_createUnits();
-    m_setLayout();
+    switch (m_valid) {
+    case validator::NONE:
+        break;
+    case validator::INT:
+        m_validator = new QIntValidator(-qInf(), qInf(), this);
+        break;
+    case validator::INT_POS:
+        m_validator = new QIntValidator(1, qInf(), this);
+        break;
+    case validator::INT_POS_0:
+        m_validator = new QIntValidator(0, qInf(), this);
+        break;
+    case validator::DOUBLE:
+        m_validator = new QDoubleValidator(-qInf(), qInf(), 3, this);
+        break;
+    }
 }
 
-lineedit2::lineedit2(validator valid, const QVector<unit> &_vUnits):
-    m_vUnits(_vUnits), m_iUnit(0)
+lineedit::lineedit(validator valid):
+    m_valid(valid), m_vUnits({}), m_iUnit(-1)
 {
-    m_createLineEdit(valid);
-    m_createUnits();
-    m_setLayout();
+    m_init();
 }
 
-void lineedit2::m_setText(const QString &text)
+lineedit::lineedit(validator valid, unit _unit):
+    m_valid(valid), m_vUnits({_unit}), m_iUnit(0)
+{
+    m_init();
+}
+
+lineedit::lineedit(validator valid, const QVector<unit> &_vUnits):
+    m_valid(valid), m_vUnits(_vUnits), m_iUnit(0)
+{
+    m_init();
+}
+
+void lineedit::m_setText(const QString &text)
 {
     blockSignals(true);
     m_lineValue->setText(text);
@@ -707,44 +744,89 @@ void lineedit2::m_setText(const QString &text)
     blockSignals(false);
 }
 
-QString lineedit2::m_getText() const
+QString lineedit::m_text() const
 {
     return m_lineValue->text();
 }
 
-void lineedit2::m_setValue(double valueInSI)
+void lineedit::m_setValue(double valueInSI)
 {
     blockSignals(true);
-    const auto &_unit = m_getUnit();
+    const unit &_unit = m_getUnit();
     double valueInUnit = _unit.m_toUnitFromSI(valueInSI);
     m_lineValue->setText(QString::number(valueInUnit));
     m_setTooltip();
     blockSignals(false);
 }
 
-double lineedit2::m_getValue() const
+double lineedit::m_value() const
 {
     double valueInUnit = m_lineValue->text().toDouble();
     double valueInSI = m_getUnit().m_toSIFromUnit(valueInUnit);
     return valueInSI;
 }
 
-void lineedit2::m_createLineEdit(validator valid)
+void lineedit::m_setNumber(double value)
 {
-    m_valid = valid;
+    blockSignals(true);
+    m_lineValue->setText(QString::number(value));
+    m_setTooltip();
+    blockSignals(true);
+}
+
+double lineedit::m_number() const
+{
+    double value = m_lineValue->text().toDouble();
+    return value;
+}
+
+void lineedit::m_setEnabled(bool enabled)
+{
+    setEnabled(enabled);
+}
+
+void lineedit::m_redBoxAnimation(int ms)
+{
+    QString stylesheet = styleSheet();
+
+    if (m_redBoxTimer == nullptr)
+        m_redBoxTimer = new QTimer(this);
+    setStyleSheet("border: 2px solid red;");
+    connect(m_redBoxTimer, &QTimer::timeout,
+            this, [this, stylesheet](){
+                setStyleSheet(stylesheet);
+                m_redBoxTimer->stop();
+            });
+    m_redBoxTimer->setInterval(ms);
+    m_redBoxTimer->start();
+}
+
+void lineedit::m_init()
+{
+    m_createlineedit();
+    m_createValidator();
+    m_createUnits();
+    m_setLayout();
+}
+
+void lineedit::m_createlineedit()
+{
     m_lineValue = new QLineEdit();
     connect(m_lineValue, &QLineEdit::editingFinished,
-            this, &lineedit2::m_slotEditingFinished);
-    connect(this, &lineedit2::m_signalFinished,
-            this, &lineedit2::m_slotValueChanged);
+            this, &lineedit::m_slotEditingFinished);
+    connect(this, &lineedit::m_signalFinished,
+            this, &lineedit::m_slotValueChanged);
 }
 
-const unit &lineedit2::m_getUnit() const
+const unit &lineedit::m_getUnit() const
 {
-    return m_vUnits[m_iUnit];
+    if (m_iUnit > 0 && m_iUnit < m_vUnits.size())
+        return m_vUnits[m_iUnit];
+    else
+        return units::none;
 }
 
-void lineedit2::m_slotUnits(QAction *action)
+void lineedit::m_slotUnits(QAction *action)
 {
     const auto &vActions = m_butUnit->actions();
     int i = vActions.indexOf(action);
@@ -752,18 +834,18 @@ void lineedit2::m_slotUnits(QAction *action)
     m_slotEditingFinished();
 }
 
-void lineedit2::m_slotValueChanged()
+void lineedit::m_slotValueChanged()
 {
     m_setTooltip();
 }
 
-void lineedit2::m_slotEditingFinished()
+void lineedit::m_slotEditingFinished()
 {
 //    if (m_lineValue->textChanged())
     emit m_signalFinished();
 }
 
-void lineedit2::m_setLayout()
+void lineedit::m_setLayout()
 {
     auto *vWids = new widHorizontal({m_lineValue, m_butUnit});
     HBoxLayout *layBackground = new HBoxLayout(this);

@@ -54,8 +54,8 @@ public:
     virtual void m_saveValues() override;
 protected:
     std::weak_ptr<dataTitle> ptr_data;
-    lineEdit *m_editText;
-    lineEdit *m_editFontSize;
+    lineedit *m_editText;
+    lineedit *m_editFontSize;
 };
 
 class tabGraphSettingsAxis: public tabGraphSettings
@@ -72,11 +72,11 @@ public slots:
 protected:
     checkbox *m_checkShowAxis;
     checkEdit *m_editSize;
-    lineEdit *m_editFontSizeNumbers, *m_editFontSizeText;
+    lineedit *m_editFontSizeNumbers, *m_editFontSizeText;
     checkbox *m_checkAutoAxis;
     checkEdit *m_checkManualStep;
-    lineEditEdit *m_editMinMax;
-    lineEdit *m_editText;
+    lineEditedit *m_editMinMax;
+    lineedit *m_editText;
 };
 
 class tabGraphSettingsXAxis: public tabGraphSettingsAxis
@@ -413,7 +413,7 @@ protected:
     std::weak_ptr<dataLegend> ptr_data;
     checkbox *m_checkShowLegend, *m_checkShowTopLine;
     checkEdit *m_editSize;
-    lineEdit *m_editFontSizeText;
+    lineedit *m_editFontSizeText;
     spinbox *m_editNColumns;
     checkbox *m_checkAlignToAxes;
 };

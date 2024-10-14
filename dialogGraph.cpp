@@ -141,8 +141,8 @@ tabGraphSettingsTitle::tabGraphSettingsTitle(std::weak_ptr<dataTitle> data):
     tabGraphSettings("Title"),
     ptr_data(data)
 {
-    m_editText = new lineEdit(validator::NONE);
-    m_editFontSize = new lineEdit(validator::INT_POS);
+    m_editText = new lineedit(validator::NONE);
+    m_editFontSize = new lineedit(validator::INT_POS);
     m_tree->m_addChild("Text", m_editText);
     m_tree->m_addChild("Font size", m_editFontSize);
 }
@@ -150,14 +150,14 @@ tabGraphSettingsTitle::tabGraphSettingsTitle(std::weak_ptr<dataTitle> data):
 void tabGraphSettingsTitle::m_loadValues()
 {
     auto s_data = ptr_data.lock();
-    m_editText->m_setText(s_data->m_text);
+    m_editText->m_setText(QString::fromStdString(s_data->m_text));
     m_editFontSize->m_setNumber(s_data->m_fontText);
 }
 
 void tabGraphSettingsTitle::m_saveValues()
 {
     auto s_data = ptr_data.lock();
-    s_data->m_text = m_editText->m_text();
+    s_data->m_text = m_editText->m_text().toStdString();
     s_data->m_fontText = m_editFontSize->m_number();
 }
 
@@ -191,7 +191,7 @@ tabGraphSettingsLegend::tabGraphSettingsLegend(std::weak_ptr<dataLegend> data):
     m_tree->m_addChild("Manual dimensions", m_editSize, titleDimensions);
     m_checkShowTopLine = new checkbox();
     m_tree->m_addChild("Show top line", m_checkShowTopLine, titleDimensions);
-    m_editFontSizeText = new lineEdit(validator::INT_POS);
+    m_editFontSizeText = new lineedit(validator::INT_POS);
     m_tree->m_addChild("Text size", m_editFontSizeText, titleDimensions);
 
     m_checkAlignToAxes = new checkbox("Align to respective axis");
@@ -321,12 +321,12 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
         auto *titleDimensions = m_tree->m_addChild("Dimensions", m_checkShowAxis, nullptr, false);
         m_editSize = new checkEdit(validator::INT_POS_0);
         m_tree->m_addChild("Manual dimensions", m_editSize, titleDimensions);
-        m_editFontSizeNumbers = new lineEdit(validator::INT_POS);
-        m_editFontSizeText = new lineEdit(validator::INT_POS);
+        m_editFontSizeNumbers = new lineedit(validator::INT_POS);
+        m_editFontSizeText = new lineedit(validator::INT_POS);
         m_tree->m_addChild("Numbers size", m_editFontSizeNumbers, titleDimensions);
         m_tree->m_addChild("Text size", m_editFontSizeText, titleDimensions);
     // Text
-        m_editText = new lineEdit(validator::NONE);
+        m_editText = new lineedit(validator::NONE);
         m_tree->m_addChild("Text", m_editText);
     // Axis min max
         m_checkAutoAxis = new checkbox("Auto axis");
@@ -335,7 +335,7 @@ tabGraphSettingsAxis::tabGraphSettingsAxis(const QString &title):
         m_checkManualStep = new checkEdit(validator::DOUBLE);
         connect(m_checkManualStep, &checkEdit::m_signalToggled,
                 this, &tabGraphSettingsAxis::m_slotAutoStepToggled);
-        m_editMinMax = new lineEditEdit(validator::DOUBLE);
+        m_editMinMax = new lineEditedit(validator::DOUBLE);
         auto *titleMinMax = m_tree->m_addChild("Range", m_checkAutoAxis, nullptr, true);
         m_tree->m_addChild("Min/max", m_editMinMax, titleMinMax);
         m_tree->m_addChild("Manual step", m_checkManualStep, titleMinMax);
@@ -350,7 +350,7 @@ void tabGraphSettingsAxis::m_loadGeneralValues(std::shared_ptr<dataAxis> s_data)
     m_checkAutoAxis->m_setChecked(s_data->m_autoAxis);
     m_checkManualStep->m_setValues(s_data->m_manualStep, s_data->m_step);
     m_editMinMax->m_setValues(s_data->m_min, s_data->m_max);
-    m_editText->m_setText(s_data->m_text);
+    m_editText->m_setText(QString::fromStdString(s_data->m_text));
     m_slotAutoAxisToggled();
 }
 
@@ -366,7 +366,7 @@ void tabGraphSettingsAxis::m_saveGeneralValues(std::shared_ptr<dataAxis> s_data)
     s_data->m_min = m_editMinMax->m_value1();
     s_data->m_max = m_editMinMax->m_value2();
     s_data->m_step = m_checkManualStep->m_value();
-    s_data->m_text = m_editText->m_text();
+    s_data->m_text = m_editText->m_text().toStdString();
 }
 
 void tabGraphSettingsAxis::m_slotAutoAxisToggled()
@@ -824,7 +824,7 @@ widGraphObjectSettingLegend::widGraphObjectSettingLegend():
 
 void widGraphObjectSettingLegend::m_setValues(bool overwrite, const std::string &text, bool enable)
 {
-    m_editText->m_setText(overwrite, text);
+    m_editText->m_setText(overwrite, QString::fromStdString(text));
     m_checkEnable->m_setChecked(enable);
     m_slotEnabledToggled();
 }
@@ -832,7 +832,7 @@ void widGraphObjectSettingLegend::m_setValues(bool overwrite, const std::string 
 std::tuple<bool, std::string, bool> widGraphObjectSettingLegend::m_getValues()
 {
     bool overwrite = m_editText->m_getChecked();
-    std::string text = m_editText->m_getText();
+    std::string text = m_editText->m_getText().toStdString();
     bool enable = m_checkEnable->isChecked();
     return {overwrite, text, enable};
 }
