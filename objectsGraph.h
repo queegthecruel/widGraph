@@ -1,12 +1,14 @@
 #ifndef OBJECTSGRAPH_H
 #define OBJECTSGRAPH_H
 
+#include "constants.h"
 #include "widGraph_global.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QDebug>
 #include <QIcon>
 
+using std::shared_ptr, std::weak_ptr;
 // Graph objects
 class widGraph;
 class widGraphAxis;
@@ -69,7 +71,7 @@ public:
     // Horizontal/vertical const curve
         void m_setConstCurveOrientation(enum orientation orient);
         std::tuple<enum orientation> m_getConstCurveOrientation();
-protected:
+private:
     // Curve
         inline QColor m_getCurveColor()
             {return QColor(m_curveR, m_curveG, m_curveB, m_curveA);}
@@ -120,7 +122,7 @@ protected:
             {m_orientation = orient;}
 public:
     bool m_hasCurve, m_hasPoints, m_hasArea, m_hasColumns, m_hasLegend, m_hasOrientation;
-protected:
+private:
     yAxisPosition m_prefferedYAxis = yAxisPosition::LEFT;
     std::string m_name;
     QIcon m_icon;
@@ -167,29 +169,28 @@ public:
     const std::string &m_getName() const;
     const QIcon &m_getIcon() const;
     virtual std::string m_getInfo() const {return "XXX";};
-    void m_setData(std::shared_ptr<dataGraphObject> data)
+    void m_setData(shared_ptr<dataGraphObject> data)
         {*m_data = *data;}
     enum yAxisPosition m_getPrefferedYAxis();
-    inline std::weak_ptr<dataGraphObject> m_getData()
+    inline weak_ptr<dataGraphObject> m_getData()
         {return m_data;}
     static QPainterPath m_createPoint(QPointF point = QPoint(0,0),
         double shapeSize = 10, pointsShapes style = pointsShapes::CROSS);
-    static std::shared_ptr<graphObject> m_createGraphObject(int type);
+    static shared_ptr<graphObject> m_createGraphObject(int type);
 protected:
     std::tuple<widGraphAxis *, widGraphAxis *> m_getAppropriateAxes(widGraph *ptr_graph);
 protected:
-    enum type {CURVE, YVALUE};
-    std::shared_ptr<dataGraphObject> m_data;
+    shared_ptr<dataGraphObject> m_data;
 };
 
-class WIDGRAPH_EXPORT graphCurve: public graphObject
+class WIDGRAPH_EXPORT graphCurve final: public graphObject
 {
 public:
     graphCurve(std::string name,
-               std::shared_ptr<std::vector<double>> ptr_dataY);
+               shared_ptr<std::vector<double>> ptr_dataY);
     graphCurve(std::string name,
-               std::shared_ptr<std::vector<double>> ptr_dataX,
-               std::shared_ptr<std::vector<double>> ptr_dataY);
+               shared_ptr<std::vector<double>> ptr_dataX,
+               shared_ptr<std::vector<double>> ptr_dataY);
     graphCurve(const graphCurve& oldGraphObject);
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override;
@@ -204,14 +205,15 @@ private:
     QPainterPath m_getPointsPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, pointsShapes style, double shapeSize);
     QPainterPath m_getAreaPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
-    std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
-    std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
+    weak_ptr<std::vector<double>> w_dataX, w_dataY;
+    shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 
-class WIDGRAPH_EXPORT graphValue: public graphObject
+class WIDGRAPH_EXPORT graphValue final: public graphObject
 {
 public:
-    graphValue(std::string name, std::shared_ptr<double> ptr_dataY, enum orientation orient = orientation::HORIZONTAL);
+    graphValue(std::string name, shared_ptr<double> ptr_dataY,
+               const unit _unit, enum orientation orient = orientation::HORIZONTAL);
     graphValue(const graphValue& oldGraphObject);
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
     virtual double m_getMinX() override;
@@ -224,14 +226,15 @@ public:
 private:
     QPainterPath m_getCurvePainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y);
 protected:
-    std::weak_ptr<double> w_data;
-    std::shared_ptr<double> s_data;
+    weak_ptr<double> w_data;
+    shared_ptr<double> s_data;
+    unit m_unit;
 };
 
-class WIDGRAPH_EXPORT graphColumn: public graphObject
+class WIDGRAPH_EXPORT graphColumn final: public graphObject
 {
 public:
-    graphColumn(std::string name, std::shared_ptr<std::vector<double>> ptr_dataY);
+    graphColumn(std::string name, shared_ptr<std::vector<double>> ptr_dataY);
     graphColumn(const graphColumn& oldGraphObject);
     ~graphColumn() = default;
     virtual void m_drawItself(QPainter *painter, widGraph *ptr_graph) override;
@@ -246,7 +249,7 @@ private:
     QPainterPath m_getColumnPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
     QPainterPath m_getColumnBorderPainterPath(widGraphAxis* ptr_x, widGraphAxis* ptr_y, double columnWidth);
 protected:
-    std::weak_ptr<std::vector<double>> w_dataX, w_dataY;
-    std::shared_ptr<std::vector<double>> s_dataX, s_dataY;
+    weak_ptr<std::vector<double>> w_dataX, w_dataY;
+    shared_ptr<std::vector<double>> s_dataX, s_dataY;
 };
 #endif // OBJECTSGRAPH_H

@@ -324,7 +324,7 @@ dataStructure::dataStructure():
 
     //Test
     m_dataTestValue = std::make_shared<double>(10);
-    m_graphObjectsTestValue = std::make_shared<graphValue>("Value 1", m_dataTestValue, orientation::HORIZONTAL);
+    m_graphObjectsTestValue = std::make_shared<graphValue>("Value 1", m_dataTestValue, units::km, orientation::HORIZONTAL);
     auto numColumns = std::vector<double>{20,42,80,13,26,52};
     m_dataTestColumn = std::make_shared<std::vector<double>>(numColumns);
     m_graphObjectsTestColumn = std::make_shared<graphColumn>("Column 1", m_dataTestColumn);

@@ -313,19 +313,6 @@ spinbox::spinbox(int min, int max):
     setMinimum(min);
     setMaximum(max);
     setMaximumWidth(50);
-   /* setStyleSheet("spinbox {"
-                    "background: white;"
-                    "border: 1px solid gray;"
-                  "}"
-                  "spinbox:disabled {"
-                    "background: rgb(240,240,240);"
-                    "border: 1px solid gray;"
-                  "}"
-                  "spinbox:focus {"
-                    "background: white;"
-                    "border: 1px solid darkblue;"
-                  "}"
-   );*/
 }
 void spinbox::m_setValue(int value)
 {

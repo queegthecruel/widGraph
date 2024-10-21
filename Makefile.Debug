@@ -286,6 +286,15 @@ debug\moc_dialogGraph.cpp: dialogGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -303,13 +312,6 @@ debug\moc_dialogGraph.cpp: dialogGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \
@@ -548,6 +550,15 @@ debug\moc_supWidgets.cpp: supWidgets.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -565,13 +576,6 @@ debug\moc_supWidgets.cpp: supWidgets.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \
@@ -797,23 +801,19 @@ debug\moc_widGraph.cpp: widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qversiontagging.h \
 		dataGraph.h \
 		objectsGraph.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		constants.h \
+		constants_global.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcompare.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcomparehelpers.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q20type_traits.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringview.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearray.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrefcount.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qpair.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydatapointer.h \
@@ -834,6 +834,21 @@ debug\moc_widGraph.cpp: widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmargins.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q23utility.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qsize.h \
@@ -848,12 +863,6 @@ debug\moc_widGraph.cpp: widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qcolor.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgb.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgba64.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qshareddata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qimage.h \
@@ -898,9 +907,6 @@ debug\moc_widGraph.cpp: widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qicon.h \
 		dialogGraph.h \
 		widPretty.h \
-		constants.h \
-		constants_global.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -1106,6 +1112,15 @@ debug\moc_widPretty.cpp: widPretty.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -1123,13 +1138,6 @@ debug\moc_widPretty.cpp: widPretty.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \
@@ -1376,7 +1384,16 @@ debug\constants.obj: constants.cpp constants.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringtokenizer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h
 
 debug\dataGraph.obj: dataGraph.cpp dataGraph.h
 
@@ -1460,6 +1477,15 @@ debug\dialogGraph.obj: dialogGraph.cpp dialogGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -1477,13 +1503,6 @@ debug\dialogGraph.obj: dialogGraph.cpp dialogGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \
@@ -1657,7 +1676,8 @@ debug\dialogGraph.obj: dialogGraph.cpp dialogGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmimedata.h
 
 debug\objectsGraph.obj: objectsGraph.cpp objectsGraph.h \
-		widGraph_global.h \
+		constants.h \
+		constants_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qglobal.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtversionchecks.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtconfiginclude.h \
@@ -1703,23 +1723,17 @@ debug\objectsGraph.obj: objectsGraph.cpp objectsGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtresource.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qttranslation.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qversiontagging.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcompare.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcomparehelpers.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q20type_traits.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringview.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearray.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrefcount.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qpair.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydatapointer.h \
@@ -1740,6 +1754,22 @@ debug\objectsGraph.obj: objectsGraph.cpp objectsGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
+		widGraph_global.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmargins.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q23utility.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qsize.h \
@@ -1754,12 +1784,6 @@ debug\objectsGraph.obj: objectsGraph.cpp objectsGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qcolor.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgb.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgba64.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qshareddata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qimage.h \
@@ -1806,9 +1830,6 @@ debug\objectsGraph.obj: objectsGraph.cpp objectsGraph.h \
 		widGraph.h \
 		dialogGraph.h \
 		widPretty.h \
-		constants.h \
-		constants_global.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -2012,6 +2033,15 @@ debug\supWidgets.obj: supWidgets.cpp supWidgets.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -2029,13 +2059,6 @@ debug\supWidgets.obj: supWidgets.cpp supWidgets.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \
@@ -2260,23 +2283,19 @@ debug\widGraph.obj: widGraph.cpp widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qversiontagging.h \
 		dataGraph.h \
 		objectsGraph.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		constants.h \
+		constants_global.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcompare.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcomparehelpers.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q20type_traits.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstring.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qchar.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringview.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearray.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrefcount.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qnamespace.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qtmetamacros.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qpair.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qarraydatapointer.h \
@@ -2297,6 +2316,21 @@ debug\widGraph.obj: widGraph.cpp widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\QPainter \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qpainter.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiglobal.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtgui-config.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qtguiexports.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qrect.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmargins.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\q23utility.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qsize.h \
@@ -2311,12 +2345,6 @@ debug\widGraph.obj: widGraph.cpp widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qcolor.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgb.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qrgba64.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qshareddata.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qimage.h \
@@ -2361,9 +2389,6 @@ debug\widGraph.obj: widGraph.cpp widGraph.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qicon.h \
 		dialogGraph.h \
 		widPretty.h \
-		constants.h \
-		constants_global.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QString \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -2570,6 +2595,15 @@ debug\widPretty.obj: widPretty.cpp widPretty.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringbuilder.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringconverter_base.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\QVector \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qvector.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
+		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		widPretty_global.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\QLabel \
 		C:\Qt\6.8.0\msvc2022_64\include\QtWidgets\qlabel.h \
@@ -2587,13 +2621,6 @@ debug\widPretty.obj: widPretty.cpp widPretty.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qfunctionaltools_impl.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtGui\qwindowdefs_win.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qobject.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qhashfunctions.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qiterator.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qbytearraylist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringlist.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qalgorithms.h \
-		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qstringmatcher.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qcoreevent.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qscopedpointer.h \
 		C:\Qt\6.8.0\msvc2022_64\include\QtCore\qmetatype.h \

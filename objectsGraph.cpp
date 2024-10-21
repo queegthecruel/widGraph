@@ -3,8 +3,8 @@
 #include "widGraph.h"
 
 graphCurve::graphCurve(std::string name,
-                       std::shared_ptr<std::vector<double> > ptr_dataX,
-                       std::shared_ptr<std::vector<double> > ptr_dataY):
+                       shared_ptr<std::vector<double> > ptr_dataX,
+                       shared_ptr<std::vector<double> > ptr_dataY):
     graphObject(true, true, true, false, true, false),
     w_dataX(ptr_dataX), w_dataY(ptr_dataY)
 {
@@ -35,7 +35,7 @@ graphCurve::graphCurve(const graphCurve &oldGraphObject):
 }
 
 graphCurve::graphCurve(std::string name,
-                       std::shared_ptr<std::vector<double> > ptr_dataY):
+                       shared_ptr<std::vector<double> > ptr_dataY):
     graphObject(true, true, true, false, true, false),
     w_dataY(ptr_dataY)
 {
@@ -271,9 +271,9 @@ QPainterPath graphObject::m_createPoint(QPointF point, double shapeSize, pointsS
     return path;
 }
 
-std::shared_ptr<graphObject> graphObject::m_createGraphObject(int /*type*/)
+shared_ptr<graphObject> graphObject::m_createGraphObject(int /*type*/)
 {
-    std::shared_ptr<graphObject> ptr_object = nullptr;
+    shared_ptr<graphObject> ptr_object = nullptr;
     return ptr_object;
 }
 
@@ -294,9 +294,11 @@ std::tuple<widGraphAxis *, widGraphAxis *> graphObject::m_getAppropriateAxes(wid
     return {ptr_x, ptr_y};
 }
 
-graphValue::graphValue(std::string name, std::shared_ptr<double> ptr_dataY, orientation orient):
+graphValue::graphValue(std::string name, shared_ptr<double> ptr_dataY,
+    const unit _unit, orientation orient):
     graphObject(true, false, false, false, true, true),
-    w_data(ptr_dataY)
+    w_data(ptr_dataY),
+    m_unit(_unit)
 {
     m_data->m_setName(name);
     QIcon icon(":/images/object_value.png");
@@ -307,7 +309,7 @@ graphValue::graphValue(std::string name, std::shared_ptr<double> ptr_dataY, orie
 }
 
 graphValue::graphValue(const graphValue &oldGraphObject):
-    graphObject(oldGraphObject)
+    graphObject(oldGraphObject), m_unit(oldGraphObject.m_unit)
 {
     w_data = oldGraphObject.w_data;
     s_data = std::make_shared<double>(*oldGraphObject.s_data);
@@ -398,7 +400,10 @@ int graphValue::m_getNValues()
 
 std::string graphValue::m_getInfo() const
 {
-    return std::to_string(*s_data);
+    std::string name = m_data->m_getName();
+    std::string value = std::to_string(*s_data);
+    std::string unit = m_unit.m_getUnit().toStdString();
+    return name + " " + value + " " + unit;
 }
 
 QPainterPath graphValue::m_getCurvePainterPath(widGraphAxis *ptr_x, widGraphAxis *ptr_y)
@@ -699,7 +704,7 @@ pointsShapes dataGraphObject::getShapeStyleFromIndex(int index)
     }
 }
 
-graphColumn::graphColumn(std::string name, std::shared_ptr<std::vector<double> > ptr_dataY):
+graphColumn::graphColumn(std::string name, shared_ptr<std::vector<double> > ptr_dataY):
     graphObject(true, false, true, true, true, false),
     w_dataY(ptr_dataY)
 {
